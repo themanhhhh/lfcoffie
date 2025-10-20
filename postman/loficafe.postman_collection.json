@@ -1,0 +1,2656 @@
+{
+  "info": {
+    "name": "LofiCafe API",
+    "_postman_id": "e86e4821-8264-4968-801e-736a7ef133f9",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Bộ sưu tập Postman để kiểm thử toàn bộ API của hệ thống LofiCafe. Sử dụng biến {{baseUrl}} để trỏ tới server (mặc định http://localhost:4000)."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "nhanVienId",
+      "value": "NV001",
+      "type": "string"
+    },
+    {
+      "key": "hoaDonId",
+      "value": "HD001",
+      "type": "string"
+    },
+    {
+      "key": "monId",
+      "value": "MON001",
+      "type": "string"
+    },
+    {
+      "key": "loaiMonId",
+      "value": "LM001",
+      "type": "string"
+    },
+    {
+      "key": "nhomThucDonId",
+      "value": "NTD001",
+      "type": "string"
+    },
+    {
+      "key": "sizeId",
+      "value": "S001",
+      "type": "string"
+    },
+    {
+      "key": "theBanId",
+      "value": "TB001",
+      "type": "string"
+    },
+    {
+      "key": "khuyenMaiId",
+      "value": "KM001",
+      "type": "string"
+    },
+    {
+      "key": "nguyenLieuId",
+      "value": "NL001",
+      "type": "string"
+    },
+    {
+      "key": "phieuNhapId",
+      "value": "PN001",
+      "type": "string"
+    },
+    {
+      "key": "chiTietPhieuNhapId",
+      "value": "CTPN001",
+      "type": "string"
+    },
+    {
+      "key": "phieuXuatId",
+      "value": "PX001",
+      "type": "string"
+    },
+    {
+      "key": "chiTietPhieuXuatId",
+      "value": "CTPX001",
+      "type": "string"
+    },
+    {
+      "key": "phieuThuId",
+      "value": "PT001",
+      "type": "string"
+    },
+    {
+      "key": "chiTietPhieuThuId",
+      "value": "CTPT001",
+      "type": "string"
+    },
+    {
+      "key": "phieuChiId",
+      "value": "PC001",
+      "type": "string"
+    },
+    {
+      "key": "chiTietPhieuChiId",
+      "value": "CTPC001",
+      "type": "string"
+    },
+    {
+      "key": "chiTietHoaDonId",
+      "value": "CTHD001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Kiểm tra nhanh trạng thái server",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Đăng nhập",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taiKhoan\": \"nguyenvana\",\n  \"matKhau\": \"your_plain_password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Nhập tài khoản/mật khẩu để nhận token JWT",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Kiểm tra token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify"
+              ]
+            },
+            "description": "Kiểm tra token hiện tại và lấy thông tin người dùng"
+          },
+          "response": []
+        },
+        {
+          "name": "Đăng xuất",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Đăng xuất (client chỉ cần xoá token)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Nhân viên",
+      "item": [
+        {
+          "name": "Danh sách nhân viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhanvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhanvien"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết nhân viên",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhanvien/{{nhanVienId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhanvien",
+                "{{nhanVienId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo nhân viên",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhanvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhanvien"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maNV\": \"{{nhanVienId}}\",\n  \"tenNV\": \"Nguyễn Văn A\",\n  \"chucVu\": \"Thu ngân\",\n  \"gioiTinh\": \"Nam\",\n  \"ngaySinh\": \"1995-05-20\",\n  \"caLam\": \"Ca sáng\",\n  \"taiKhoan\": \"nguyenvana\",\n  \"matKhau\": \"\",\n  \"soDienThoai\": \"0901234567\",\n  \"email\": \"staff@example.com\",\n  \"diaChi\": \"123 Đường Lê Lợi, Quận 1, TP.HCM\",\n  \"trangThai\": \"hoạt động\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật nhân viên",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhanvien/{{nhanVienId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhanvien",
+                "{{nhanVienId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenNV\": \"Nguyễn Văn A\",\n  \"caLam\": \"Ca chiều\",\n  \"trangThai\": \"hoạt động\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa nhân viên",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhanvien/{{nhanVienId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhanvien",
+                "{{nhanVienId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Hóa đơn",
+      "item": [
+        {
+          "name": "Danh sách hóa đơn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "hoadon"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết hóa đơn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/{{hoaDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "hoadon",
+                "{{hoaDonId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo hóa đơn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "hoadon"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maHD\": \"{{hoaDonId}}\",\n  \"ngay\": \"2025-10-20\",\n  \"phuongThucThanhToan\": \"Tiền mặt\",\n  \"nhanVien\": {\n    \"maNV\": \"{{nhanVienId}}\"\n  },\n  \"theBan\": {\n    \"maTheBan\": \"{{theBanId}}\"\n  },\n  \"khuyenMai\": {\n    \"maKM\": \"{{khuyenMaiId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật hóa đơn",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/{{hoaDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "hoadon",
+                "{{hoaDonId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phuongThucThanhToan\": \"Chuyển khoản\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa hóa đơn",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hoadon/{{hoaDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "hoadon",
+                "{{hoaDonId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Món",
+      "item": [
+        {
+          "name": "Danh sách món",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mon"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết món",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mon/{{monId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mon",
+                "{{monId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo món",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mon"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maMon\": \"{{monId}}\",\n  \"tenMon\": \"Cà phê sữa đá\",\n  \"donGia\": 35000,\n  \"donViTinh\": \"Ly\",\n  \"loaiMon\": {\n    \"maLoaiMon\": \"{{loaiMonId}}\"\n  },\n  \"nhomThucDon\": {\n    \"maNhomThucDon\": \"{{nhomThucDonId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật món",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/mon/{{monId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mon",
+                "{{monId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenMon\": \"Cà phê sữa đá\",\n  \"donGia\": 38000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa món",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mon/{{monId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "mon",
+                "{{monId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Loại món",
+      "item": [
+        {
+          "name": "Danh sách loại món",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loaimon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loaimon"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết loại món",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loaimon/{{loaiMonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loaimon",
+                "{{loaiMonId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo loại món",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loaimon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loaimon"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maLoaiMon\": \"{{loaiMonId}}\",\n  \"tenLoaiMon\": \"Cà phê\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật loại món",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/loaimon/{{loaiMonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loaimon",
+                "{{loaiMonId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenLoaiMon\": \"Đồ uống cà phê\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa loại món",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/loaimon/{{loaiMonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "loaimon",
+                "{{loaiMonId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Nhóm thực đơn",
+      "item": [
+        {
+          "name": "Danh sách nhóm thực đơn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhomthucdon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhomthucdon"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết nhóm thực đơn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhomthucdon/{{nhomThucDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhomthucdon",
+                "{{nhomThucDonId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo nhóm thực đơn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhomthucdon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhomthucdon"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maNhomThucDon\": \"{{nhomThucDonId}}\",\n  \"tenNhomThucDon\": \"Đồ uống\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật nhóm thực đơn",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhomthucdon/{{nhomThucDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhomthucdon",
+                "{{nhomThucDonId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenNhomThucDon\": \"Đồ uống đặc biệt\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa nhóm thực đơn",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhomthucdon/{{nhomThucDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhomthucdon",
+                "{{nhomThucDonId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Size",
+      "item": [
+        {
+          "name": "Danh sách size",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/size",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "size"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết size",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/size/{{sizeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "size",
+                "{{sizeId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo size",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/size",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "size"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maSize\": \"{{sizeId}}\",\n  \"tenSize\": \"L\",\n  \"giaCongThem\": 5000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật size",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/size/{{sizeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "size",
+                "{{sizeId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenSize\": \"XL\",\n  \"giaCongThem\": 7000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa size",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/size/{{sizeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "size",
+                "{{sizeId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Thẻ bàn",
+      "item": [
+        {
+          "name": "Danh sách thẻ bàn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/theban",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "theban"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết thẻ bàn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/theban/{{theBanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "theban",
+                "{{theBanId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo thẻ bàn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/theban",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "theban"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maTheBan\": \"{{theBanId}}\",\n  \"tenTheBan\": \"Bàn 01\",\n  \"trangThai\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật thẻ bàn",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/theban/{{theBanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "theban",
+                "{{theBanId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trangThai\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa thẻ bàn",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/theban/{{theBanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "theban",
+                "{{theBanId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Khuyến mãi",
+      "item": [
+        {
+          "name": "Danh sách khuyến mãi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/khuyenmai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "khuyenmai"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết khuyến mãi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/khuyenmai/{{khuyenMaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "khuyenmai",
+                "{{khuyenMaiId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo khuyến mãi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khuyenmai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "khuyenmai"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maKM\": \"{{khuyenMaiId}}\",\n  \"tenKM\": \"Giảm 10% hóa đơn\",\n  \"loaiKM\": \"percentage\",\n  \"giaTriGiam\": 10,\n  \"soTienToiThieu\": 100000,\n  \"giamToiDa\": 30000,\n  \"soLuongSuDung\": 100,\n  \"moTa\": \"Áp dụng cho hóa đơn từ 100.000đ\",\n  \"ngayBatDau\": \"2025-10-01T00:00:00.000Z\",\n  \"ngayKetThuc\": \"2025-10-31T23:59:59.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật khuyến mãi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/khuyenmai/{{khuyenMaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "khuyenmai",
+                "{{khuyenMaiId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenKM\": \"Giảm 15% hóa đơn\",\n  \"giaTriGiam\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa khuyến mãi",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/khuyenmai/{{khuyenMaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "khuyenmai",
+                "{{khuyenMaiId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Nguyên liệu",
+      "item": [
+        {
+          "name": "Danh sách nguyên liệu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nguyenlieu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nguyenlieu"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết nguyên liệu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nguyenlieu/{{nguyenLieuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nguyenlieu",
+                "{{nguyenLieuId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo nguyên liệu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nguyenlieu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nguyenlieu"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maNL\": \"{{nguyenLieuId}}\",\n  \"tenNL\": \"Hạt cà phê Arabica\",\n  \"donViTinh\": \"kg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật nguyên liệu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nguyenlieu/{{nguyenLieuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nguyenlieu",
+                "{{nguyenLieuId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenNL\": \"Hạt cà phê Robusta\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa nguyên liệu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/nguyenlieu/{{nguyenLieuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nguyenlieu",
+                "{{nguyenLieuId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phiếu nhập",
+      "item": [
+        {
+          "name": "Danh sách phiếu nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieunhap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieunhap"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết phiếu nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieunhap/{{phieuNhapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieunhap",
+                "{{phieuNhapId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo phiếu nhập",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieunhap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieunhap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maPN\": \"{{phieuNhapId}}\",\n  \"ngayNhapKho\": \"2025-10-20\",\n  \"nguoiGiao\": \"Lê Minh\",\n  \"tenNCC\": \"Nhà cung cấp A\",\n  \"nhanVien\": {\n    \"maNV\": \"{{nhanVienId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật phiếu nhập",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieunhap/{{phieuNhapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieunhap",
+                "{{phieuNhapId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenNCC\": \"Nhà cung cấp B\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa phiếu nhập",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieunhap/{{phieuNhapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieunhap",
+                "{{phieuNhapId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chi tiết phiếu nhập",
+      "item": [
+        {
+          "name": "Danh sách chi tiết phiếu nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieunhap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieunhap"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết chi tiết phiếu nhập",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieunhap/{{chiTietPhieuNhapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieunhap",
+                "{{chiTietPhieuNhapId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo chi tiết phiếu nhập",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieunhap",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieunhap"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maCTPN\": \"{{chiTietPhieuNhapId}}\",\n  \"soLuong\": 50,\n  \"hanSuDung\": \"2025-12-31\",\n  \"donGia\": 45000,\n  \"phieuNhap\": {\n    \"maPN\": \"{{phieuNhapId}}\"\n  },\n  \"nguyenLieu\": {\n    \"maNL\": \"{{nguyenLieuId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật chi tiết phiếu nhập",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieunhap/{{chiTietPhieuNhapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieunhap",
+                "{{chiTietPhieuNhapId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"soLuong\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa chi tiết phiếu nhập",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieunhap/{{chiTietPhieuNhapId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieunhap",
+                "{{chiTietPhieuNhapId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phiếu xuất",
+      "item": [
+        {
+          "name": "Danh sách phiếu xuất",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuxuat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuxuat"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết phiếu xuất",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuxuat/{{phieuXuatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuxuat",
+                "{{phieuXuatId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo phiếu xuất",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuxuat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuxuat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maPX\": \"{{phieuXuatId}}\",\n  \"ngayXuatKho\": \"2025-10-21\",\n  \"lyDoXuatKho\": \"Xuất cho quầy chính\",\n  \"nhanVien\": {\n    \"maNV\": \"{{nhanVienId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật phiếu xuất",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuxuat/{{phieuXuatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuxuat",
+                "{{phieuXuatId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lyDoXuatKho\": \"Xuất cho chi nhánh 2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa phiếu xuất",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuxuat/{{phieuXuatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuxuat",
+                "{{phieuXuatId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chi tiết phiếu xuất",
+      "item": [
+        {
+          "name": "Danh sách chi tiết phiếu xuất",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuxuat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuxuat"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết chi tiết phiếu xuất",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuxuat/{{chiTietPhieuXuatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuxuat",
+                "{{chiTietPhieuXuatId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo chi tiết phiếu xuất",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuxuat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuxuat"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maCTPX\": \"{{chiTietPhieuXuatId}}\",\n  \"soLuong\": 10,\n  \"phieuXuat\": {\n    \"maPX\": \"{{phieuXuatId}}\"\n  },\n  \"nguyenLieu\": {\n    \"maNL\": \"{{nguyenLieuId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật chi tiết phiếu xuất",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuxuat/{{chiTietPhieuXuatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuxuat",
+                "{{chiTietPhieuXuatId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"soLuong\": 15\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa chi tiết phiếu xuất",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuxuat/{{chiTietPhieuXuatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuxuat",
+                "{{chiTietPhieuXuatId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phiếu thu",
+      "item": [
+        {
+          "name": "Danh sách phiếu thu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuthu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuthu"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết phiếu thu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuthu/{{phieuThuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuthu",
+                "{{phieuThuId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo phiếu thu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuthu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuthu"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maPT\": \"{{phieuThuId}}\",\n  \"ngay\": \"2025-10-22\",\n  \"nhanVien\": {\n    \"maNV\": \"{{nhanVienId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật phiếu thu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuthu/{{phieuThuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuthu",
+                "{{phieuThuId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ngay\": \"2025-10-23\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa phiếu thu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuthu/{{phieuThuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuthu",
+                "{{phieuThuId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chi tiết phiếu thu",
+      "item": [
+        {
+          "name": "Danh sách chi tiết phiếu thu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuthu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuthu"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết chi tiết phiếu thu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuthu/{{chiTietPhieuThuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuthu",
+                "{{chiTietPhieuThuId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo chi tiết phiếu thu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuthu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuthu"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maCTPT\": \"{{chiTietPhieuThuId}}\",\n  \"nguonThu\": \"Doanh thu bán hàng\",\n  \"soTien\": 500000,\n  \"hinhThuc\": \"Tiền mặt\",\n  \"phieuThu\": {\n    \"maPT\": \"{{phieuThuId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật chi tiết phiếu thu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuthu/{{chiTietPhieuThuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuthu",
+                "{{chiTietPhieuThuId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"soTien\": 550000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa chi tiết phiếu thu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuthu/{{chiTietPhieuThuId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuthu",
+                "{{chiTietPhieuThuId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phiếu chi",
+      "item": [
+        {
+          "name": "Danh sách phiếu chi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuchi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuchi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết phiếu chi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuchi/{{phieuChiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuchi",
+                "{{phieuChiId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo phiếu chi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuchi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuchi"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maPC\": \"{{phieuChiId}}\",\n  \"ngay\": \"2025-10-22\",\n  \"nhanVien\": {\n    \"maNV\": \"{{nhanVienId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật phiếu chi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuchi/{{phieuChiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuchi",
+                "{{phieuChiId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ngay\": \"2025-10-25\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa phiếu chi",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/phieuchi/{{phieuChiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "phieuchi",
+                "{{phieuChiId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chi tiết phiếu chi",
+      "item": [
+        {
+          "name": "Danh sách chi tiết phiếu chi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuchi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuchi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết chi tiết phiếu chi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuchi/{{chiTietPhieuChiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuchi",
+                "{{chiTietPhieuChiId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo chi tiết phiếu chi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuchi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuchi"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maCTPC\": \"{{chiTietPhieuChiId}}\",\n  \"loaiChiPhi\": \"Nguyên liệu\",\n  \"tenKhoanChi\": \"Nhập sữa tươi\",\n  \"soTien\": 1200000,\n  \"hinhThuc\": \"Tiền mặt\",\n  \"phieuChi\": {\n    \"maPC\": \"{{phieuChiId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật chi tiết phiếu chi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuchi/{{chiTietPhieuChiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuchi",
+                "{{chiTietPhieuChiId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"soTien\": 1500000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa chi tiết phiếu chi",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitietphieuchi/{{chiTietPhieuChiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitietphieuchi",
+                "{{chiTietPhieuChiId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chi tiết hóa đơn",
+      "item": [
+        {
+          "name": "Danh sách chi tiết hóa đơn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitiethoadon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitiethoadon"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chi tiết chi tiết hóa đơn",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitiethoadon/{{chiTietHoaDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitiethoadon",
+                "{{chiTietHoaDonId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tạo chi tiết hóa đơn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitiethoadon",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitiethoadon"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maCTHD\": \"{{chiTietHoaDonId}}\",\n  \"soLuong\": 2,\n  \"donGia\": 45000,\n  \"ghiChu\": \"Ít đá\",\n  \"hoaDon\": {\n    \"maHD\": \"{{hoaDonId}}\"\n  },\n  \"mon\": {\n    \"maMon\": \"{{monId}}\"\n  },\n  \"size\": {\n    \"maSize\": \"{{sizeId}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Điền dữ liệu cần thiết trước khi gửi"
+          },
+          "response": []
+        },
+        {
+          "name": "Cập nhật chi tiết hóa đơn",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitiethoadon/{{chiTietHoaDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitiethoadon",
+                "{{chiTietHoaDonId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"soLuong\": 3,\n  \"ghiChu\": \"Không đường\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Chỉ gửi các trường cần cập nhật"
+          },
+          "response": []
+        },
+        {
+          "name": "Xóa chi tiết hóa đơn",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chitiethoadon/{{chiTietHoaDonId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chitiethoadon",
+                "{{chiTietHoaDonId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Thống kê",
+      "item": [
+        {
+          "name": "Tổng quan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/thongke/overview",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "thongke",
+                "overview"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-30"
+                }
+              ]
+            },
+            "description": "Tham số startDate/endDate ở định dạng YYYY-MM-DD"
+          },
+          "response": []
+        },
+        {
+          "name": "Top sản phẩm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/thongke/top-products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "thongke",
+                "top-products"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "5"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2025-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doanh thu theo kênh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/thongke/revenue-by-channel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "thongke",
+                "revenue-by-channel"
+              ],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2025-09-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2025-09-30"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doanh thu theo tháng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/thongke/revenue-by-month",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "thongke",
+                "revenue-by-month"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2025"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
