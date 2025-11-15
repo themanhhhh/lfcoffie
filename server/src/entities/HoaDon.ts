@@ -1,32 +1,30 @@
 import { Entity, PrimaryColumn, Column, ManyToOne, OneToMany, JoinColumn } from "typeorm";
-import { NhanVien } from "./NhanVien";
-import { TheBan } from "./TheBan";
-import { KhuyenMai } from "./KhuyenMai";
-import { ChiTietHoaDon } from "./ChiTietHoaDon";
+import { PhienLamViec } from "./PhienLamViec";
+import { CTKM } from "./CTKM";
+import { ChiTietDonHang } from "./ChiTietHoaDon";
 
-@Entity({ name: "hoadon" })
-export class HoaDon {
+@Entity({ name: "donhang" })
+export class DonHang {
   @PrimaryColumn({ type: "varchar", length: 10 })
-  maHD!: string;
+  MaDonHang!: string;
 
-  @ManyToOne(() => NhanVien, (nv) => nv.hoaDons, { eager: true })
-  @JoinColumn({ name: "maNV" })
-  nhanVien!: NhanVien;
+  @ManyToOne(() => PhienLamViec, (plv) => plv.donHangs, { eager: true })
+  @JoinColumn({ name: "MaPhienLamViec" })
+  phienLamViec!: PhienLamViec;
 
-  @ManyToOne(() => TheBan, (tb) => tb.hoaDons, { nullable: true, eager: true })
-  @JoinColumn({ name: "maTheBan" })
-  theBan?: TheBan | null;
-
-  @ManyToOne(() => KhuyenMai, (km) => km.hoaDons, { nullable: true, eager: true })
-  @JoinColumn({ name: "maKM" })
-  khuyenMai?: KhuyenMai | null;
+  @ManyToOne(() => CTKM, (ctkm) => ctkm.donHangs, { nullable: true, eager: true })
+  @JoinColumn({ name: "MaCTKM" })
+  ctkm?: CTKM | null;
 
   @Column({ type: "date" })
-  ngay!: Date;
+  Ngay!: Date;
 
-  @Column({ type: "varchar", length: 30 })
-  phuongThucThanhToan!: string;
+  @Column({ type: "varchar", length: 50 })
+  PhuongThucThanhToan!: string;
 
-  @OneToMany(() => ChiTietHoaDon, (ct) => ct.hoaDon)
-  chiTietHoaDons!: ChiTietHoaDon[];
+  @OneToMany(() => ChiTietDonHang, (ctdh) => ctdh.donHang)
+  chiTietDonHangs!: ChiTietDonHang[];
 }
+
+// Export alias for backward compatibility
+export { DonHang as HoaDon };

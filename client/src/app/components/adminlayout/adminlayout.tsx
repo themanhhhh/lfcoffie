@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FaBox, FaChartBar, FaList, FaTicketAlt, FaUsers, FaUtensils } from 'react-icons/fa'
+import { FaChartBar, FaList, FaTicketAlt, FaUsers, FaUtensils, FaReceipt, FaMoneyBillWave } from 'react-icons/fa'
 import { IconType } from 'react-icons'
 
 import AdminHeader from '../adminheader/adminheader'
@@ -20,7 +20,8 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'stats', href: '/admin/statistic', label: 'Thống kê', icon: FaChartBar },
   { id: 'menu', href: '/admin', label: 'Quản lý Menu', icon: FaUtensils },
   { id: 'categories', href: '/admin/category', label: 'Danh mục', icon: FaList },
-  { id: 'materials', href: '/admin/material', label: 'Nguyên liệu', icon: FaBox },
+  { id: 'orders', href: '/admin/orders', label: 'Đơn hàng', icon: FaReceipt },
+  { id: 'revenue-expense', href: '/admin/revenue-expense', label: 'Thu Chi', icon: FaMoneyBillWave },
   { id: 'staff', href: '/admin/staff', label: 'Nhân viên', icon: FaUsers },
   { id: 'vouchers', href: '/admin/voucher', label: 'Voucher', icon: FaTicketAlt }
 ]

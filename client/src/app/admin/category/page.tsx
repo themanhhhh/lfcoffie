@@ -9,7 +9,6 @@ import {
   FaTimes,
   FaList
 } from 'react-icons/fa'
-import AdminLayout from '../../components/adminlayout/adminlayout'
 import styles from './category.module.css'
 import { apiFetch, ApiError } from '../../../lib/api'
 
@@ -43,7 +42,15 @@ const CategoryPage = () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await apiFetch<Category[]>('/api/loaimon')
+      // Get all mon and extract unique LoaiMon
+      const monData = await apiFetch<any[]>('/api/mon')
+      // Extract unique LoaiMon values
+      const uniqueLoaiMon = Array.from(new Set(monData.map(m => m.LoaiMon)))
+      // Map to Category format
+      const data: Category[] = uniqueLoaiMon.map((loaiMon, index) => ({
+        maLoaiMon: `LM${String(index + 1).padStart(2, '0')}`, // Generate code like LM01, LM02
+        tenLoaiMon: loaiMon
+      }))
       setCategories(data)
     } catch (err) {
       setError(
@@ -75,47 +82,13 @@ const CategoryPage = () => {
   }
 
   const handleDeleteCategory = async (category: Category) => {
-    if (!confirm(`Bạn có chắc muốn xóa danh mục "${category.tenLoaiMon}"?`)) {
-      return
-    }
-
-    try {
-      await apiFetch(`/api/loaimon/${category.maLoaiMon}`, {
-        method: 'DELETE'
-      })
-      
-      await loadCategories()
-      alert('Xóa danh mục thành công!')
-    } catch (err) {
-      alert('Lỗi khi xóa danh mục: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
-    }
+    alert('Chức năng xóa danh mục hiện chưa khả dụng. Danh mục được quản lý thông qua các món.')
   }
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    try {
-      if (editingCategory) {
-        // Update
-        await apiFetch(`/api/loaimon/${editingCategory.maLoaiMon}`, {
-          method: 'PUT',
-          body: JSON.stringify(formData)
-        })
-        alert('Cập nhật danh mục thành công!')
-      } else {
-        // Create
-        await apiFetch('/api/loaimon', {
-          method: 'POST',
-          body: JSON.stringify(formData)
-        })
-        alert('Thêm danh mục mới thành công!')
-      }
-
-      setShowModal(false)
-      await loadCategories()
-    } catch (err) {
-      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
-    }
+    alert('Chức năng thêm/sửa danh mục hiện chưa khả dụng. Danh mục được tự động tạo từ LoaiMon của các món. Để thêm danh mục mới, hãy tạo món với LoaiMon mới.')
+    setShowModal(false)
   }
 
   const handleCloseModal = () => {
@@ -130,27 +103,22 @@ const CategoryPage = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className={styles.container}>
-          <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu...</div>
-        </div>
-      </AdminLayout>
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu...</div>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <AdminLayout>
-        <div className={styles.container}>
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
-        </div>
-      </AdminLayout>
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
+      </div>
     )
   }
 
   return (
-    <AdminLayout>
-      <div className={styles.container}>
+    <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.headerMain}>
             <h1>
@@ -212,7 +180,6 @@ const CategoryPage = () => {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal for Add/Edit Category */}
       {showModal && (
@@ -258,7 +225,7 @@ const CategoryPage = () => {
           </div>
         </div>
       )}
-    </AdminLayout>
+      </div>
   )
 }
 

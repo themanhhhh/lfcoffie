@@ -22,33 +22,12 @@ import {
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
 import { logo, coffeeBlack } from '../image/index'
-import { apiFetch, ApiError } from '../../lib/api'
+import { monApi, ApiError } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
 
 type IconType = React.ComponentType<{ className?: string }>
 
-interface LoaiMonDto {
-  maLoaiMon: string
-  tenLoaiMon: string
-}
-
-interface MonDto {
-  maMon: string
-  tenMon: string
-  donGia: number
-  donViTinh: string
-  moTa?: string | null
-  hinhAnh?: string | null
-  loaiMon?: {
-    maLoaiMon: string
-    tenLoaiMon: string
-  } | null
-  nhomThucDon?: {
-    maNhomThucDon: string
-    tenNhomThucDon: string
-  } | null
-}
 
 interface Product {
   id: string
@@ -71,19 +50,6 @@ interface CartItem extends Product {
 }
 
 const CATEGORY_ICON_CYCLE: IconType[] = [MdLocalCafe, GiTeapot, MdLocalBar, MdCake, MdFastfood]
-
-const resolveProductImage = (source?: string | null): StaticImageData | string => {
-  if (!source) {
-    return coffeeBlack
-  }
-  if (/^https?:\/\//i.test(source)) {
-    return source
-  }
-  if (source.startsWith('/')) {
-    return source
-  }
-  return `/${source}`
-}
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price) + ' đ'
@@ -142,34 +108,29 @@ const Staff = () => {
       setLoading(true)
       setError(null)
       try {
-        const [monData, categoryData] = await Promise.all([
-          apiFetch<MonDto[]>('/api/mon'),
-          apiFetch<LoaiMonDto[]>('/api/loaimon')
-        ])
+        const monData = await monApi.getAll()
 
         if (ignore) return
 
+        // Extract unique categories from mon data
+        const uniqueCategories = Array.from(new Set(monData.map(m => m.LoaiMon)))
         const baseCategories: Category[] = [
           { id: 'all', name: 'Tất cả', icon: FaThLarge },
-          ...categoryData.map((item, index) => ({
-            id: item.maLoaiMon,
-            name: item.tenLoaiMon,
+          ...uniqueCategories.map((categoryName, index) => ({
+            id: categoryName,
+            name: categoryName,
             icon: CATEGORY_ICON_CYCLE[index % CATEGORY_ICON_CYCLE.length]
           }))
         ]
 
         const mappedProducts: Product[] = monData.map((item) => ({
-          id: item.maMon,
-          name: item.tenMon,
-          description:
-            item.moTa ??
-            item.nhomThucDon?.tenNhomThucDon ??
-            item.loaiMon?.tenLoaiMon ??
-            'Đang cập nhật',
-          price: item.donGia ?? 0,
-          image: resolveProductImage(item.hinhAnh),
-          categoryId: item.loaiMon?.maLoaiMon ?? 'other',
-          categoryName: item.loaiMon?.tenLoaiMon ?? 'Khác'
+          id: item.MaMon,
+          name: item.TenMon,
+          description: `${item.NhomMon} - ${item.LoaiMon}`,
+          price: item.DonGia ?? 0,
+          image: item.imgUrl || coffeeBlack, // Use imgUrl from API or default
+          categoryId: item.LoaiMon ?? 'other',
+          categoryName: item.LoaiMon ?? 'Khác'
         }))
 
         const hasOtherCategory = mappedProducts.some(
@@ -282,8 +243,8 @@ const Staff = () => {
               <FaUser />
             </div>
             <div>
-              <strong>{user?.tenNV || 'Người dùng'}</strong>
-              <p>Chức vụ: {user?.chucVu || 'Nhân viên'}</p>
+              <strong>{user?.TenNhanVien || 'Người dùng'}</strong>
+              <p>Chức vụ: {user?.ChucVu || 'Nhân viên'}</p>
             </div>
             <button 
               className={Style.logoutBtn}

@@ -79,6 +79,16 @@
   outline: none;
   flex: 1;
   font-size: 1rem;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #333 !important;
+}
+
+.searchBox input:-webkit-autofill,
+.searchBox input:-webkit-autofill:hover,
+.searchBox input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+  -webkit-text-fill-color: #333 !important;
 }
 
 .stats {

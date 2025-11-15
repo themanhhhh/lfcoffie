@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
           const response = await authApi.verifyToken();
           setUser(response.user);
-        } catch (error) {
+        } catch {
           // Token is invalid, remove it
           removeToken();
         }
@@ -64,8 +64,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Set user data
       setUser(response.user);
       
-    } catch (error: any) {
-      const errorMessage = error.body?.message || error.message || 'Đăng nhập thất bại';
+    } catch (error: unknown) {
+      const apiError = error as { body?: { message?: string }; message?: string };
+      const errorMessage = apiError.body?.message || apiError.message || 'Đăng nhập thất bại';
       setError(errorMessage);
       throw error;
     } finally {

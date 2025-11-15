@@ -1,26 +1,40 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import { LoaiMon } from "./LoaiMon";
-import { NhomThucDon } from "./NhomThucDon";
+import { Entity, PrimaryColumn, Column, OneToMany } from "typeorm";
+import { ChiTietDonHang } from "./ChiTietHoaDon";
+import { DSMonTrongCombo } from "./DSMonTrongCombo";
+import { GiamMon } from "./GiamMon";
 
 @Entity({ name: "mon" })
 export class Mon {
   @PrimaryColumn({ type: "varchar", length: 10 })
-  maMon!: string;
+  MaMon!: string;
 
-  @ManyToOne(() => LoaiMon, (lm) => lm.mons, { eager: true })
-  @JoinColumn({ name: "maLoaiMon" })
-  loaiMon!: LoaiMon;
+  @Column({ type: "varchar", length: 50 })
+  LoaiMon!: string; // 'cafe', 'trà', 'snacks', 'bánh', etc.
 
-  @ManyToOne(() => NhomThucDon, (n) => n.mons, { eager: true })
-  @JoinColumn({ name: "maNhomThucDon" })
-  nhomThucDon!: NhomThucDon;
+  @Column({ type: "varchar", length: 20 })
+  NhomMon!: string; // 'đồ ăn', 'đồ uống', 'combo'
 
-  @Column({ type: "varchar", length: 30 })
-  tenMon!: string;
+  @Column({ type: "varchar", length: 100 })
+  TenMon!: string;
 
   @Column({ type: "int" })
-  donGia!: number;
+  DonGia!: number;
 
-  @Column({ type: "varchar", length: 10 })
-  donViTinh!: string;
+  @Column({ type: "varchar", length: 20 })
+  DonViTinh!: string;
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  TrangThai?: string | null;
+
+  @Column({ type: "varchar", length: 255, nullable: true })
+  imgUrl?: string | null;
+
+  @OneToMany(() => ChiTietDonHang, (ctdh) => ctdh.mon)
+  chiTietDonHangs!: ChiTietDonHang[];
+
+  @OneToMany(() => DSMonTrongCombo, (ds) => ds.mon)
+  dsMonTrongCombos!: DSMonTrongCombo[];
+
+  @OneToMany(() => GiamMon, (gm) => gm.mon)
+  giamMons!: GiamMon[];
 }

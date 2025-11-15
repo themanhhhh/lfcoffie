@@ -1,17 +1,13 @@
-import { Entity, PrimaryColumn, Column, OneToMany } from "typeorm";
-import { HoaDon } from "./HoaDon";
+import { Entity, PrimaryColumn, Column } from "typeorm";
 
 @Entity({ name: "theban" })
 export class TheBan {
   @PrimaryColumn({ type: "varchar", length: 10 })
-  maTheBan!: string;
+  MaTheBan!: string;
 
-  @Column({ type: "varchar", length: 30 })
-  tenTheBan!: string;
+  @Column({ type: "varchar", length: 50 })
+  TenTheBan!: string;
 
-  @Column({ type: "boolean" })
-  trangThai!: boolean;
-
-  @OneToMany(() => HoaDon, (hd) => hd.theBan)
-  hoaDons!: HoaDon[];
+  @Column({ type: "varchar", length: 20 })
+  TrangThai!: string;
 }

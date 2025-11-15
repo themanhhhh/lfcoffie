@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const ThongKeController_1 = require("../controllers/ThongKeController");
+const router = (0, express_1.Router)();
+const controller = new ThongKeController_1.ThongKeController();
+router.get("/overview", controller.getOverview.bind(controller));
+router.get("/top-products", controller.getTopProducts.bind(controller));
+router.get("/revenue-by-channel", controller.getRevenueByChannel.bind(controller));
+router.get("/revenue-by-month", controller.getRevenueByMonth.bind(controller));
+router.get("/shift-closing/:maPhienLamViec", controller.getShiftClosingReport.bind(controller));
+exports.default = router;

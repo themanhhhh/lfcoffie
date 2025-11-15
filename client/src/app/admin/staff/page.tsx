@@ -12,9 +12,8 @@ import {
   FaStar
 } from 'react-icons/fa'
 import { MdOutlineSchedule, MdOutlineAccessTime } from 'react-icons/md'
-import AdminLayout from '../../components/adminlayout/adminlayout'
 import styles from './staff.module.css'
-import { apiFetch, ApiError } from '../../../lib/api'
+import { nhanVienApi, donHangApi, ApiError } from '../../../lib/api'
 
 type StaffStatus = 'active' | 'probation' | 'leave'
 
@@ -35,28 +34,6 @@ interface StaffMember {
   username: string
   gender: string
   birthDate: string
-}
-
-interface NhanVienDto {
-  maNV: string
-  tenNV: string
-  chucVu: string
-  gioiTinh: string
-  ngaySinh: string
-  caLam: string
-  taiKhoan: string
-  soDienThoai?: string | null
-  email?: string | null
-  diaChi?: string | null
-  trangThai?: string | null
-}
-
-interface HoaDonDto {
-  maHD: string
-  ngay: string
-  nhanVien?: {
-    maNV: string
-  } | null
 }
 
 const STATUS_OPTIONS: { value: 'all' | StaffStatus; label: string }[] = [
@@ -110,8 +87,8 @@ const StaffPage = () => {
       setError(null)
       try {
         const [nhanVienList, hoaDonList] = await Promise.all([
-          apiFetch<NhanVienDto[]>('/api/nhanvien'),
-          apiFetch<HoaDonDto[]>('/api/hoadon')
+          nhanVienApi.getAll(),
+          donHangApi.getAll()
         ])
 
         if (ignore) return
@@ -122,23 +99,24 @@ const StaffPage = () => {
         >()
 
         hoaDonList.forEach((invoice) => {
-          const staffId = invoice.nhanVien?.maNV
+          const staffId = invoice.phienLamViec?.nhanVien?.MaNhanVien
           if (!staffId) return
           if (!invoiceStats.has(staffId)) {
             invoiceStats.set(staffId, { total: 0 })
           }
           const entry = invoiceStats.get(staffId)!
           entry.total += 1
-          if (!entry.earliest || invoice.ngay < entry.earliest) {
-            entry.earliest = invoice.ngay
+          const invoiceDate = typeof invoice.Ngay === 'string' ? invoice.Ngay : (invoice.Ngay as Date).toISOString()
+          if (!entry.earliest || invoiceDate < entry.earliest) {
+            entry.earliest = invoiceDate
           }
-          if (!entry.latest || invoice.ngay > entry.latest) {
-            entry.latest = invoice.ngay
+          if (!entry.latest || invoiceDate > entry.latest) {
+            entry.latest = invoiceDate
           }
         })
 
         const mappedStaff: StaffMember[] = nhanVienList.map((employee) => {
-          const stat = invoiceStats.get(employee.maNV) ?? { total: 0 }
+          const stat = invoiceStats.get(employee.MaNhanVien) ?? { total: 0 }
           const joinDate = formatDate(stat.earliest)
           const lastShift = formatDate(stat.latest)
           const inactivityDays = daysBetween(stat.latest)
@@ -149,31 +127,31 @@ const StaffPage = () => {
           } else if (inactivityDays > 30) {
             status = 'leave'
           }
-          if (employee.trangThai === 'leave') {
+          if (employee.TrangThai === 'leave') {
             status = 'leave'
-          } else if (employee.trangThai === 'probation') {
+          } else if (employee.TrangThai === 'probation') {
             status = 'probation'
           }
 
           const rating = stat.total === 0 ? 3 : Math.min(5, 3 + stat.total / 50)
 
           return {
-            id: employee.maNV,
-            name: employee.tenNV,
-            role: employee.chucVu,
-            department: employee.chucVu,
+            id: employee.MaNhanVien,
+            name: employee.TenNhanVien,
+            role: employee.ChucVu,
+            department: employee.ChucVu,
             status,
-            shift: employee.caLam,
-            phone: employee.soDienThoai ?? 'Chưa cập nhật',
-            email: employee.email ?? employee.taiKhoan,
+            shift: employee.caLam?.TenCaLam ?? 'Chưa cập nhật',
+            phone: employee.SoDienThoai ?? 'Chưa cập nhật',
+            email: employee.TaiKhoan,
             joinDate,
             lastShift,
             totalShifts: stat.total,
             rating: Number(rating.toFixed(1)),
-            address: employee.diaChi ?? 'Chưa cập nhật',
-            username: employee.taiKhoan,
-            gender: employee.gioiTinh,
-            birthDate: formatDate(employee.ngaySinh)
+            address: 'Chưa cập nhật',
+            username: employee.TaiKhoan,
+            gender: employee.GioiTinh,
+            birthDate: formatDate(employee.NgaySinh)
           }
         })
 
@@ -236,8 +214,7 @@ const StaffPage = () => {
   }, [filteredStaff, selectedStaff])
 
   return (
-    <AdminLayout>
-      <div className={styles.page}>
+    <div className={styles.page}>
         <header className={styles.pageHeader}>
           <div>
             <h1>Quản lý nhân sự</h1>
@@ -408,8 +385,7 @@ const StaffPage = () => {
             )}
           </aside>
         </div>
-      </div>
-    </AdminLayout>
+    </div>
   )
 }
 

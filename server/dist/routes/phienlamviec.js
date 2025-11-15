@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const PhienLamViecController_1 = require("../controllers/PhienLamViecController");
+const router = (0, express_1.Router)();
+const controller = new PhienLamViecController_1.PhienLamViecController();
+router.get("/", controller.getAll.bind(controller));
+router.get("/:id", controller.getOne.bind(controller));
+router.post("/", controller.create.bind(controller));
+router.post("/open-shift", controller.openShift.bind(controller));
+router.post("/close-shift", controller.closeShift.bind(controller));
+router.put("/:id", controller.update.bind(controller));
+router.delete("/:id", controller.remove.bind(controller));
+exports.default = router;

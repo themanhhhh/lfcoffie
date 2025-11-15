@@ -1,0 +1,256 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class UpdateEntitiesToNewERD1763149105574 implements MigrationInterface {
+    name = 'UpdateEntitiesToNewERD1763149105574'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        // Drop foreign keys that reference mon table first
+        await queryRunner.query(`ALTER TABLE "chitiethoadon" DROP CONSTRAINT IF EXISTS "FK_925452c836ec97dab45979e243c"`);
+        
+        // Drop foreign keys from mon table
+        await queryRunner.query(`ALTER TABLE "mon" DROP CONSTRAINT IF EXISTS "FK_78ee3d53ca797821f6b0cb9e259"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP CONSTRAINT IF EXISTS "FK_949a5b8d62912768ded285c21e9"`);
+        
+        // Create new tables first
+        await queryRunner.query(`CREATE TABLE "giamhoadon" ("MaGHD" character varying(10) NOT NULL, "GiaTriTu" integer, "SoTienGiam" integer NOT NULL, "LoaiGiam" character varying(20) NOT NULL, "NgayBatDau" date NOT NULL, "NgayKetThuc" date NOT NULL, "Thu" character varying(20), "GioBatDau" TIME, "GioKetThuc" TIME, "TrangThai" character varying(20) NOT NULL DEFAULT 'hoạt động', "MaCTKM" character varying(10), CONSTRAINT "PK_0431f43c0db81ca00a89f7a00a3" PRIMARY KEY ("MaGHD"))`);
+        await queryRunner.query(`CREATE TABLE "tuychon" ("MaTuyChon" character varying(10) NOT NULL, "LoaiTuyChon" character varying(50) NOT NULL, "TenTuyChon" character varying(100) NOT NULL, "GiaCongThem" integer NOT NULL DEFAULT '0', CONSTRAINT "PK_3acb1c40644a48c0e00a2400666" PRIMARY KEY ("MaTuyChon"))`);
+        await queryRunner.query(`CREATE TABLE "tuychondonhang" ("MaTCDH" character varying(10) NOT NULL, "MaCTDH" character varying(10), "MaTuyChon" character varying(10), CONSTRAINT "PK_1cda81595934ee3f905f5c02009" PRIMARY KEY ("MaTCDH"))`);
+        await queryRunner.query(`CREATE TABLE "chitietdonhang" ("MaCTDH" character varying(10) NOT NULL, "DonGia" integer NOT NULL, "SoLuong" integer NOT NULL, "MaDH" character varying(10), "MaMon" character varying(10), CONSTRAINT "PK_5c4112f72e22093b02ec89f196d" PRIMARY KEY ("MaCTDH"))`);
+        await queryRunner.query(`CREATE TABLE "combo" ("MaCombo" character varying(10) NOT NULL, "TenCombo" character varying(100) NOT NULL, "GiaCombo" integer NOT NULL, "NgayBatDau" date NOT NULL, "NgayKetThuc" date NOT NULL, "Thu" character varying(20), "GioBatDau" TIME, "GioKetThuc" TIME, "TrangThai" character varying(20) NOT NULL DEFAULT 'hoạt động', "MaDSMonCombo" character varying(10), CONSTRAINT "PK_8c3930c27867ed375656c43e443" PRIMARY KEY ("MaCombo"))`);
+        await queryRunner.query(`CREATE TABLE "dsmontrongcombo" ("MaDSMonCombo" character varying(10) NOT NULL, "SoLuong" integer NOT NULL, "MaMon" character varying(10), CONSTRAINT "PK_2a0aee5cc53dc95310182f41d01" PRIMARY KEY ("MaDSMonCombo"))`);
+        await queryRunner.query(`CREATE TABLE "giammon" ("MaGM" character varying(10) NOT NULL, "SoTienGiam" integer NOT NULL, "LoaiGiam" character varying(20) NOT NULL, "ApDungCho" character varying(50), "NgayBatDau" date NOT NULL, "NgayKetThuc" date NOT NULL, "Thu" character varying(20), "GioBatDau" TIME, "GioKetThuc" TIME, "TrangThai" character varying(20) NOT NULL DEFAULT 'hoạt động', "MaCTKM" character varying(10), "MaMon" character varying(10), CONSTRAINT "PK_e1da4ef7dca1c57e9900dd859d4" PRIMARY KEY ("MaGM"))`);
+        await queryRunner.query(`CREATE TABLE "ctkm" ("MaCTKM" character varying(10) NOT NULL, "TenCTKM" character varying(100) NOT NULL, "LoaiCTKM" character varying(20) NOT NULL, CONSTRAINT "PK_ca612621e563a3dbe1ebb3c0e32" PRIMARY KEY ("MaCTKM"))`);
+        await queryRunner.query(`CREATE TABLE "donhang" ("MaDonHang" character varying(10) NOT NULL, "Ngay" date NOT NULL, "PhuongThucThanhToan" character varying(50) NOT NULL, "MaPhienLamViec" character varying(10), "MaCTKM" character varying(10), CONSTRAINT "PK_59fe352b8ea544ae0eafa7e85ac" PRIMARY KEY ("MaDonHang"))`);
+        await queryRunner.query(`CREATE TABLE "nghiepvu" ("MaNghiepVu" character varying(10) NOT NULL, "LoaiGiaoDich" character varying(10) NOT NULL, "TenNghiepVu" character varying(100) NOT NULL, CONSTRAINT "PK_9dac2dd0eb7bdab5b5e395b4132" PRIMARY KEY ("MaNghiepVu"))`);
+        await queryRunner.query(`CREATE TABLE "thuchi" ("MaGiaoDich" character varying(10) NOT NULL, "ThoiGian" TIMESTAMP NOT NULL, "PhuongThucThanhToan" character varying(50) NOT NULL, "GhiChu" text, "SoTien" integer NOT NULL, "MaPhienLamViec" character varying(10), "MaNghiepVu" character varying(10), CONSTRAINT "PK_975bad156187a38427aa767eb7b" PRIMARY KEY ("MaGiaoDich"))`);
+        await queryRunner.query(`CREATE TABLE "phienlamviec" ("MaPhienLamViec" character varying(10) NOT NULL, "Ngay" date NOT NULL, "ThoiGianMo" TIME, "ThoiGianDong" TIME, "TrangThai" character varying(20) NOT NULL DEFAULT 'mở', "MaCaLam" character varying(10), "MaNhanVien" character varying(10), CONSTRAINT "PK_3a7c90121c3d808e466995c30f2" PRIMARY KEY ("MaPhienLamViec"))`);
+        await queryRunner.query(`CREATE TABLE "calam" ("MaCaLam" character varying(10) NOT NULL, "TenCaLam" character varying(50) NOT NULL, "ThoiGianBatDau" TIME NOT NULL, "ThoiGianKetThuc" TIME NOT NULL, CONSTRAINT "PK_fe35c445449ddc8379643ecdfcc" PRIMARY KEY ("MaCaLam"))`);
+        
+        // Drop old primary key first (before adding new columns)
+        await queryRunner.query(`ALTER TABLE "mon" DROP CONSTRAINT IF EXISTS "PK_77b01c440dbe3f9d97105f7a192" CASCADE`);
+        
+        // Add new columns as nullable first, then copy data, then set NOT NULL, then drop old columns
+        await queryRunner.query(`ALTER TABLE "mon" ADD "MaMon" character varying(10)`);
+        await queryRunner.query(`UPDATE "mon" SET "MaMon" = "maMon" WHERE "maMon" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ALTER COLUMN "MaMon" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD CONSTRAINT "PK_3fb564e3e8a5438f981d0657812" PRIMARY KEY ("MaMon")`);
+        
+        await queryRunner.query(`ALTER TABLE "mon" ADD "LoaiMon" character varying(50)`);
+        await queryRunner.query(`UPDATE "mon" SET "LoaiMon" = COALESCE((SELECT "tenLoaiMon" FROM "loaimon" WHERE "maLoaiMon" = "mon"."maLoaiMon"), 'cafe')`);
+        await queryRunner.query(`ALTER TABLE "mon" ALTER COLUMN "LoaiMon" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "mon" ADD "NhomMon" character varying(20)`);
+        await queryRunner.query(`UPDATE "mon" SET "NhomMon" = COALESCE((SELECT "tenNhomThucDon" FROM "nhomthucdon" WHERE "maNhomThucDon" = "mon"."maNhomThucDon"), 'đồ uống')`);
+        await queryRunner.query(`ALTER TABLE "mon" ALTER COLUMN "NhomMon" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "mon" ADD "TenMon" character varying(100)`);
+        await queryRunner.query(`UPDATE "mon" SET "TenMon" = "tenMon" WHERE "tenMon" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ALTER COLUMN "TenMon" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "mon" ADD "DonGia" integer`);
+        await queryRunner.query(`UPDATE "mon" SET "DonGia" = "donGia" WHERE "donGia" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ALTER COLUMN "DonGia" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "mon" ADD "DonViTinh" character varying(20)`);
+        await queryRunner.query(`UPDATE "mon" SET "DonViTinh" = "donViTinh" WHERE "donViTinh" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ALTER COLUMN "DonViTinh" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "mon" ADD "TrangThai" character varying(20)`);
+        
+        // Drop foreign keys that reference nhanvien table first
+        await queryRunner.query(`ALTER TABLE "hoadon" DROP CONSTRAINT IF EXISTS "FK_32741e8aa0629d3cbae88bd3049"`);
+        await queryRunner.query(`ALTER TABLE "phieunhap" DROP CONSTRAINT IF EXISTS "FK_b7250b8ace357f5ceed4419c9ba"`);
+        await queryRunner.query(`ALTER TABLE "phieuxuat" DROP CONSTRAINT IF EXISTS "FK_afb383e64a3dc8852206b3f738e"`);
+        await queryRunner.query(`ALTER TABLE "phieuthu" DROP CONSTRAINT IF EXISTS "FK_65840c0e9aaf76ff1f2bd6af0e8"`);
+        await queryRunner.query(`ALTER TABLE "phieuchi" DROP CONSTRAINT IF EXISTS "FK_7da3f5d9687e1c94e10ff5a7da5"`);
+        
+        // Drop old primary key first
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP CONSTRAINT IF EXISTS "PK_52f1d02a8a1b7ce2b25f13146cc" CASCADE`);
+        
+        // nhanvien table
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "MaNhanVien" character varying(10)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "MaNhanVien" = "maNV" WHERE "maNV" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "MaNhanVien" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD CONSTRAINT "PK_0f78d820d8626128138ca4d722f" PRIMARY KEY ("MaNhanVien")`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "TenNhanVien" character varying(50)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "TenNhanVien" = "tenNV" WHERE "tenNV" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "TenNhanVien" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "SoDienThoai" character varying(15)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "SoDienThoai" = "soDienThoai"`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "ChucVu" character varying(30)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "ChucVu" = "chucVu" WHERE "chucVu" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "ChucVu" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "GioiTinh" character varying(10)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "GioiTinh" = "gioiTinh" WHERE "gioiTinh" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "GioiTinh" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "NgaySinh" date`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "NgaySinh" = "ngaySinh" WHERE "ngaySinh" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "NgaySinh" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "TaiKhoan" character varying(50)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "TaiKhoan" = "taiKhoan" WHERE "taiKhoan" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "TaiKhoan" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD CONSTRAINT "UQ_55d5d512997091ca646335bdc98" UNIQUE ("TaiKhoan")`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "MatKhau" character varying(100)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "MatKhau" = "matKhau" WHERE "matKhau" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ALTER COLUMN "MatKhau" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "TrangThai" character varying(20)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "TrangThai" = "trangThai"`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "MaCaLam" character varying(10)`);
+        await queryRunner.query(`UPDATE "nhanvien" SET "MaCaLam" = NULL`); // Will be set later based on caLam string
+        
+        // Drop foreign keys that reference theban table first (if any)
+        await queryRunner.query(`ALTER TABLE "hoadon" DROP CONSTRAINT IF EXISTS "FK_theban"`);
+        
+        // Drop old primary key first
+        await queryRunner.query(`ALTER TABLE "theban" DROP CONSTRAINT IF EXISTS "PK_28d34db2be9d5a042d0d3664997" CASCADE`);
+        
+        // theban table
+        await queryRunner.query(`ALTER TABLE "theban" ADD "MaTheBan" character varying(10)`);
+        await queryRunner.query(`UPDATE "theban" SET "MaTheBan" = "maTheBan" WHERE "maTheBan" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "theban" ALTER COLUMN "MaTheBan" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "theban" ADD CONSTRAINT "PK_9e1b7dcaabcc7d1c33f5a2d9f15" PRIMARY KEY ("MaTheBan")`);
+        
+        await queryRunner.query(`ALTER TABLE "theban" ADD "TenTheBan" character varying(50)`);
+        await queryRunner.query(`UPDATE "theban" SET "TenTheBan" = "tenTheBan" WHERE "tenTheBan" IS NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "theban" ALTER COLUMN "TenTheBan" SET NOT NULL`);
+        
+        await queryRunner.query(`ALTER TABLE "theban" ADD "TrangThai" character varying(20)`);
+        await queryRunner.query(`UPDATE "theban" SET "TrangThai" = CASE WHEN "trangThai" = true THEN 'trống' ELSE 'đang dùng' END`);
+        await queryRunner.query(`ALTER TABLE "theban" ALTER COLUMN "TrangThai" SET NOT NULL`);
+        
+        // Now drop old columns after copying data
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN IF EXISTS "maMon"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN IF EXISTS "tenMon"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN IF EXISTS "donGia"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN IF EXISTS "donViTinh"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN IF EXISTS "maLoaiMon"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN IF EXISTS "maNhomThucDon"`);
+        
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "maNV"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "tenNV"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "chucVu"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "gioiTinh"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "ngaySinh"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "caLam"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP CONSTRAINT IF EXISTS "UQ_94dd01643e19c89ffe5f8d0c1fd"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "taiKhoan"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "matKhau"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "soDienThoai"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "email"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "diaChi"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN IF EXISTS "trangThai"`);
+        
+        await queryRunner.query(`ALTER TABLE "theban" DROP COLUMN IF EXISTS "maTheBan"`);
+        await queryRunner.query(`ALTER TABLE "theban" DROP COLUMN IF EXISTS "tenTheBan"`);
+        await queryRunner.query(`ALTER TABLE "theban" DROP COLUMN IF EXISTS "trangThai"`);
+        await queryRunner.query(`ALTER TABLE "giamhoadon" ADD CONSTRAINT "FK_5a1d879ee823257f0f18887e04e" FOREIGN KEY ("MaCTKM") REFERENCES "ctkm"("MaCTKM") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "tuychondonhang" ADD CONSTRAINT "FK_26fb8801a6ed3f91981046632f9" FOREIGN KEY ("MaCTDH") REFERENCES "chitietdonhang"("MaCTDH") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "tuychondonhang" ADD CONSTRAINT "FK_49e5c6336aeceee8ebac0288162" FOREIGN KEY ("MaTuyChon") REFERENCES "tuychon"("MaTuyChon") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "chitietdonhang" ADD CONSTRAINT "FK_18211b2df296b783c2e9f2184f9" FOREIGN KEY ("MaDH") REFERENCES "donhang"("MaDonHang") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "chitietdonhang" ADD CONSTRAINT "FK_eb22b3753080e99d5e0b3f350e3" FOREIGN KEY ("MaMon") REFERENCES "mon"("MaMon") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "combo" ADD CONSTRAINT "FK_6193f4f7a2236f789295a3d0fb4" FOREIGN KEY ("MaDSMonCombo") REFERENCES "dsmontrongcombo"("MaDSMonCombo") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "dsmontrongcombo" ADD CONSTRAINT "FK_ddc00134ebcf18af80e68db1f1a" FOREIGN KEY ("MaMon") REFERENCES "mon"("MaMon") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "giammon" ADD CONSTRAINT "FK_4e50961f2ac7f964b2290fa3623" FOREIGN KEY ("MaCTKM") REFERENCES "ctkm"("MaCTKM") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "giammon" ADD CONSTRAINT "FK_89480d7f12f17f51d71db0b525f" FOREIGN KEY ("MaMon") REFERENCES "mon"("MaMon") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "donhang" ADD CONSTRAINT "FK_805cf7887abb3e02ca6049a6e6b" FOREIGN KEY ("MaPhienLamViec") REFERENCES "phienlamviec"("MaPhienLamViec") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "donhang" ADD CONSTRAINT "FK_969414ed61bb32a7982b6c9982d" FOREIGN KEY ("MaCTKM") REFERENCES "ctkm"("MaCTKM") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "thuchi" ADD CONSTRAINT "FK_79e677739b9f4f690d8543d7f6c" FOREIGN KEY ("MaPhienLamViec") REFERENCES "phienlamviec"("MaPhienLamViec") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "thuchi" ADD CONSTRAINT "FK_7d69abf80d029daa68a9cd0fe10" FOREIGN KEY ("MaNghiepVu") REFERENCES "nghiepvu"("MaNghiepVu") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "phienlamviec" ADD CONSTRAINT "FK_1add72aeb8cdf3ab1d276ef5104" FOREIGN KEY ("MaCaLam") REFERENCES "calam"("MaCaLam") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "phienlamviec" ADD CONSTRAINT "FK_f2da19fa4573ca2d82f208f622a" FOREIGN KEY ("MaNhanVien") REFERENCES "nhanvien"("MaNhanVien") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD CONSTRAINT "FK_f5c1d90b691ea88daa2165bbf63" FOREIGN KEY ("MaCaLam") REFERENCES "calam"("MaCaLam") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP CONSTRAINT "FK_f5c1d90b691ea88daa2165bbf63"`);
+        await queryRunner.query(`ALTER TABLE "phienlamviec" DROP CONSTRAINT "FK_f2da19fa4573ca2d82f208f622a"`);
+        await queryRunner.query(`ALTER TABLE "phienlamviec" DROP CONSTRAINT "FK_1add72aeb8cdf3ab1d276ef5104"`);
+        await queryRunner.query(`ALTER TABLE "thuchi" DROP CONSTRAINT "FK_7d69abf80d029daa68a9cd0fe10"`);
+        await queryRunner.query(`ALTER TABLE "thuchi" DROP CONSTRAINT "FK_79e677739b9f4f690d8543d7f6c"`);
+        await queryRunner.query(`ALTER TABLE "donhang" DROP CONSTRAINT "FK_969414ed61bb32a7982b6c9982d"`);
+        await queryRunner.query(`ALTER TABLE "donhang" DROP CONSTRAINT "FK_805cf7887abb3e02ca6049a6e6b"`);
+        await queryRunner.query(`ALTER TABLE "giammon" DROP CONSTRAINT "FK_89480d7f12f17f51d71db0b525f"`);
+        await queryRunner.query(`ALTER TABLE "giammon" DROP CONSTRAINT "FK_4e50961f2ac7f964b2290fa3623"`);
+        await queryRunner.query(`ALTER TABLE "dsmontrongcombo" DROP CONSTRAINT "FK_ddc00134ebcf18af80e68db1f1a"`);
+        await queryRunner.query(`ALTER TABLE "combo" DROP CONSTRAINT "FK_6193f4f7a2236f789295a3d0fb4"`);
+        await queryRunner.query(`ALTER TABLE "chitietdonhang" DROP CONSTRAINT "FK_eb22b3753080e99d5e0b3f350e3"`);
+        await queryRunner.query(`ALTER TABLE "chitietdonhang" DROP CONSTRAINT "FK_18211b2df296b783c2e9f2184f9"`);
+        await queryRunner.query(`ALTER TABLE "tuychondonhang" DROP CONSTRAINT "FK_49e5c6336aeceee8ebac0288162"`);
+        await queryRunner.query(`ALTER TABLE "tuychondonhang" DROP CONSTRAINT "FK_26fb8801a6ed3f91981046632f9"`);
+        await queryRunner.query(`ALTER TABLE "giamhoadon" DROP CONSTRAINT "FK_5a1d879ee823257f0f18887e04e"`);
+        await queryRunner.query(`ALTER TABLE "theban" DROP COLUMN "TrangThai"`);
+        await queryRunner.query(`ALTER TABLE "theban" DROP COLUMN "TenTheBan"`);
+        await queryRunner.query(`ALTER TABLE "theban" DROP CONSTRAINT "PK_9e1b7dcaabcc7d1c33f5a2d9f15"`);
+        await queryRunner.query(`ALTER TABLE "theban" DROP COLUMN "MaTheBan"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "MaCaLam"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "TrangThai"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "MatKhau"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP CONSTRAINT "UQ_55d5d512997091ca646335bdc98"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "TaiKhoan"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "NgaySinh"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "GioiTinh"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "ChucVu"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "SoDienThoai"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "TenNhanVien"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP CONSTRAINT "PK_0f78d820d8626128138ca4d722f"`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" DROP COLUMN "MaNhanVien"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "TrangThai"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "DonViTinh"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "DonGia"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "TenMon"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "NhomMon"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "LoaiMon"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP CONSTRAINT "PK_3fb564e3e8a5438f981d0657812"`);
+        await queryRunner.query(`ALTER TABLE "mon" DROP COLUMN "MaMon"`);
+        await queryRunner.query(`ALTER TABLE "theban" ADD "trangThai" boolean NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "theban" ADD "tenTheBan" character varying(30) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "theban" ADD "maTheBan" character varying(10) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "theban" ADD CONSTRAINT "PK_28d34db2be9d5a042d0d3664997" PRIMARY KEY ("maTheBan")`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "trangThai" character varying(20)`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "diaChi" character varying(255)`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "email" character varying(100)`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "soDienThoai" character varying(15)`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "matKhau" character varying(100) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "taiKhoan" character varying(50) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD CONSTRAINT "UQ_94dd01643e19c89ffe5f8d0c1fd" UNIQUE ("taiKhoan")`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "caLam" character varying(30) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "ngaySinh" date NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "gioiTinh" character varying(5) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "chucVu" character varying(30) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "tenNV" character varying(30) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD "maNV" character varying(10) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "nhanvien" ADD CONSTRAINT "PK_52f1d02a8a1b7ce2b25f13146cc" PRIMARY KEY ("maNV")`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD "maNhomThucDon" character varying(10)`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD "maLoaiMon" character varying(10)`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD "donViTinh" character varying(10) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD "donGia" integer NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD "tenMon" character varying(30) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD "maMon" character varying(10) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD CONSTRAINT "PK_77b01c440dbe3f9d97105f7a192" PRIMARY KEY ("maMon")`);
+        await queryRunner.query(`DROP TABLE "calam"`);
+        await queryRunner.query(`DROP TABLE "phienlamviec"`);
+        await queryRunner.query(`DROP TABLE "thuchi"`);
+        await queryRunner.query(`DROP TABLE "nghiepvu"`);
+        await queryRunner.query(`DROP TABLE "donhang"`);
+        await queryRunner.query(`DROP TABLE "ctkm"`);
+        await queryRunner.query(`DROP TABLE "giammon"`);
+        await queryRunner.query(`DROP TABLE "dsmontrongcombo"`);
+        await queryRunner.query(`DROP TABLE "combo"`);
+        await queryRunner.query(`DROP TABLE "chitietdonhang"`);
+        await queryRunner.query(`DROP TABLE "tuychondonhang"`);
+        await queryRunner.query(`DROP TABLE "tuychon"`);
+        await queryRunner.query(`DROP TABLE "giamhoadon"`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD CONSTRAINT "FK_949a5b8d62912768ded285c21e9" FOREIGN KEY ("maNhomThucDon") REFERENCES "nhomthucdon"("maNhomThucDon") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "mon" ADD CONSTRAINT "FK_78ee3d53ca797821f6b0cb9e259" FOREIGN KEY ("maLoaiMon") REFERENCES "loaimon"("maLoaiMon") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+    }
+
+}

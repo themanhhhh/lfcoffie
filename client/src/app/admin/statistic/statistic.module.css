@@ -275,6 +275,194 @@
   text-align: right;
 }
 
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.categoryList {
+  display: grid;
+  gap: 1rem;
+}
+
+.categoryRow {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed #eadfce;
+}
+
+.categoryRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.categoryInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.categoryInfo strong {
+  font-size: 1rem;
+  color: #3f2c1f;
+}
+
+.categoryInfo span {
+  color: #7d6d5b;
+  font-size: 0.85rem;
+}
+
+.categoryProgress {
+  height: 12px;
+  background: #efe4d6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.categoryProgress div {
+  height: 100%;
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  border-radius: 999px;
+}
+
+.categoryValue {
+  text-align: right;
+  font-weight: 600;
+  color: #3f2c1f;
+}
+
+/* Pie Chart Styles */
+.pieChartContainer {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 2rem;
+  align-items: start;
+  padding: 1rem 0;
+}
+
+.pieChartWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.pieChart {
+  width: 100%;
+  height: auto;
+  max-width: 300px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.pieSlice {
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.pieSlice:hover {
+  opacity: 1 !important;
+  filter: brightness(1.1);
+}
+
+.pieCenterText {
+  font-size: 14px;
+  font-weight: 700;
+  fill: #3f2c1f;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.pieLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pieLegendItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #faf8f5;
+  transition: background 0.2s ease;
+}
+
+.pieLegendItem:hover {
+  background: #f5f0e8;
+}
+
+.pieLegendColor {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pieLegendInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pieLegendInfo strong {
+  font-size: 1rem;
+  color: #3f2c1f;
+}
+
+.piePercentage {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #8B4513;
+  background: #f5f0e8;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.overviewList {
+  display: grid;
+  gap: 1rem;
+}
+
+.overviewItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.overviewItem span {
+  color: #7d6d5b;
+  font-size: 0.95rem;
+}
+
+.overviewItem strong {
+  font-size: 1.1rem;
+  color: #3f2c1f;
+}
+
+.profitText {
+  color: #28a745 !important;
+}
+
 @media (max-width: 1200px) {
   .summaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,6 +480,15 @@
 
   .summaryGrid {
     grid-template-columns: 1fr;
+  }
+
+  .pieChartContainer {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pieChartWrapper {
+    max-width: 250px;
   }
 }
 

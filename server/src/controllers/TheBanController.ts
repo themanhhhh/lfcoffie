@@ -12,7 +12,7 @@ export class TheBanController {
 
   async getOne(req: Request, res: Response) {
     const { id } = req.params;
-    const item = await this.repository.findOne({ where: { maTheBan: id } } as any);
+    const item = await this.repository.findOne({ where: { MaTheBan: id } } as any);
     if (!item) return res.status(404).json({ message: "Không tìm thấy" });
     return res.json(item);
   }
@@ -29,7 +29,7 @@ export class TheBanController {
 
   async update(req: Request, res: Response) {
     const { id } = req.params;
-    const existed = await this.repository.findOne({ where: { maTheBan: id } } as any);
+    const existed = await this.repository.findOne({ where: { MaTheBan: id } } as any);
     if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
     Object.assign(existed, req.body);
     const saved = await this.repository.save(existed);
@@ -38,7 +38,7 @@ export class TheBanController {
 
   async remove(req: Request, res: Response) {
     const { id } = req.params;
-    const existed = await this.repository.findOne({ where: { maTheBan: id } } as any);
+    const existed = await this.repository.findOne({ where: { MaTheBan: id } } as any);
     if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
     await this.repository.remove(existed);
     return res.json({ message: "Đã xóa" });

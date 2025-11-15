@@ -3,23 +3,21 @@ import { DataSource } from "typeorm";
 import dotenv from "dotenv";
 
 import { NhanVien } from "../entities/NhanVien";
-import { HoaDon } from "../entities/HoaDon";
+import { CaLam } from "../entities/CaLam";
+import { PhienLamViec } from "../entities/PhienLamViec";
+import { DonHang } from "../entities/HoaDon";
+import { ChiTietDonHang } from "../entities/ChiTietHoaDon";
 import { Mon } from "../entities/Mon";
-import { LoaiMon } from "../entities/LoaiMon";
-import { NhomThucDon } from "../entities/NhomThucDon";
-import { Size } from "../entities/Size";
 import { TheBan } from "../entities/TheBan";
-import { KhuyenMai } from "../entities/KhuyenMai";
-import { NguyenLieu } from "../entities/NguyenLieu";
-import { PhieuNhap } from "../entities/PhieuNhap";
-import { ChiTietPhieuNhap } from "../entities/ChiTietPhieuNhap";
-import { PhieuXuat } from "../entities/PhieuXuat";
-import { ChiTietPhieuXuat } from "../entities/ChiTietPhieuXuat";
-import { PhieuThu } from "../entities/PhieuThu";
-import { ChiTietPhieuThu } from "../entities/ChiTietPhieuThu";
-import { PhieuChi } from "../entities/PhieuChi";
-import { ChiTietPhieuChi } from "../entities/ChiTietPhieuChi";
-import { ChiTietHoaDon } from "../entities/ChiTietHoaDon";
+import { CTKM } from "../entities/CTKM";
+import { ThuChi } from "../entities/ThuChi";
+import { NghiepVu } from "../entities/NghiepVu";
+import { TuyChon } from "../entities/TuyChon";
+import { TuyChonDonHang } from "../entities/TuyChonDonHang";
+import { DSMonTrongCombo } from "../entities/DSMonTrongCombo";
+import { Combo } from "../entities/Combo";
+import { GiamHoaDon } from "../entities/GiamHoaDon";
+import { GiamMon } from "../entities/GiamMon";
 
 dotenv.config();
 
@@ -32,7 +30,24 @@ export const AppDataSource = new DataSource({
   database: "lofi",
   synchronize: false, // QUAN TRỌNG: Tắt synchronize khi dùng migrations
   logging: false,
-  entities: [NhanVien, HoaDon, Mon, LoaiMon, NhomThucDon, Size, TheBan, KhuyenMai, NguyenLieu, PhieuNhap, ChiTietPhieuNhap, PhieuXuat, ChiTietPhieuXuat, PhieuThu, ChiTietPhieuThu, PhieuChi, ChiTietPhieuChi, ChiTietHoaDon],
+  entities: [
+    NhanVien,
+    CaLam,
+    PhienLamViec,
+    DonHang,
+    ChiTietDonHang,
+    Mon,
+    TheBan,
+    CTKM,
+    ThuChi,
+    NghiepVu,
+    TuyChon,
+    TuyChonDonHang,
+    DSMonTrongCombo,
+    Combo,
+    GiamHoaDon,
+    GiamMon,
+  ],
   subscribers: [],
   migrations: ["src/migrations/**/*.ts"],
   migrationsTableName: "migrations_history",

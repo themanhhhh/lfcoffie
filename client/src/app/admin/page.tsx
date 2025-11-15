@@ -2,25 +2,16 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import Image, { StaticImageData } from 'next/image'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import Style from '../style/admin.module.css'
 import {
   FaPlus,
   FaEdit,
   FaTrash,
   FaSearch,
-  FaChartBar,
-  FaUtensils,
-  FaList,
-  FaBox,
-  FaUsers,
-  FaTicketAlt,
   FaTimes
 } from 'react-icons/fa'
 import { coffeeBlack } from '../image/index'
-import AdminHeader from '../components/adminheader/adminheader'
-import { apiFetch, ApiError } from '../../lib/api'
+import { monApi, ApiError } from '../../lib/api'
 
 interface Category {
   id: string
@@ -37,53 +28,22 @@ interface Product {
   categoryName: string
 }
 
-interface MonDto {
-  maMon: string
-  tenMon: string
-  donGia: number
-  donViTinh: string
-  moTa?: string | null
-  hinhAnh?: string | null
-  loaiMon?: {
-    maLoaiMon: string
-    tenLoaiMon: string
-  } | null
-}
-
-interface LoaiMonDto {
-  maLoaiMon: string
-  tenLoaiMon: string
-}
-
-const resolveProductImage = (source?: string | null): StaticImageData | string => {
-  if (!source) {
-    return coffeeBlack
-  }
-  if (/^https?:\/\//i.test(source)) {
-    return source
-  }
-  if (source.startsWith('/')) {
-    return source
-  }
-  return `/${source}`
-}
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price) + ' đ'
 
 interface ProductFormData {
-  maMon: string
-  tenMon: string
-  donGia: number
-  donViTinh: string
-  moTa?: string
-  hinhAnh?: string
-  maLoaiMon: string
-  maNhomThucDon: string
+  MaMon: string
+  TenMon: string
+  DonGia: number
+  DonViTinh: string
+  LoaiMon: string
+  NhomMon: string
+  TrangThai?: string
+  imgUrl?: string
 }
 
 const Admin = () => {
-  const pathname = usePathname()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
@@ -95,14 +55,14 @@ const Admin = () => {
   const [showModal, setShowModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState<ProductFormData>({
-    maMon: '',
-    tenMon: '',
-    donGia: 0,
-    donViTinh: 'ly',
-    moTa: '',
-    hinhAnh: '',
-    maLoaiMon: '',
-    maNhomThucDon: 'NTD01' // default
+    MaMon: '',
+    TenMon: '',
+    DonGia: 0,
+    DonViTinh: 'ly',
+    LoaiMon: 'cafe',
+    NhomMon: 'đồ uống',
+    TrangThai: 'hoạt động',
+    imgUrl: ''
   })
 
   useEffect(() => {
@@ -111,25 +71,24 @@ const Admin = () => {
       setLoading(true)
       setError(null)
       try {
-        const [monData, categoryData] = await Promise.all([
-          apiFetch<MonDto[]>('/api/mon'),
-          apiFetch<LoaiMonDto[]>('/api/loaimon')
-        ])
+        const monData = await monApi.getAll()
         if (ignore) return
 
-        const mappedCategories: Category[] = categoryData.map((category) => ({
-          id: category.maLoaiMon,
-          name: category.tenLoaiMon
+        // Extract unique categories from mon data
+        const uniqueCategories = Array.from(new Set(monData.map(m => m.LoaiMon)))
+        const mappedCategories: Category[] = uniqueCategories.map((categoryName) => ({
+          id: categoryName,
+          name: categoryName
         }))
 
         const mappedProducts: Product[] = monData.map((item) => ({
-          id: item.maMon,
-          name: item.tenMon,
-          description: item.moTa ?? 'Đang cập nhật',
-          price: item.donGia ?? 0,
-          image: resolveProductImage(item.hinhAnh),
-          categoryId: item.loaiMon?.maLoaiMon ?? 'other',
-          categoryName: item.loaiMon?.tenLoaiMon ?? 'Khác'
+          id: item.MaMon,
+          name: item.TenMon,
+          description: `${item.NhomMon} - ${item.LoaiMon}`,
+          price: item.DonGia ?? 0,
+          image: item.imgUrl || coffeeBlack, // Use imgUrl from API or default
+          categoryId: item.LoaiMon ?? 'other',
+          categoryName: item.LoaiMon ?? 'Khác'
         }))
 
         const hasOtherCategory = mappedProducts.some(
@@ -187,24 +146,23 @@ const Admin = () => {
 
   const loadMenuData = async () => {
     try {
-      const [monData, categoryData] = await Promise.all([
-        apiFetch<MonDto[]>('/api/mon'),
-        apiFetch<LoaiMonDto[]>('/api/loaimon')
-      ])
+      const monData = await monApi.getAll()
 
-      const mappedCategories: Category[] = categoryData.map((category) => ({
-        id: category.maLoaiMon,
-        name: category.tenLoaiMon
+      // Extract unique categories from mon data
+      const uniqueCategories = Array.from(new Set(monData.map(m => m.LoaiMon)))
+      const mappedCategories: Category[] = uniqueCategories.map((categoryName) => ({
+        id: categoryName,
+        name: categoryName
       }))
 
       const mappedProducts: Product[] = monData.map((item) => ({
-        id: item.maMon,
-        name: item.tenMon,
-        description: item.moTa ?? 'Đang cập nhật',
-        price: item.donGia ?? 0,
-        image: resolveProductImage(item.hinhAnh),
-        categoryId: item.loaiMon?.maLoaiMon ?? 'other',
-        categoryName: item.loaiMon?.tenLoaiMon ?? 'Khác'
+        id: item.MaMon,
+        name: item.TenMon,
+        description: `${item.NhomMon} - ${item.LoaiMon}`,
+        price: item.DonGia ?? 0,
+        image: coffeeBlack, // Default image
+        categoryId: item.LoaiMon ?? 'other',
+        categoryName: item.LoaiMon ?? 'Khác'
       }))
 
       const hasOtherCategory = mappedProducts.some(
@@ -225,29 +183,30 @@ const Admin = () => {
   const handleAddItem = () => {
     setEditingProduct(null)
     setFormData({
-      maMon: '',
-      tenMon: '',
-      donGia: 0,
-      donViTinh: 'ly',
-      moTa: '',
-      hinhAnh: '',
-      maLoaiMon: categories[0]?.id || '',
-      maNhomThucDon: 'NTD01'
+      MaMon: '',
+      TenMon: '',
+      DonGia: 0,
+      DonViTinh: 'ly',
+      LoaiMon: categories[0]?.id || 'cafe',
+      NhomMon: 'đồ uống',
+      TrangThai: 'hoạt động',
+      imgUrl: ''
     })
     setShowModal(true)
   }
 
   const handleEditItem = (item: Product) => {
     setEditingProduct(item)
+    const monItem = menuItems.find(m => m.id === item.id)
     setFormData({
-      maMon: item.id,
-      tenMon: item.name,
-      donGia: item.price,
-      donViTinh: 'ly',
-      moTa: item.description,
-      hinhAnh: typeof item.image === 'string' ? item.image : '',
-      maLoaiMon: item.categoryId,
-      maNhomThucDon: 'NTD01'
+      MaMon: item.id,
+      TenMon: item.name,
+      DonGia: item.price,
+      DonViTinh: 'ly',
+      LoaiMon: item.categoryId,
+      NhomMon: monItem?.description?.split(' - ')[0] || 'đồ uống',
+      TrangThai: 'hoạt động',
+      imgUrl: typeof item.image === 'string' ? item.image : ''
     })
     setShowModal(true)
   }
@@ -258,10 +217,7 @@ const Admin = () => {
     }
 
     try {
-      await apiFetch(`/api/mon/${item.id}`, {
-        method: 'DELETE'
-      })
-      
+      await monApi.delete(item.id)
       await loadMenuData()
       alert('Xóa món thành công!')
     } catch (err) {
@@ -275,17 +231,11 @@ const Admin = () => {
     try {
       if (editingProduct) {
         // Update
-        await apiFetch(`/api/mon/${editingProduct.id}`, {
-          method: 'PUT',
-          body: JSON.stringify(formData)
-        })
+        await monApi.update(editingProduct.id, formData)
         alert('Cập nhật món thành công!')
       } else {
         // Create
-        await apiFetch('/api/mon', {
-          method: 'POST',
-          body: JSON.stringify(formData)
-        })
+        await monApi.create(formData)
         alert('Thêm món mới thành công!')
       }
 
@@ -334,38 +284,8 @@ const Admin = () => {
     return pages
   }
 
-  const sidebarItems = [
-    { id: 'stats', name: 'Thống kê', icon: FaChartBar, path: '/admin/statistic' },
-    { id: 'menu', name: 'Quản lý Menu', icon: FaUtensils, path: '/admin' },
-    { id: 'categories', name: 'Danh mục', icon: FaList, path: '/admin/category' },
-    { id: 'materials', name: 'Nguyên liệu', icon: FaBox, path: '/admin/material' },
-    { id: 'staff', name: 'Nhân viên', icon: FaUsers, path: '/admin/staff' },
-    { id: 'vouchers', name: 'Voucher', icon: FaTicketAlt, path: '/admin/voucher' }
-  ]
-
   return (
-    <div className={Style.adminContainer}>
-      <AdminHeader />
-
-      <div className={Style.mainLayout}>
-        <div className={Style.sidebar}>
-          {sidebarItems.map((item) => {
-            const IconComponent = item.icon
-            const isActive = pathname === item.path
-            return (
-              <Link
-                key={item.id}
-                href={item.path}
-                className={`${Style.sidebarItem} ${isActive ? Style.active : ''}`}
-              >
-                <IconComponent className={Style.sidebarIcon} />
-                {item.name}
-              </Link>
-            )
-          })}
-        </div>
-
-        <div className={Style.content}>
+    <div className={Style.content}>
           <div className={Style.contentHeader}>
             <div className={Style.pageTitle}>
               <h2>Quản lý Menu</h2>
@@ -518,8 +438,6 @@ const Admin = () => {
               </div>
             </div>
           )}
-        </div>
-      </div>
 
       {/* Modal for Add/Edit Product */}
       {showModal && (
@@ -536,8 +454,8 @@ const Admin = () => {
                 <label>Mã món *</label>
                 <input
                   type="text"
-                  value={formData.maMon}
-                  onChange={(e) => setFormData({ ...formData, maMon: e.target.value })}
+                  value={formData.MaMon}
+                  onChange={(e) => setFormData({ ...formData, MaMon: e.target.value })}
                   disabled={!!editingProduct}
                   required
                 />
@@ -546,19 +464,19 @@ const Admin = () => {
                 <label>Tên món *</label>
                 <input
                   type="text"
-                  value={formData.tenMon}
-                  onChange={(e) => setFormData({ ...formData, tenMon: e.target.value })}
+                  value={formData.TenMon}
+                  onChange={(e) => setFormData({ ...formData, TenMon: e.target.value })}
                   required
                 />
               </div>
               <div className={Style.formGroup}>
-                <label>Danh mục *</label>
+                <label>Loại món *</label>
                 <select
-                  value={formData.maLoaiMon}
-                  onChange={(e) => setFormData({ ...formData, maLoaiMon: e.target.value })}
+                  value={formData.LoaiMon}
+                  onChange={(e) => setFormData({ ...formData, LoaiMon: e.target.value })}
                   required
                 >
-                  <option value="">-- Chọn danh mục --</option>
+                  <option value="">-- Chọn loại món --</option>
                   {categories
                     .filter((cat) => cat.id !== 'other')
                     .map((cat) => (
@@ -568,13 +486,25 @@ const Admin = () => {
                     ))}
                 </select>
               </div>
+              <div className={Style.formGroup}>
+                <label>Nhóm món *</label>
+                <select
+                  value={formData.NhomMon}
+                  onChange={(e) => setFormData({ ...formData, NhomMon: e.target.value })}
+                  required
+                >
+                  <option value="đồ uống">Đồ uống</option>
+                  <option value="đồ ăn">Đồ ăn</option>
+                  <option value="combo">Combo</option>
+                </select>
+              </div>
               <div className={Style.formRow}>
                 <div className={Style.formGroup}>
                   <label>Đơn giá *</label>
                   <input
                     type="number"
-                    value={formData.donGia}
-                    onChange={(e) => setFormData({ ...formData, donGia: Number(e.target.value) })}
+                    value={formData.DonGia}
+                    onChange={(e) => setFormData({ ...formData, DonGia: Number(e.target.value) })}
                     required
                     min="0"
                   />
@@ -583,26 +513,28 @@ const Admin = () => {
                   <label>Đơn vị tính *</label>
                   <input
                     type="text"
-                    value={formData.donViTinh}
-                    onChange={(e) => setFormData({ ...formData, donViTinh: e.target.value })}
+                    value={formData.DonViTinh}
+                    onChange={(e) => setFormData({ ...formData, DonViTinh: e.target.value })}
                     required
                   />
                 </div>
               </div>
               <div className={Style.formGroup}>
-                <label>Mô tả</label>
-                <textarea
-                  value={formData.moTa}
-                  onChange={(e) => setFormData({ ...formData, moTa: e.target.value })}
-                  rows={3}
-                />
+                <label>Trạng thái</label>
+                <select
+                  value={formData.TrangThai || 'hoạt động'}
+                  onChange={(e) => setFormData({ ...formData, TrangThai: e.target.value })}
+                >
+                  <option value="hoạt động">Hoạt động</option>
+                  <option value="tạm ngưng">Tạm ngưng</option>
+                </select>
               </div>
               <div className={Style.formGroup}>
-                <label>Hình ảnh (URL)</label>
+                <label>URL hình ảnh</label>
                 <input
-                  type="text"
-                  value={formData.hinhAnh}
-                  onChange={(e) => setFormData({ ...formData, hinhAnh: e.target.value })}
+                  type="url"
+                  value={formData.imgUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, imgUrl: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                 />
               </div>

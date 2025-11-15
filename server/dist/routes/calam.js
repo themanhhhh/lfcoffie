@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const CaLamController_1 = require("../controllers/CaLamController");
+const router = (0, express_1.Router)();
+const controller = new CaLamController_1.CaLamController();
+router.get("/", controller.getAll.bind(controller));
+router.get("/:id", controller.getOne.bind(controller));
+router.post("/", controller.create.bind(controller));
+router.put("/:id", controller.update.bind(controller));
+router.delete("/:id", controller.remove.bind(controller));
+exports.default = router;

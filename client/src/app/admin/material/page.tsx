@@ -14,7 +14,6 @@ import {
   FaEdit,
   FaTrash
 } from 'react-icons/fa'
-import AdminLayout from '../../components/adminlayout/adminlayout'
 import styles from './material.module.css'
 import { apiFetch, ApiError } from '../../../lib/api'
 
@@ -286,27 +285,22 @@ const MaterialPage = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className={styles.container}>
-          <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu...</div>
-        </div>
-      </AdminLayout>
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu...</div>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <AdminLayout>
-        <div className={styles.container}>
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
-        </div>
-      </AdminLayout>
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
+      </div>
     )
   }
 
   return (
-    <AdminLayout>
-      <div className={styles.container}>
+    <div className={styles.container}>
         <div className={styles.summaryGrid}>
           <div className={styles.summaryCard}>
             <div className={styles.summaryIcon}>
@@ -587,7 +581,7 @@ const MaterialPage = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </div>
   )
 }
 

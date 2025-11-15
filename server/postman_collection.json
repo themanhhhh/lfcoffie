@@ -1,0 +1,2056 @@
+{
+	"info": {
+		"_postman_id": "lofi-cafe-api",
+		"name": "Lofi Cafe API",
+		"description": "API collection cho hệ thống quản lý quán cà phê Lofi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"taiKhoan\": \"admin\",\n  \"matKhau\": \"admin123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Verify Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/verify",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "verify"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "logout"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Nhân viên",
+			"item": [
+				{
+					"name": "Get All Nhân viên",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/nhanvien",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nhanvien"]
+						}
+					}
+				},
+				{
+					"name": "Get Nhân viên by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/nhanvien/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nhanvien", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NV001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Nhân viên",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaNhanVien\": \"NV002\",\n  \"TenNhanVien\": \"Nguyễn Thị B\",\n  \"ChucVu\": \"Nhân viên\",\n  \"GioiTinh\": \"Nữ\",\n  \"NgaySinh\": \"1995-05-15\",\n  \"TaiKhoan\": \"ntb\",\n  \"MatKhau\": \"123456\",\n  \"SoDienThoai\": \"0987654321\",\n  \"TrangThai\": \"hoạt động\",\n  \"MaCaLam\": \"CL001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/nhanvien",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nhanvien"]
+						}
+					}
+				},
+				{
+					"name": "Update Nhân viên",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"TenNhanVien\": \"Nguyễn Văn A Updated\",\n  \"ChucVu\": \"Quản lý\",\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/nhanvien/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nhanvien", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NV001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Nhân viên",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/nhanvien/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nhanvien", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NV001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Ca làm",
+			"item": [
+				{
+					"name": "Get All Ca làm",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/calam",
+							"host": ["{{base_url}}"],
+							"path": ["api", "calam"]
+						}
+					}
+				},
+				{
+					"name": "Get Ca làm by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/calam/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "calam", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CL001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Ca làm",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaCaLam\": \"CL001\",\n  \"TenCaLam\": \"Ca sáng\",\n  \"ThoiGianBatDau\": \"07:00:00\",\n  \"ThoiGianKetThuc\": \"12:00:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/calam",
+							"host": ["{{base_url}}"],
+							"path": ["api", "calam"]
+						}
+					}
+				},
+				{
+					"name": "Update Ca làm",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"TenCaLam\": \"Ca sáng (Updated)\",\n  \"ThoiGianBatDau\": \"08:00:00\",\n  \"ThoiGianKetThuc\": \"13:00:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/calam/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "calam", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CL001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Ca làm",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/calam/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "calam", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CL001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Phiên làm việc",
+			"item": [
+				{
+					"name": "Get All Phiên làm việc",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec"]
+						}
+					}
+				},
+				{
+					"name": "Get Phiên làm việc by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "PLV001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Open Shift",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaPhienLamViec\": \"PLV001\",\n  \"MaCaLam\": \"CL001\",\n  \"MaNhanVien\": \"NV001\",\n  \"Ngay\": \"2025-01-21\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec/open-shift",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec", "open-shift"]
+						}
+					}
+				},
+				{
+					"name": "Close Shift",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaPhienLamViec\": \"PLV001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec/close-shift",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec", "close-shift"]
+						}
+					}
+				},
+				{
+					"name": "Create Phiên làm việc",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaPhienLamViec\": \"PLV001\",\n  \"MaCaLam\": \"CL001\",\n  \"MaNhanVien\": \"NV001\",\n  \"Ngay\": \"2025-01-21\",\n  \"ThoiGianMo\": \"07:00:00\",\n  \"TrangThai\": \"mở\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec"]
+						}
+					}
+				},
+				{
+					"name": "Update Phiên làm việc",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ThoiGianDong\": \"12:00:00\",\n  \"TrangThai\": \"đóng\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "PLV001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Phiên làm việc",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/phienlamviec/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "phienlamviec", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "PLV001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Món",
+			"item": [
+				{
+					"name": "Get All Món",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "mon"]
+						}
+					}
+				},
+				{
+					"name": "Get Món by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "mon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "M001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Món",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaMon\": \"M001\",\n  \"TenMon\": \"Cà phê đen\",\n  \"LoaiMon\": \"cafe\",\n  \"NhomMon\": \"đồ uống\",\n  \"DonGia\": 25000,\n  \"DonViTinh\": \"ly\",\n  \"TrangThai\": \"hoạt động\",\n  \"imgUrl\": \"https://example.com/images/cafe-den.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "mon"]
+						}
+					}
+				},
+				{
+					"name": "Update Món",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"TenMon\": \"Cà phê đen (Updated)\",\n  \"DonGia\": 30000,\n  \"TrangThai\": \"hoạt động\",\n  \"imgUrl\": \"https://example.com/images/cafe-den-updated.jpg\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/mon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "mon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "M001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Món",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/mon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "mon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "M001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Đơn hàng (Hóa đơn)",
+			"item": [
+				{
+					"name": "Get All Đơn hàng",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/hoadon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hoadon"]
+						}
+					}
+				},
+				{
+					"name": "Get Đơn hàng by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/hoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "DH001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Đơn hàng",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaDonHang\": \"DH001\",\n  \"Ngay\": \"2025-01-21\",\n  \"PhuongThucThanhToan\": \"Tiền mặt\",\n  \"MaPhienLamViec\": \"PLV001\",\n  \"MaCTKM\": \"CTKM001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/hoadon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hoadon"]
+						}
+					}
+				},
+				{
+					"name": "Update Đơn hàng",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"PhuongThucThanhToan\": \"Chuyển khoản\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/hoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "DH001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Đơn hàng",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/hoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "hoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "DH001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Chi tiết đơn hàng",
+			"item": [
+				{
+					"name": "Get All Chi tiết đơn hàng",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chitiethoadon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chitiethoadon"]
+						}
+					}
+				},
+				{
+					"name": "Get Chi tiết đơn hàng by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chitiethoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chitiethoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CTDH001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Chi tiết đơn hàng",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaCTDH\": \"CTDH001\",\n  \"MaDH\": \"DH001\",\n  \"MaMon\": \"M001\",\n  \"DonGia\": 25000,\n  \"SoLuong\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chitiethoadon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chitiethoadon"]
+						}
+					}
+				},
+				{
+					"name": "Update Chi tiết đơn hàng",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"SoLuong\": 3,\n  \"DonGia\": 30000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chitiethoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chitiethoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CTDH001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Chi tiết đơn hàng",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chitiethoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chitiethoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CTDH001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Thẻ bàn",
+			"item": [
+				{
+					"name": "Get All Thẻ bàn",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/theban",
+							"host": ["{{base_url}}"],
+							"path": ["api", "theban"]
+						}
+					}
+				},
+				{
+					"name": "Get Thẻ bàn by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/theban/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "theban", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TB001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Thẻ bàn",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaTheBan\": \"TB001\",\n  \"TenTheBan\": \"Bàn 1\",\n  \"TrangThai\": \"trống\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/theban",
+							"host": ["{{base_url}}"],
+							"path": ["api", "theban"]
+						}
+					}
+				},
+				{
+					"name": "Update Thẻ bàn",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"TrangThai\": \"đang dùng\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/theban/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "theban", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TB001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Thẻ bàn",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/theban/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "theban", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TB001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "CTKM (Chương trình khuyến mãi)",
+			"item": [
+				{
+					"name": "Get All CTKM",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/ctkm",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ctkm"]
+						}
+					}
+				},
+				{
+					"name": "Get CTKM by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/ctkm/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ctkm", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CTKM001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create CTKM",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaCTKM\": \"CTKM001\",\n  \"TenCTKM\": \"Giảm giá cuối tuần\",\n  \"LoaiCTKM\": \"giamhoadon\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ctkm",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ctkm"]
+						}
+					}
+				},
+				{
+					"name": "Update CTKM",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"TenCTKM\": \"Giảm giá cuối tuần (Updated)\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ctkm/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ctkm", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CTKM001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete CTKM",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/ctkm/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "ctkm", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CTKM001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Giảm hóa đơn",
+			"item": [
+				{
+					"name": "Get All Giảm hóa đơn",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giamhoadon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giamhoadon"]
+						}
+					}
+				},
+				{
+					"name": "Get Active Rules",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giamhoadon/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giamhoadon", "active"]
+						}
+					}
+				},
+				{
+					"name": "Get Giảm hóa đơn by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giamhoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giamhoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "GHD001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Giảm hóa đơn",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaGHD\": \"GHD001\",\n  \"MaCTKM\": \"CTKM001\",\n  \"GiaTriTu\": 100000,\n  \"SoTienGiam\": 10000,\n  \"LoaiGiam\": \"fixed\",\n  \"NgayBatDau\": \"2025-01-01\",\n  \"NgayKetThuc\": \"2025-12-31\",\n  \"Thu\": \"Tất cả\",\n  \"GioBatDau\": \"08:00:00\",\n  \"GioKetThuc\": \"22:00:00\",\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/giamhoadon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giamhoadon"]
+						}
+					}
+				},
+				{
+					"name": "Update Giảm hóa đơn",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"SoTienGiam\": 15000,\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/giamhoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giamhoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "GHD001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Giảm hóa đơn",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giamhoadon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giamhoadon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "GHD001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Giảm món",
+			"item": [
+				{
+					"name": "Get All Giảm món",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giammon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giammon"]
+						}
+					}
+				},
+				{
+					"name": "Get Active Rules for Mon",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giammon/mon/:maMon/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giammon", "mon", ":maMon", "active"],
+							"variable": [
+								{
+									"key": "maMon",
+									"value": "M001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Giảm món by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giammon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giammon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "GM001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Giảm món",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaGM\": \"GM001\",\n  \"MaCTKM\": \"CTKM001\",\n  \"MaMon\": \"M001\",\n  \"SoTienGiam\": 5000,\n  \"LoaiGiam\": \"fixed\",\n  \"ApDungCho\": \"tất cả\",\n  \"NgayBatDau\": \"2025-01-01\",\n  \"NgayKetThuc\": \"2025-12-31\",\n  \"Thu\": \"Tất cả\",\n  \"GioBatDau\": \"08:00:00\",\n  \"GioKetThuc\": \"22:00:00\",\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/giammon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giammon"]
+						}
+					}
+				},
+				{
+					"name": "Update Giảm món",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"SoTienGiam\": 7000,\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/giammon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giammon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "GM001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Giảm món",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/giammon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "giammon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "GM001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Combo",
+			"item": [
+				{
+					"name": "Get All Combo",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/combo",
+							"host": ["{{base_url}}"],
+							"path": ["api", "combo"]
+						}
+					}
+				},
+				{
+					"name": "Get Active Combos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/combo/active",
+							"host": ["{{base_url}}"],
+							"path": ["api", "combo", "active"]
+						}
+					}
+				},
+				{
+					"name": "Get Combo by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/combo/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "combo", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CB001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Combo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaCombo\": \"CB001\",\n  \"TenCombo\": \"Combo buổi sáng\",\n  \"GiaCombo\": 50000,\n  \"NgayBatDau\": \"2025-01-01\",\n  \"NgayKetThuc\": \"2025-12-31\",\n  \"Thu\": \"Tất cả\",\n  \"GioBatDau\": \"07:00:00\",\n  \"GioKetThuc\": \"11:00:00\",\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/combo",
+							"host": ["{{base_url}}"],
+							"path": ["api", "combo"]
+						}
+					}
+				},
+				{
+					"name": "Update Combo",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"GiaCombo\": 55000,\n  \"TrangThai\": \"hoạt động\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/combo/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "combo", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CB001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Combo",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/combo/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "combo", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "CB001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Thu chi",
+			"item": [
+				{
+					"name": "Get All Thu chi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thuchi",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thuchi"]
+						}
+					}
+				},
+				{
+					"name": "Get Thu chi by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thuchi/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thuchi", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TC001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Thu chi",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaGiaoDich\": \"TC001\",\n  \"MaPhienLamViec\": \"PLV001\",\n  \"MaNghiepVu\": \"NV001\",\n  \"ThoiGian\": \"2025-01-21T10:00:00Z\",\n  \"PhuongThucThanhToan\": \"Tiền mặt\",\n  \"SoTien\": 100000,\n  \"GhiChu\": \"Thu tiền bàn 1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/thuchi",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thuchi"]
+						}
+					}
+				},
+				{
+					"name": "Update Thu chi",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"SoTien\": 150000,\n  \"GhiChu\": \"Thu tiền bàn 1 (Updated)\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/thuchi/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thuchi", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TC001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Thu chi",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thuchi/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thuchi", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TC001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Nghiệp vụ",
+			"item": [
+				{
+					"name": "Get All Nghiệp vụ",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/nghiepvu",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nghiepvu"]
+						}
+					}
+				},
+				{
+					"name": "Get Nghiệp vụ by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/nghiepvu/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nghiepvu", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NV001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Nghiệp vụ",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaNghiepVu\": \"NV001\",\n  \"LoaiGiaoDich\": \"thu\",\n  \"TenNghiepVu\": \"Thu tiền bàn\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/nghiepvu",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nghiepvu"]
+						}
+					}
+				},
+				{
+					"name": "Update Nghiệp vụ",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"TenNghiepVu\": \"Thu tiền bàn (Updated)\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/nghiepvu/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nghiepvu", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NV001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Nghiệp vụ",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/nghiepvu/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "nghiepvu", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "NV001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Tùy chọn",
+			"item": [
+				{
+					"name": "Get All Tùy chọn",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tuychon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tuychon"]
+						}
+					}
+				},
+				{
+					"name": "Get Tùy chọn by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tuychon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tuychon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TC001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Tùy chọn",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"MaTuyChon\": \"TC001\",\n  \"LoaiTuyChon\": \"size\",\n  \"TenTuyChon\": \"Size L\",\n  \"GiaCongThem\": 10000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tuychon",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tuychon"]
+						}
+					}
+				},
+				{
+					"name": "Update Tùy chọn",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"GiaCongThem\": 15000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tuychon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tuychon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TC001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Tùy chọn",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/tuychon/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tuychon", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "TC001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Thống kê",
+			"item": [
+				{
+					"name": "Get Overview",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thongke/overview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thongke", "overview"]
+						}
+					}
+				},
+				{
+					"name": "Get Top Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thongke/top-products?limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thongke", "top-products"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Revenue by Channel",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thongke/revenue-by-channel",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thongke", "revenue-by-channel"]
+						}
+					}
+				},
+				{
+					"name": "Get Revenue by Month",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thongke/revenue-by-month?year=2025",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thongke", "revenue-by-month"],
+							"query": [
+								{
+									"key": "year",
+									"value": "2025"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Shift Closing Report",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/thongke/shift-closing/:maPhienLamViec",
+							"host": ["{{base_url}}"],
+							"path": ["api", "thongke", "shift-closing", ":maPhienLamViec"],
+							"variable": [
+								{
+									"key": "maPhienLamViec",
+									"value": "PLV001"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

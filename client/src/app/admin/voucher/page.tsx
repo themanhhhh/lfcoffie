@@ -15,7 +15,6 @@ import {
   FaClock,
   FaTimes
 } from 'react-icons/fa'
-import AdminLayout from '../../components/adminlayout/adminlayout'
 import styles from './voucher.module.css'
 import { apiFetch, ApiError } from '../../../lib/api'
 
@@ -40,17 +39,19 @@ interface Voucher {
 }
 
 interface KhuyenMaiDto {
-  maKM: string
-  tenKM: string
-  loaiKM?: string
+  MaCTKM: string
+  TenCTKM: string
+  LoaiCTKM?: string
   giaTriGiam?: number
   soTienToiThieu?: number
   giamToiDa?: number
   soLuongSuDung?: number
   moTa?: string
-  ngayBatDau: string
-  ngayKetThuc: string
-  hoaDons?: any[]
+  ngayBatDau?: string
+  ngayKetThuc?: string
+  giamHoaDons?: Array<{ maHD: string }>
+  giamMons?: Array<{ maMon: string }>
+  donHangs?: Array<{ maDH: string }>
 }
 
 interface VoucherFormData {
@@ -109,36 +110,36 @@ const VoucherPage = () => {
       setLoading(true)
       setError(null)
       try {
-        const data = await apiFetch<KhuyenMaiDto[]>('/api/khuyenmai')
+        const data = await apiFetch<KhuyenMaiDto[]>('/api/ctkm')
         if (ignore) return
 
-        // Transform data
-        const mapped: Voucher[] = data.map((km) => {
-          const startDate = new Date(km.ngayBatDau)
-          const endDate = new Date(km.ngayKetThuc)
+        // Transform data - CTKM structure
+        const mapped: Voucher[] = data.map((km: KhuyenMaiDto) => {
+          // CTKM doesn't have date fields, so we'll set default values
           const now = new Date()
+          const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
+          const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
           
           let status: VoucherStatus = 'active'
-          if (now < startDate) {
+          // Since CTKM doesn't have date fields, we'll check if it has active discounts
+          if (km.giamHoaDons && km.giamHoaDons.length === 0 && km.giamMons && km.giamMons.length === 0) {
             status = 'inactive'
-          } else if (now > endDate) {
-            status = 'expired'
           }
 
           return {
-            id: km.maKM,
-            code: km.maKM,
-            name: km.tenKM,
-            type: (km.loaiKM || 'percentage') as VoucherType,
-            value: km.giaTriGiam || 0,
-            minOrderAmount: km.soTienToiThieu,
-            maxDiscount: km.giamToiDa,
-            usageLimit: km.soLuongSuDung || 0,
-            usedCount: km.hoaDons?.length || 0,
+            id: km.MaCTKM,
+            code: km.MaCTKM,
+            name: km.TenCTKM,
+            type: (km.LoaiCTKM === 'giamhoadon' ? 'fixed' : km.LoaiCTKM === 'giammon' ? 'percentage' : 'percentage') as VoucherType,
+            value: 0, // CTKM doesn't store value directly
+            minOrderAmount: 0,
+            maxDiscount: 0,
+            usageLimit: 100,
+            usedCount: km.donHangs?.length || 0,
             startDate: startDate.toISOString().split('T')[0],
             endDate: endDate.toISOString().split('T')[0],
             status,
-            description: km.moTa || '',
+            description: km.TenCTKM || '',
             applicableItems: []
           }
         })
@@ -255,37 +256,37 @@ const VoucherPage = () => {
 
   const loadVouchersData = async () => {
     try {
-      const data = await apiFetch<KhuyenMaiDto[]>('/api/khuyenmai')
+      const data = await apiFetch<KhuyenMaiDto[]>('/api/ctkm')
 
-      const mapped: Voucher[] = data.map((km) => {
-        const startDate = new Date(km.ngayBatDau)
-        const endDate = new Date(km.ngayKetThuc)
-        const now = new Date()
-        
-        let status: VoucherStatus = 'active'
-        if (now < startDate) {
-          status = 'inactive'
-        } else if (now > endDate) {
-          status = 'expired'
-        }
+      const mapped: Voucher[] = data.map((km: KhuyenMaiDto) => {
+          // CTKM doesn't have date fields, so we'll set default values
+          const now = new Date()
+          const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) // 30 days ago
+          const endDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+          
+          let status: VoucherStatus = 'active'
+          // Since CTKM doesn't have date fields, we'll check if it has active discounts
+          if (km.giamHoaDons && km.giamHoaDons.length === 0 && km.giamMons && km.giamMons.length === 0) {
+            status = 'inactive'
+          }
 
-        return {
-          id: km.maKM,
-          code: km.maKM,
-          name: km.tenKM,
-          type: (km.loaiKM || 'percentage') as VoucherType,
-          value: km.giaTriGiam || 0,
-          minOrderAmount: km.soTienToiThieu,
-          maxDiscount: km.giamToiDa,
-          usageLimit: km.soLuongSuDung || 0,
-          usedCount: km.hoaDons?.length || 0,
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: endDate.toISOString().split('T')[0],
-          status,
-          description: km.moTa || '',
-          applicableItems: []
-        }
-      })
+          return {
+            id: km.MaCTKM,
+            code: km.MaCTKM,
+            name: km.TenCTKM,
+            type: (km.LoaiCTKM === 'giamhoadon' ? 'fixed' : km.LoaiCTKM === 'giammon' ? 'percentage' : 'percentage') as VoucherType,
+            value: 0, // CTKM doesn't store value directly
+            minOrderAmount: 0,
+            maxDiscount: 0,
+            usageLimit: 100,
+            usedCount: km.donHangs?.length || 0,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: endDate.toISOString().split('T')[0],
+            status,
+            description: km.TenCTKM || '',
+            applicableItems: []
+          }
+        })
 
       setVouchers(mapped)
     } catch (err) {
@@ -333,16 +334,24 @@ const VoucherPage = () => {
     try {
       if (editingVoucher) {
         // Update
-        await apiFetch(`/api/khuyenmai/${editingVoucher.id}`, {
+        await apiFetch(`/api/ctkm/${editingVoucher.id}`, {
           method: 'PUT',
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+            MaCTKM: formData.maKM,
+            TenCTKM: formData.tenKM,
+            LoaiCTKM: formData.loaiKM
+          })
         })
         alert('Cập nhật voucher thành công!')
       } else {
         // Create
-        await apiFetch('/api/khuyenmai', {
+        await apiFetch('/api/ctkm', {
           method: 'POST',
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+            MaCTKM: formData.maKM,
+            TenCTKM: formData.tenKM,
+            LoaiCTKM: formData.loaiKM
+          })
         })
         alert('Thêm voucher mới thành công!')
       }
@@ -365,7 +374,7 @@ const VoucherPage = () => {
     }
 
     try {
-      await apiFetch(`/api/khuyenmai/${voucherId}`, {
+      await apiFetch(`/api/ctkm/${voucherId}`, {
         method: 'DELETE'
       })
 
@@ -381,27 +390,22 @@ const VoucherPage = () => {
 
   if (loading) {
     return (
-      <AdminLayout>
-        <div className={styles.container}>
-          <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu...</div>
-        </div>
-      </AdminLayout>
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu...</div>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <AdminLayout>
-        <div className={styles.container}>
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
-        </div>
-      </AdminLayout>
+      <div className={styles.container}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>
+      </div>
     )
   }
 
   return (
-        <AdminLayout>
-      <div className={styles.container}>
+    <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.headerMain}>
@@ -669,10 +673,16 @@ const VoucherPage = () => {
                 </div>
 
                 <div className={styles.detailsActions}>
-                  <button className={styles.primaryBtn}>
+                  <button 
+                    className={styles.primaryBtn}
+                    onClick={() => handleEditVoucher(selectedVoucher)}
+                  >
                     <FaEdit /> Chỉnh sửa
                   </button>
-                  <button className={styles.secondaryBtn}>
+                  <button 
+                    className={styles.secondaryBtn}
+                    onClick={() => copyToClipboard(selectedVoucher.code)}
+                  >
                     <FaCopy /> Sao chép mã
                   </button>
                 </div>
@@ -818,9 +828,9 @@ const VoucherPage = () => {
             </div>
           </div>
         )}
-      </div>
-    </AdminLayout>
-    )
+    </div>
+  
+  )
 }
 
 export default VoucherPage

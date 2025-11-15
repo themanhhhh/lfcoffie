@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const GiamMonController_1 = require("../controllers/GiamMonController");
+const router = (0, express_1.Router)();
+const controller = new GiamMonController_1.GiamMonController();
+router.get("/", controller.getAll.bind(controller));
+router.get("/mon/:maMon/active", controller.getActiveRulesForMon.bind(controller));
+router.get("/:id", controller.getOne.bind(controller));
+router.post("/", controller.create.bind(controller));
+router.put("/:id", controller.update.bind(controller));
+router.delete("/:id", controller.remove.bind(controller));
+exports.default = router;

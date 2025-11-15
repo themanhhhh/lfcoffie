@@ -106,7 +106,16 @@
   outline: none;
   flex: 1;
   font-size: 0.95rem;
-  color: #3f2c1f;
+  color: #3f2c1f !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.searchBox input:-webkit-autofill,
+.searchBox input:-webkit-autofill:hover,
+.searchBox input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+  -webkit-text-fill-color: #3f2c1f !important;
 }
 
 .filters {

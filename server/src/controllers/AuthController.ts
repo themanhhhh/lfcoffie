@@ -17,9 +17,10 @@ export class AuthController {
         });
       }
 
-      // Find user by taiKhoan only
+      // Find user by TaiKhoan only
       const user = await this.repository.findOne({
-        where: { taiKhoan: taiKhoan }
+        where: { TaiKhoan: taiKhoan } as any,
+        relations: ['caLam']
       });
 
       if (!user) {
@@ -29,14 +30,14 @@ export class AuthController {
       }
 
       // Check if user is active
-      if (user.trangThai && user.trangThai !== "hoạt động") {
+      if (user.TrangThai && user.TrangThai !== "hoạt động") {
         return res.status(401).json({ 
           message: "Tài khoản đã bị khóa" 
         });
       }
 
       // Verify password
-      const isPasswordValid = await bcrypt.compare(matKhau, user.matKhau);
+      const isPasswordValid = await bcrypt.compare(matKhau, user.MatKhau);
       if (!isPasswordValid) {
         return res.status(401).json({ 
           message: "Tài khoản hoặc mật khẩu không đúng" 
@@ -46,17 +47,17 @@ export class AuthController {
       // Generate JWT token
       const token = jwt.sign(
         { 
-          maNV: user.maNV, 
-          tenNV: user.tenNV, 
-          chucVu: user.chucVu,
-          taiKhoan: user.taiKhoan 
+          MaNhanVien: user.MaNhanVien, 
+          TenNhanVien: user.TenNhanVien, 
+          ChucVu: user.ChucVu,
+          TaiKhoan: user.TaiKhoan 
         },
         process.env.JWT_SECRET || "your-secret-key",
         { expiresIn: "24h" }
       );
 
       // Return user info and token (exclude password)
-      const { matKhau: _, ...userWithoutPassword } = user;
+      const { MatKhau: _, ...userWithoutPassword } = user;
       
       return res.json({
         message: "Đăng nhập thành công",
@@ -84,14 +85,15 @@ export class AuthController {
       
       // Get fresh user data
       const user = await this.repository.findOne({
-        where: { maNV: decoded.maNV }
+        where: { MaNhanVien: decoded.MaNhanVien } as any,
+        relations: ['caLam']
       });
 
       if (!user) {
         return res.status(401).json({ message: "Token không hợp lệ" });
       }
 
-      const { matKhau: _, ...userWithoutPassword } = user;
+      const { MatKhau: _, ...userWithoutPassword } = user;
       return res.json({ user: userWithoutPassword });
 
     } catch (error) {

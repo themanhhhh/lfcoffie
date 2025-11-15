@@ -217,7 +217,9 @@
   border: 1px solid #e9ecef;
   border-radius: 8px;
   font-size: 0.9rem;
-  background: white;
+  background: white !important;
+  background-color: white !important;
+  color: #333 !important;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
 }

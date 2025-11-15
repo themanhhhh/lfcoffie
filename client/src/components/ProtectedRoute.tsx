@@ -22,8 +22,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }, [isAuthenticated, isLoading, router]);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && requiredRole && user?.chucVu !== requiredRole) {
-      router.push('/unauthorized');
+    if (!isLoading && isAuthenticated && requiredRole && user?.ChucVu !== requiredRole) {
+      router.push('/staff');
     }
   }, [isAuthenticated, isLoading, user, requiredRole, router]);
 
@@ -51,7 +51,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  if (requiredRole && user?.chucVu !== requiredRole) {
+  if (requiredRole && user?.ChucVu !== requiredRole) {
     return (
       <div style={{ 
         display: 'flex', 

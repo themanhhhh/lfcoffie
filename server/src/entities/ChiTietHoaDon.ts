@@ -1,31 +1,30 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from "typeorm";
-import { HoaDon } from "./HoaDon";
+import { Entity, PrimaryColumn, Column, ManyToOne, OneToMany, JoinColumn } from "typeorm";
+import { DonHang } from "./HoaDon";
 import { Mon } from "./Mon";
-import { Size } from "./Size";
+import { TuyChonDonHang } from "./TuyChonDonHang";
 
-@Entity({ name: "chitiethoadon" })
-export class ChiTietHoaDon {
+@Entity({ name: "chitietdonhang" })
+export class ChiTietDonHang {
   @PrimaryColumn({ type: "varchar", length: 10 })
-  maCTHD!: string;
+  MaCTDH!: string;
 
-  @ManyToOne(() => HoaDon, (hd) => hd.chiTietHoaDons, { eager: true })
-  @JoinColumn({ name: "maHD" })
-  hoaDon!: HoaDon;
+  @ManyToOne(() => DonHang, (dh) => dh.chiTietDonHangs, { eager: true })
+  @JoinColumn({ name: "MaDH" })
+  donHang!: DonHang;
 
-  @ManyToOne(() => Mon, (m) => m.maMon, { eager: true })
-  @JoinColumn({ name: "maMon" })
+  @ManyToOne(() => Mon, (m) => m.chiTietDonHangs, { eager: true })
+  @JoinColumn({ name: "MaMon" })
   mon!: Mon;
 
-  @ManyToOne(() => Size, (s) => s.maSize, { eager: true })
-  @JoinColumn({ name: "maSize" })
-  size!: Size;
+  @Column({ type: "int" })
+  DonGia!: number;
 
   @Column({ type: "int" })
-  soLuong!: number;
+  SoLuong!: number;
 
-  @Column({ type: "int", nullable: true })
-  donGia?: number;
-
-  @Column({ type: "varchar", length: 255, nullable: true })
-  ghiChu?: string;
+  @OneToMany(() => TuyChonDonHang, (tcdh) => tcdh.chiTietDonHang)
+  tuyChonDonHangs!: TuyChonDonHang[];
 }
+
+// Export alias for backward compatibility
+export { ChiTietDonHang as ChiTietHoaDon };

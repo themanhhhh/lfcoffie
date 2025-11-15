@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const ComboController_1 = require("../controllers/ComboController");
+const router = (0, express_1.Router)();
+const controller = new ComboController_1.ComboController();
+router.get("/", controller.getAll.bind(controller));
+router.get("/active", controller.getActiveCombos.bind(controller));
+router.get("/:id", controller.getOne.bind(controller));
+router.post("/", controller.create.bind(controller));
+router.put("/:id", controller.update.bind(controller));
+router.delete("/:id", controller.remove.bind(controller));
+exports.default = router;
