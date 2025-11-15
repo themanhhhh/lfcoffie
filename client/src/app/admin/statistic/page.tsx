@@ -415,7 +415,6 @@ const StatisticPage = () => {
           )}
         </section>
       </div>
-    </AdminLayout>
   )
 }
 

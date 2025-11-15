@@ -17,12 +17,16 @@ import {
   FaExchangeAlt,
   FaIdBadge,
   FaThLarge,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaQrcode,
+  FaPrint,
+  FaStore,
+  FaHome
 } from 'react-icons/fa'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
 import { logo, coffeeBlack } from '../image/index'
-import { monApi, ApiError } from '../../lib/api'
+import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, ApiError } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -92,6 +96,13 @@ const Staff = () => {
   ])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [orderType, setOrderType] = useState<'dine-in' | 'takeaway'>('dine-in')
+  const [selectedTable, setSelectedTable] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash')
+  const [currentPhienLamViec, setCurrentPhienLamViec] = useState<string | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
   
   const { user, logout } = useAuth()
   const router = useRouter()
@@ -101,6 +112,14 @@ const Staff = () => {
     router.push('/')
   }
 
+  // Load QR code from localStorage on mount
+  useEffect(() => {
+    const savedQrCode = localStorage.getItem('qrCodeImage')
+    if (savedQrCode) {
+      setQrCodeImage(savedQrCode)
+    }
+  }, [])
+
   useEffect(() => {
     let ignore = false
 
@@ -108,9 +127,22 @@ const Staff = () => {
       setLoading(true)
       setError(null)
       try {
-        const monData = await monApi.getAll()
+        const [monData, phienLamViecData] = await Promise.all([
+          monApi.getAll(),
+          phienLamViecApi.getAll()
+        ])
 
         if (ignore) return
+
+        // Tìm phiên làm việc đang mở của nhân viên hiện tại
+        if (user?.MaNhanVien) {
+          const activePhien = phienLamViecData.find(
+            (plv) => plv.MaNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
+          )
+          if (activePhien) {
+            setCurrentPhienLamViec(activePhien.MaPhienLamViec)
+          }
+        }
 
         // Extract unique categories from mon data
         const uniqueCategories = Array.from(new Set(monData.map(m => m.LoaiMon)))
@@ -170,7 +202,7 @@ const Staff = () => {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [user])
 
   const visibleProducts = useMemo(() => {
     if (activeCategory === 'all') {
@@ -211,6 +243,105 @@ const Staff = () => {
     setCart([])
     setCustomerName('')
     setTableNumber('')
+    setSelectedTable('')
+    setOrderType('dine-in')
+    setPaymentMethod('cash')
+  }
+
+  const handleOpenPaymentModal = () => {
+    if (cart.length === 0) return
+    setShowPaymentModal(true)
+    // Reset payment options
+    setOrderType('dine-in')
+    setSelectedTable('')
+    setPaymentMethod('cash')
+  }
+
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false)
+  }
+
+  const handleQrCodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file ảnh')
+        return
+      }
+      
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Kích thước ảnh không được vượt quá 2MB')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const result = event.target?.result as string
+        setQrCodeImage(result)
+        localStorage.setItem('qrCodeImage', result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleProcessPayment = async () => {
+    if (!currentPhienLamViec) {
+      alert('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
+      return
+    }
+
+    if (orderType === 'dine-in' && !selectedTable) {
+      alert('Vui lòng chọn số bàn')
+      return
+    }
+
+    setIsProcessing(true)
+    try {
+      const totalAmount = getTotalPrice()
+      const now = new Date()
+      
+      // Tạo mã đơn hàng
+      const maDonHang = `DH${Date.now().toString().slice(-6)}`
+      
+      // Tạo đơn hàng
+      const donHang = await donHangApi.create({
+        MaDonHang: maDonHang,
+        MaPhienLamViec: currentPhienLamViec,
+        Ngay: now.toISOString().split('T')[0],
+        PhuongThucThanhToan: paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'
+      })
+
+      // Tạo chi tiết đơn hàng
+      const chiTietPromises = cart.map(async (item, index) => {
+        const maCTDH = `CT${maDonHang}${String(index + 1).padStart(2, '0')}`
+        return chiTietDonHangApi.create({
+          MaCTDH: maCTDH,
+          MaDH: maDonHang,
+          MaMon: item.id,
+          DonGia: item.price,
+          SoLuong: item.quantity
+        })
+      })
+
+      await Promise.all(chiTietPromises)
+
+      // Hiển thị hóa đơn
+      setShowPaymentModal(false)
+      
+      // In hóa đơn (có thể mở window print)
+      setTimeout(() => {
+        window.print()
+      }, 500)
+
+      alert('Thanh toán thành công!')
+      clearCart()
+    } catch (err) {
+      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Không thể tạo đơn hàng'))
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const getTotalPrice = () =>
@@ -350,14 +481,42 @@ const Staff = () => {
                 />
               </div>
               <div className={Style.inputGroup}>
-                <label>Số bàn</label>
-                <input
-                  type="text"
-                  placeholder="Nhập số bàn hoặc 'Mang về'"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                />
+                <label>Loại đơn</label>
+                <div className={Style.orderTypeButtons}>
+                  <button
+                    type="button"
+                    className={`${Style.orderTypeBtn} ${orderType === 'dine-in' ? Style.active : ''}`}
+                    onClick={() => {
+                      setOrderType('dine-in')
+                      setTableNumber('')
+                    }}
+                  >
+                    <FaStore /> Dùng tại quán
+                  </button>
+                  <button
+                    type="button"
+                    className={`${Style.orderTypeBtn} ${orderType === 'takeaway' ? Style.active : ''}`}
+                    onClick={() => {
+                      setOrderType('takeaway')
+                      setTableNumber('Mang về')
+                    }}
+                  >
+                    <FaHome /> Mang về
+                  </button>
+                </div>
               </div>
+              {orderType === 'dine-in' && (
+                <div className={Style.inputGroup}>
+                  <label>Số bàn *</label>
+                  <input
+                    type="text"
+                    placeholder="Nhập số bàn (VD: 1, 2, 3...)"
+                    value={tableNumber}
+                    onChange={(e) => setTableNumber(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
             </div>
 
             <div className={Style.cartItems}>
@@ -420,16 +579,7 @@ const Staff = () => {
               <button
                 className={Style.paymentBtn}
                 disabled={cart.length === 0}
-                onClick={() => {
-                  alert(
-                    `Thanh toán thành công!\nTổng tiền: ${formatPrice(
-                      getTotalPrice()
-                    )}\nKhách hàng: ${customerName || 'Khách vãng lai'}\nBàn: ${
-                      tableNumber || 'Mang về'
-                    }`
-                  )
-                  clearCart()
-                }}
+                onClick={handleOpenPaymentModal}
               >
                 <FaCheck /> Thanh toán
               </button>
@@ -437,6 +587,208 @@ const Staff = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className={Style.paymentModalOverlay} onClick={handleClosePaymentModal}>
+          <div className={Style.paymentModalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={Style.paymentModalHeader}>
+              <h2>Thanh toán</h2>
+              <button className={Style.closeBtn} onClick={handleClosePaymentModal}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className={Style.paymentModalBody}>
+              {/* Order Type Selection */}
+              <div className={Style.paymentSection}>
+                <label>Loại đơn</label>
+                <div className={Style.orderTypeButtons}>
+                  <button
+                    type="button"
+                    className={`${Style.orderTypeBtn} ${orderType === 'dine-in' ? Style.active : ''}`}
+                    onClick={() => {
+                      setOrderType('dine-in')
+                      setSelectedTable('')
+                    }}
+                  >
+                    <FaStore /> Dùng tại quán
+                  </button>
+                  <button
+                    type="button"
+                    className={`${Style.orderTypeBtn} ${orderType === 'takeaway' ? Style.active : ''}`}
+                    onClick={() => {
+                      setOrderType('takeaway')
+                      setSelectedTable('')
+                    }}
+                  >
+                    <FaHome /> Mang về
+                  </button>
+                </div>
+              </div>
+
+              {/* Table Selection (only for dine-in) */}
+              {orderType === 'dine-in' && (
+                <div className={Style.paymentSection}>
+                  <label>Số bàn *</label>
+                  <div className={Style.tableGrid}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        className={`${Style.tableBtn} ${selectedTable === num.toString() ? Style.selected : ''}`}
+                        onClick={() => {
+                          setSelectedTable(num.toString())
+                          setTableNumber(num.toString())
+                        }}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    className={Style.tableInput}
+                    placeholder="Hoặc nhập số bàn khác"
+                    value={selectedTable}
+                    onChange={(e) => {
+                      setSelectedTable(e.target.value)
+                      setTableNumber(e.target.value)
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Payment Method Selection */}
+              <div className={Style.paymentSection}>
+                <label>Phương thức thanh toán</label>
+                <div className={Style.paymentMethodButtons}>
+                  <button
+                    type="button"
+                    className={`${Style.paymentMethodBtn} ${paymentMethod === 'cash' ? Style.active : ''}`}
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                    <FaMoneyBillWave /> Tiền mặt
+                  </button>
+                  <button
+                    type="button"
+                    className={`${Style.paymentMethodBtn} ${paymentMethod === 'transfer' ? Style.active : ''}`}
+                    onClick={() => setPaymentMethod('transfer')}
+                  >
+                    <FaQrcode /> Chuyển khoản
+                  </button>
+                </div>
+              </div>
+
+              {/* QR Code for Transfer */}
+              {paymentMethod === 'transfer' && (
+                <div className={Style.paymentSection}>
+                  <label>QR Code thanh toán</label>
+                  <div className={Style.qrCodeContainer}>
+                    {qrCodeImage ? (
+                      <div className={Style.qrCodeImageWrapper}>
+                        <img 
+                          src={qrCodeImage} 
+                          alt="QR Code thanh toán" 
+                          className={Style.qrCodeImage}
+                        />
+                        <div className={Style.qrAmount}>
+                          {formatPrice(getTotalPrice())}
+                        </div>
+                        <small>Quét mã để thanh toán</small>
+                      </div>
+                    ) : (
+                      <div className={Style.qrCodePlaceholder}>
+                        <FaQrcode className={Style.qrIcon} />
+                        <p>Chưa có QR Code</p>
+                        <small>Vui lòng upload ảnh QR Code</small>
+                      </div>
+                    )}
+                  </div>
+                  <div className={Style.qrCodeUpload}>
+                    <label htmlFor="qrCodeUpload" className={Style.qrCodeUploadLabel}>
+                      <FaQrcode /> {qrCodeImage ? 'Thay đổi QR Code' : 'Upload QR Code'}
+                    </label>
+                    <input
+                      id="qrCodeUpload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleQrCodeUpload}
+                      className={Style.qrCodeUploadInput}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Invoice Preview */}
+              <div className={Style.paymentSection}>
+                <div className={Style.invoicePreview}>
+                  <div className={Style.invoiceHeader}>
+                    <h3>LOFI COFFEE</h3>
+                    <p>Hóa đơn thanh toán</p>
+                  </div>
+                  <div className={Style.invoiceInfo}>
+                    <div className={Style.invoiceRow}>
+                      <span>Khách hàng:</span>
+                      <span>{customerName || 'Khách vãng lai'}</span>
+                    </div>
+                    {orderType === 'dine-in' && tableNumber && (
+                      <div className={Style.invoiceRow}>
+                        <span>Số bàn:</span>
+                        <span>{tableNumber}</span>
+                      </div>
+                    )}
+                    <div className={Style.invoiceRow}>
+                      <span>Phương thức:</span>
+                      <span>{paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</span>
+                    </div>
+                    <div className={Style.invoiceDivider}></div>
+                    <div className={Style.invoiceItems}>
+                      {cart.map((item) => (
+                        <div key={item.id} className={Style.invoiceItem}>
+                          <div>
+                            <span className={Style.invoiceItemName}>{item.name}</span>
+                            <span className={Style.invoiceItemQty}>x{item.quantity}</span>
+                          </div>
+                          <span>{formatPrice(item.price * item.quantity)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className={Style.invoiceDivider}></div>
+                    <div className={Style.invoiceTotal}>
+                      <span>Tổng cộng:</span>
+                      <span className={Style.invoiceTotalAmount}>{formatPrice(getTotalPrice())}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className={Style.paymentModalActions}>
+              <button
+                type="button"
+                className={Style.cancelPaymentBtn}
+                onClick={handleClosePaymentModal}
+                disabled={isProcessing}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className={Style.confirmPaymentBtn}
+                onClick={handleProcessPayment}
+                disabled={isProcessing || (orderType === 'dine-in' && !selectedTable)}
+              >
+                {isProcessing ? 'Đang xử lý...' : (
+                  <>
+                    <FaPrint /> Xác nhận và in hóa đơn
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </ProtectedRoute>
   )

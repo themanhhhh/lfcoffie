@@ -663,3 +663,490 @@
     max-width: 300px;
   }
 }
+
+/* Payment Modal Styles */
+.paymentModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.paymentModalContent {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.paymentModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.paymentModalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.paymentModalBody {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.paymentSection {
+  margin-bottom: 1.5rem;
+}
+
+.paymentSection label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+/* Order Type Buttons */
+.orderTypeButtons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.orderTypeBtn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.orderTypeBtn:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+}
+
+.orderTypeBtn.active {
+  background: #8B4513;
+  border-color: #8B4513;
+  color: white;
+}
+
+/* Table Selection */
+.tableGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tableBtn {
+  aspect-ratio: 1;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.tableBtn:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+  transform: scale(1.05);
+}
+
+.tableBtn.selected {
+  background: #8B4513;
+  border-color: #8B4513;
+  color: white;
+}
+
+.tableInput {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.tableInput:focus {
+  outline: none;
+  border-color: #8B4513;
+}
+
+/* Payment Method Buttons */
+.paymentMethodButtons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.paymentMethodBtn {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.paymentMethodBtn:hover {
+  border-color: #8B4513;
+  color: #8B4513;
+}
+
+.paymentMethodBtn.active {
+  background: #8B4513;
+  border-color: #8B4513;
+  color: white;
+}
+
+/* QR Code Container */
+.qrCodeContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.qrCodePlaceholder {
+  background: #f8f8f8;
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  min-width: 250px;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.qrCodeImageWrapper {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-width: 250px;
+}
+
+.qrCodeImage {
+  max-width: 250px;
+  max-height: 250px;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.qrIcon {
+  font-size: 4rem;
+  color: #8B4513;
+  margin-bottom: 0.5rem;
+}
+
+.qrCodePlaceholder p {
+  margin: 0;
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.qrAmount {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #8B4513;
+  margin: 0.5rem 0;
+  padding: 0.5rem 1rem;
+  background: #f8f8f8;
+  border-radius: 8px;
+}
+
+.qrCodePlaceholder small,
+.qrCodeImageWrapper small {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.qrCodeUpload {
+  display: flex;
+  justify-content: center;
+}
+
+.qrCodeUploadInput {
+  display: none;
+}
+
+.qrCodeUploadLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #8B4513;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.qrCodeUploadLabel:hover {
+  background: #A0522D;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+/* Invoice Preview */
+.invoicePreview {
+  background: #f8f8f8;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+}
+
+.invoiceHeader {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #8B4513;
+}
+
+.invoiceHeader h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #8B4513;
+  font-weight: bold;
+}
+
+.invoiceHeader p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.invoiceInfo {
+  color: #333;
+}
+
+.invoiceRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.invoiceRow span:first-child {
+  font-weight: 500;
+  color: #666;
+}
+
+.invoiceRow span:last-child {
+  font-weight: 600;
+  color: #333;
+}
+
+.invoiceDivider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 0.75rem 0;
+}
+
+.invoiceItems {
+  margin: 1rem 0;
+}
+
+.invoiceItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.invoiceItem:last-child {
+  border-bottom: none;
+}
+
+.invoiceItemName {
+  font-weight: 500;
+  color: #333;
+  margin-right: 0.5rem;
+}
+
+.invoiceItemQty {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.invoiceTotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.invoiceTotalAmount {
+  font-size: 1.3rem;
+  color: #8B4513;
+}
+
+/* Payment Modal Actions */
+.paymentModalActions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f8f8;
+}
+
+.cancelPaymentBtn {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelPaymentBtn:hover:not(:disabled) {
+  border-color: #999;
+  background: #f0f0f0;
+}
+
+.cancelPaymentBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirmPaymentBtn {
+  flex: 2;
+  padding: 0.75rem 1.5rem;
+  background: #8B4513;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.confirmPaymentBtn:hover:not(:disabled) {
+  background: #A0522D;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+.confirmPaymentBtn:disabled {
+  background: #ddd;
+  color: #999;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Print Styles */
+@media print {
+  .paymentModalOverlay {
+    position: static;
+    background: white;
+  }
+
+  .paymentModalContent {
+    max-width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+
+  .paymentModalHeader,
+  .paymentModalActions,
+  .paymentSection:not(:last-child),
+  .orderTypeButtons,
+  .tableGrid,
+  .tableInput,
+  .paymentMethodButtons,
+  .qrCodeContainer {
+    display: none;
+  }
+
+  .invoicePreview {
+    border: none;
+    background: white;
+  }
+}

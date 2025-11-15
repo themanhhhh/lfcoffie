@@ -1,5 +1,5 @@
 'use client'
-import React, { FormEvent, useMemo, useState, useEffect } from 'react'
+import React, { FormEvent, useMemo, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   FaArrowLeft,
@@ -10,7 +10,8 @@ import {
   FaFileInvoice
 } from 'react-icons/fa'
 import styles from './cashflow.module.css'
-import { apiFetch, ApiError } from '../../../lib/api'
+import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError } from '../../../lib/api'
+import { useAuth } from '../../../contexts/AuthContext'
 
 type TransactionType = 'in' | 'out'
 
@@ -31,19 +32,6 @@ interface CashFormState {
   reference: string
 }
 
-interface PhieuThuDto {
-  maPT: string
-  ngay: string
-  nhanVien?: { tenNV: string }
-  chiTietPhieuThus?: Array<{ soTien: number; tenKhoanThu?: string }>
-}
-
-interface PhieuChiDto {
-  maPC: string
-  ngay: string
-  nhanVien?: { tenNV: string }
-  chiTietPhieuChis?: Array<{ soTien: number; tenKhoanChi?: string; loaiChiPhi?: string }>
-}
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   style: 'currency',
@@ -94,83 +82,103 @@ const CashflowPage = () => {
   const [cashOutForm, setCashOutForm] = useState<CashFormState>(() => buildInitialFormState())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentPhienLamViec, setCurrentPhienLamViec] = useState<string | null>(null)
+  const [nghiepVuThuId, setNghiepVuThuId] = useState<string>('NV001')
+  const [nghiepVuChiId, setNghiepVuChiId] = useState<string>('NV002')
+  
+  const { user } = useAuth()
 
-  useEffect(() => {
-    let ignore = false
-    const loadData = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const today = new Date().toISOString().split('T')[0]
-        const [phieuThuData, phieuChiData] = await Promise.all([
-          apiFetch<PhieuThuDto[]>(`/api/phieuthu?startDate=${today}&endDate=${today}`),
-          apiFetch<PhieuChiDto[]>(`/api/phieuchi?startDate=${today}&endDate=${today}`)
-        ])
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Load nghiepvu for thu and chi
+      const [nghiepVuThu, nghiepVuChi] = await Promise.all([
+        nghiepVuApi.getAll({ loaiGiaoDich: 'thu' }),
+        nghiepVuApi.getAll({ loaiGiaoDich: 'chi' })
+      ])
+      
+      if (nghiepVuThu.length > 0) {
+        setNghiepVuThuId(nghiepVuThu[0].MaNghiepVu)
+      }
+      if (nghiepVuChi.length > 0) {
+        setNghiepVuChiId(nghiepVuChi[0].MaNghiepVu)
+      }
 
-        if (ignore) return
-
-        const allTransactions: Transaction[] = []
-        let id = 1
-
-        // Transform phieu thu
-        phieuThuData.forEach((pt) => {
-          pt.chiTietPhieuThus?.forEach((ct) => {
-            const date = new Date(pt.ngay)
-            allTransactions.push({
-              id: id++,
-              type: 'in',
-              amount: ct.soTien,
-              reason: ct.tenKhoanThu || 'Thu tiền',
-              performedBy: pt.nhanVien?.tenNV || 'N/A',
-              time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
-              reference: pt.maPT
-            })
-          })
-        })
-
-        // Transform phieu chi
-        phieuChiData.forEach((pc) => {
-          pc.chiTietPhieuChis?.forEach((ct) => {
-            const date = new Date(pc.ngay)
-            allTransactions.push({
-              id: id++,
-              type: 'out',
-              amount: ct.soTien,
-              reason: ct.loaiChiPhi || ct.tenKhoanChi || 'Chi tiền',
-              performedBy: pc.nhanVien?.tenNV || 'N/A',
-              time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
-              reference: pc.maPC
-            })
-          })
-        })
-
-        // Sắp xếp theo thời gian
-        allTransactions.sort((a, b) => {
-          const [aH, aM] = a.time.split(':').map(Number)
-          const [bH, bM] = b.time.split(':').map(Number)
-          return (bH * 60 + bM) - (aH * 60 + aM)
-        })
-
-        setTransactions(allTransactions)
-      } catch (err) {
-        if (ignore) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Không thể tải dữ liệu giao dịch. Vui lòng thử lại.'
+      // Load current phien lam viec
+      if (user?.MaNhanVien) {
+        const phienLamViecList = await phienLamViecApi.getAll()
+        const activePhien = phienLamViecList.find(
+          (plv) => plv.MaNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
         )
-      } finally {
-        if (!ignore) {
-          setLoading(false)
+        if (activePhien) {
+          setCurrentPhienLamViec(activePhien.MaPhienLamViec)
         }
       }
-    }
 
-    loadData()
-    return () => {
-      ignore = true
+      // Load thu chi data
+      const [thuData, chiData] = await Promise.all([
+        thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'thu' }),
+        thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'chi' })
+      ])
+
+      const allTransactions: Transaction[] = []
+      let id = 1
+
+      // Transform thu data
+      thuData.forEach((tc) => {
+        const date = new Date(tc.ThoiGian)
+        allTransactions.push({
+          id: id++,
+          type: 'in',
+          amount: tc.SoTien,
+          reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Thu tiền',
+          performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
+          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+          reference: tc.MaGiaoDich
+        })
+      })
+
+      // Transform chi data
+      chiData.forEach((tc) => {
+        const date = new Date(tc.ThoiGian)
+        allTransactions.push({
+          id: id++,
+          type: 'out',
+          amount: tc.SoTien,
+          reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Chi tiền',
+          performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
+          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+          reference: tc.MaGiaoDich
+        })
+      })
+
+      // Sắp xếp theo thời gian
+      allTransactions.sort((a, b) => {
+        const [aH, aM] = a.time.split(':').map(Number)
+        const [bH, bM] = b.time.split(':').map(Number)
+        return (bH * 60 + bM) - (aH * 60 + aM)
+      })
+
+      setTransactions(allTransactions)
+    } catch (err) {
+      console.error('Error loading cashflow data:', err)
+      const errorMessage = err instanceof ApiError
+        ? err.message
+        : err instanceof Error
+        ? err.message
+        : 'Không thể tải dữ liệu giao dịch. Vui lòng thử lại.'
+      setError(errorMessage)
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }, [user])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const totals = useMemo(() => {
     return transactions.reduce(
@@ -211,53 +219,27 @@ const CashflowPage = () => {
       return
     }
 
+    if (!currentPhienLamViec) {
+      alert('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
+      return
+    }
+
     try {
-      const endpoint = type === 'in' ? '/api/phieuthu' : '/api/phieuchi'
-      const payload = type === 'in' 
-        ? {
-            maNV: 'NV001', // TODO: Get from logged in user
-            soTien: amount,
-            lyDoThu: form.reason
-          }
-        : {
-            maNV: 'NV001', // TODO: Get from logged in user
-            soTien: amount,
-            loaiChiPhi: form.reason,
-            tenKhoanChi: form.reason,
-            hinhThuc: 'Tiền mặt'
-          }
+      // Generate MaGiaoDich
+      const timestamp = Date.now().toString().slice(-6)
+      const maGiaoDich = `GD${timestamp}`
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        throw new Error('Lỗi khi tạo giao dịch')
+      const payload = {
+        MaGiaoDich: maGiaoDich,
+        MaPhienLamViec: currentPhienLamViec,
+        MaNghiepVu: type === 'in' ? nghiepVuThuId : nghiepVuChiId,
+        ThoiGian: new Date().toISOString(),
+        PhuongThucThanhToan: 'Tiền mặt',
+        GhiChu: form.reason,
+        SoTien: amount
       }
 
-      const timeStamp = new Date()
-      const time = timeStamp
-        .toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-        .toString()
-
-      const nextId = transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1
-
-      setTransactions(prev => [
-        {
-          id: nextId,
-          type,
-          amount,
-          reason: form.reason,
-          performedBy: form.performedBy,
-          time,
-          reference: form.reference || undefined
-        },
-        ...prev
-      ])
+      await thuChiApi.create(payload)
 
       if (type === 'in') {
         setCashInForm(buildInitialFormState())
@@ -265,9 +247,12 @@ const CashflowPage = () => {
         setCashOutForm(buildInitialFormState())
       }
 
+      // Reload data to get the latest transactions
+      await loadData()
+
       alert('Ghi nhận giao dịch thành công!')
     } catch (err) {
-      alert('Lỗi khi ghi nhận giao dịch: ' + (err instanceof Error ? err.message : 'Unknown error'))
+      alert('Lỗi khi ghi nhận giao dịch: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
