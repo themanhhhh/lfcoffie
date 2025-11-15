@@ -12,17 +12,22 @@ export class ThuChiController {
       let where: any = {};
       
       if (startDate && endDate) {
-        where.ThoiGian = Between(new Date(startDate as string), new Date(endDate as string));
+        // Set start date to beginning of day and end date to end of day
+        const start = new Date(startDate as string);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+        where.ThoiGian = Between(start, end);
       }
       
       const list = await this.repository.find({
         where,
-        relations: ['phienLamViec', 'nghiepVu']
+        relations: ['phienLamViec', 'nghiepVu', 'phienLamViec.nhanVien']
       });
 
       let filtered = list;
       if (loaiGiaoDich) {
-        filtered = list.filter(item => item.nghiepVu.LoaiGiaoDich === loaiGiaoDich);
+        filtered = list.filter(item => item.nghiepVu?.LoaiGiaoDich === loaiGiaoDich);
       }
 
       return res.json(filtered);

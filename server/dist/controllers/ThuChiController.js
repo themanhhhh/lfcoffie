@@ -13,15 +13,20 @@ class ThuChiController {
             const { startDate, endDate, loaiGiaoDich } = req.query;
             let where = {};
             if (startDate && endDate) {
-                where.ThoiGian = (0, typeorm_1.Between)(new Date(startDate), new Date(endDate));
+                // Set start date to beginning of day and end date to end of day
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                where.ThoiGian = (0, typeorm_1.Between)(start, end);
             }
             const list = await this.repository.find({
                 where,
-                relations: ['phienLamViec', 'nghiepVu']
+                relations: ['phienLamViec', 'nghiepVu', 'phienLamViec.nhanVien']
             });
             let filtered = list;
             if (loaiGiaoDich) {
-                filtered = list.filter(item => item.nghiepVu.LoaiGiaoDich === loaiGiaoDich);
+                filtered = list.filter(item => item.nghiepVu?.LoaiGiaoDich === loaiGiaoDich);
             }
             return res.json(filtered);
         }

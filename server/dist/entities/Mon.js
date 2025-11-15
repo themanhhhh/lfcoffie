@@ -46,6 +46,10 @@ __decorate([
     __metadata("design:type", Object)
 ], Mon.prototype, "TrangThai", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 255, nullable: true }),
+    __metadata("design:type", Object)
+], Mon.prototype, "imgUrl", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => ChiTietHoaDon_1.ChiTietDonHang, (ctdh) => ctdh.mon),
     __metadata("design:type", Array)
 ], Mon.prototype, "chiTietDonHangs", void 0);

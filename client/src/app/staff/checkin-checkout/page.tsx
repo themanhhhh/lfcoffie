@@ -11,7 +11,7 @@ import {
   FaClipboardCheck
 } from 'react-icons/fa'
 import styles from './checkinCheckout.module.css'
-import { apiFetch, ApiError } from '../../../lib/api'
+import { useAuth } from '../../../contexts/AuthContext'
 
 type ShiftStatus = 'pending' | 'working' | 'completed'
 
@@ -34,99 +34,33 @@ interface StaffShift {
   history: HistoryItem[]
 }
 
-interface NhanVienDto {
-  maNV: string
-  tenNV: string
-  chucVu: string
-  caLam: string
-}
-
-const initialStaff: StaffShift[] = [
-  {
-    id: 'S001',
-    name: 'Nguyễn Thảo',
-    role: 'Thu ngân',
-    status: 'working',
-    checkIn: '07:45',
-    history: [{ action: 'checkin', time: '07:45', note: 'Đến sớm chuẩn bị quầy' }]
-  },
-  {
-    id: 'S002',
-    name: 'Trần Hữu Minh',
-    role: 'Pha chế',
-    status: 'working',
-    checkIn: '07:55',
-    history: [{ action: 'checkin', time: '07:55' }]
-  },
-  {
-    id: 'S003',
-    name: 'Lê Mỹ An',
-    role: 'Phục vụ',
-    status: 'pending',
-    history: []
-  },
-  {
-    id: 'S004',
-    name: 'Phạm Quốc Huy',
-    role: 'Quản lý ca',
-    status: 'completed',
-    checkIn: '06:50',
-    checkOut: '08:15',
-    history: [
-      { action: 'checkin', time: '06:50', note: 'Chuẩn bị bàn giao ca' },
-      { action: 'checkout', time: '08:15', note: 'Bàn giao sổ quỹ' }
-    ]
-  }
-]
-
 const CheckinCheckoutPage = () => {
   const [staffShifts, setStaffShifts] = useState<StaffShift[]>([])
   const [selectedStaffId, setSelectedStaffId] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    let ignore = false
-    const loadData = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const nhanVienData = await apiFetch<NhanVienDto[]>('/api/nhanvien')
-        
-        if (ignore) return
-
-        // Transform data - giả định tất cả pending trừ khi đã check-in
-        const mapped: StaffShift[] = nhanVienData.map((nv) => ({
-          id: nv.maNV,
-          name: nv.tenNV,
-          role: nv.chucVu,
-          status: 'pending' as ShiftStatus,
-          history: []
-        }))
-
-        setStaffShifts(mapped)
-        if (mapped.length > 0) {
-          setSelectedStaffId(mapped[0].id)
-        }
-      } catch (err) {
-        if (ignore) return
-        setError(
-          err instanceof ApiError
-            ? err.message
-            : 'Không thể tải danh sách nhân viên. Vui lòng thử lại.'
-        )
-      } finally {
-        if (!ignore) {
-          setLoading(false)
-        }
-      }
+    if (!user?.MaNhanVien) {
+      setError('Không tìm thấy thông tin nhân viên')
+      setLoading(false)
+      return
     }
 
-    loadData()
-    return () => {
-      ignore = true
-    }
-  }, [])
+    // Sử dụng trực tiếp thông tin từ user context
+    const mapped: StaffShift[] = [{
+      id: user.MaNhanVien,
+      name: user.TenNhanVien || 'Không tên',
+      role: user.ChucVu || 'Nhân viên',
+      status: 'pending' as ShiftStatus,
+      history: []
+    }]
+
+    setStaffShifts(mapped)
+    setSelectedStaffId(user.MaNhanVien)
+    setLoading(false)
+  }, [user])
 
   const selectedStaff = useMemo(
     () => staffShifts.find(staff => staff.id === selectedStaffId),
@@ -230,30 +164,29 @@ const CheckinCheckoutPage = () => {
 
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
-          <h2><FaClipboardCheck /> Danh sách ca hôm nay</h2>
-          <ul>
-            {staffShifts.map(staff => (
-              <li
-                key={staff.id}
-                className={`${styles.staffItem} ${
-                  selectedStaffId === staff.id ? styles.staffItemActive : ''
-                }`}
-                onClick={() => setSelectedStaffId(staff.id)}
-              >
-                <div className={styles.staffInfo}>
-                  <strong>{staff.name}</strong>
-                  <span><FaUserTie /> {staff.role}</span>
-                </div>
-                <div className={`${styles.statusBadge} ${statusClass[staff.status]}`}>
-                  {statusLabel[staff.status]}
-                </div>
-                <div className={styles.timeInfo}>
-                  <span><FaSignInAlt /> {staff.checkIn || '—'}</span>
-                  <span><FaSignOutAlt /> {staff.checkOut || '—'}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <h2><FaClipboardCheck /> Thông tin ca làm việc</h2>
+          {staffShifts && staffShifts.length > 0 && (
+            <ul>
+              {staffShifts.map((staff) => (
+                <li
+                  key={staff.id}
+                  className={`${styles.staffItem} ${styles.staffItemActive}`}
+                >
+                  <div className={styles.staffInfo}>
+                    <strong>{staff.name}</strong>
+                    <span><FaUserTie /> {staff.role}</span>
+                  </div>
+                  <div className={`${styles.statusBadge} ${statusClass[staff.status]}`}>
+                    {statusLabel[staff.status]}
+                  </div>
+                  <div className={styles.timeInfo}>
+                    <span><FaSignInAlt /> {staff.checkIn || '—'}</span>
+                    <span><FaSignOutAlt /> {staff.checkOut || '—'}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
 
         <section className={styles.content}>
