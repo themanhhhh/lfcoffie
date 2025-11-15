@@ -21,13 +21,13 @@
 
 .pageHeader h1 {
   margin: 0;
-  color: #3f2c1f;
+  color: #000000;
   font-size: 2rem;
 }
 
 .pageHeader p {
   margin: 0.35rem 0 0;
-  color: #7d6d5b;
+  color: #000000;
   font-size: 0.95rem;
 }
 
@@ -45,13 +45,13 @@
   justify-content: space-between;
   align-items: flex-start;
   box-shadow: 0 12px 24px rgba(139, 69, 19, 0.12);
-  color: #3f2c1f;
+  color: #000000;
 }
 
 .summaryCard span {
   display: block;
   font-size: 0.95rem;
-  color: #7d6d5b;
+  color: #000000;
 }
 
 .summaryCard strong {
@@ -98,7 +98,7 @@
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   box-shadow: 0 10px 20px rgba(139, 69, 19, 0.08);
-  color: #7d6d5b;
+  color: #000000;
 }
 
 .searchBox input {
@@ -106,7 +106,7 @@
   outline: none;
   flex: 1;
   font-size: 0.95rem;
-  color: #3f2c1f !important;
+  color: #000000 !important;
   background: transparent !important;
   background-color: transparent !important;
 }
@@ -115,7 +115,7 @@
 .searchBox input:-webkit-autofill:hover,
 .searchBox input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px white inset !important;
-  -webkit-text-fill-color: #3f2c1f !important;
+  -webkit-text-fill-color: #000000 !important;
 }
 
 .filters {
@@ -136,7 +136,7 @@
   padding: 0.7rem 1rem;
   background: white;
   font-size: 0.95rem;
-  color: #3f2c1f;
+  color: #000000;
   min-width: 170px;
   box-shadow: 0 8px 16px rgba(139, 69, 19, 0.06);
 }
@@ -183,7 +183,7 @@
 
 .tableWrapper thead {
   background: #f6ecdf;
-  color: #6b5848;
+  color: #000000;
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.04em;
@@ -194,6 +194,7 @@
   padding: 1rem 1.25rem;
   text-align: left;
   border-bottom: 1px solid #f0e6da;
+  color: #000000;
 }
 
 .tableWrapper tbody tr:hover {
@@ -204,7 +205,7 @@
 .tableState {
   text-align: center;
   padding: 2rem;
-  color: #7d6d5b;
+  color: #000000;
   font-size: 0.95rem;
 }
 
@@ -220,17 +221,18 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #3f2c1f;
+  color: #000000;
 }
 
 .staffCell strong {
   font-size: 0.95rem;
   display: block;
+  color: #000000;
 }
 
 .staffCell span {
   font-size: 0.85rem;
-  color: #7d6d5b;
+  color: #000000;
 }
 
 .statusTag {
@@ -245,23 +247,26 @@
 
 .statusActive {
   background: rgba(40, 167, 69, 0.15);
-  color: #1f7a44;
+  color: #000000;
+  border: 1px solid #28a745;
 }
 
 .statusProbation {
   background: rgba(13, 110, 253, 0.12);
-  color: #0b5ed7;
+  color: #000000;
+  border: 1px solid #0d6efd;
 }
 
 .statusLeave {
   background: rgba(255, 193, 7, 0.18);
-  color: #c88f00;
+  color: #000000;
+  border: 1px solid #ffc107;
 }
 
 .emptyState {
   text-align: center;
   padding: 2.5rem 1rem;
-  color: #7d6d5b;
+  color: #000000;
   font-size: 0.95rem;
 }
 
@@ -273,17 +278,18 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  color: #3f2c1f;
+  color: #000000;
 }
 
 .detailHeader h3 {
   margin: 0;
   font-size: 1.4rem;
+  color: #000000;
 }
 
 .detailHeader span {
   display: block;
-  color: #7d6d5b;
+  color: #000000;
   margin: 0.35rem 0;
 }
 
@@ -299,7 +305,7 @@
 }
 
 .detailStats span {
-  color: #7d6d5b;
+  color: #000000;
   display: block;
   margin-bottom: 0.3rem;
 }
@@ -309,13 +315,14 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  color: #000000;
 }
 
 .detailList {
   display: grid;
   gap: 0.75rem;
   font-size: 0.95rem;
-  color: #4a3b2b;
+  color: #000000;
 }
 
 .detailList div {
@@ -343,7 +350,7 @@
 
 .detailPlaceholder {
   text-align: center;
-  color: #7d6d5b;
+  color: #000000;
   margin-top: 2rem;
   font-size: 0.95rem;
 }

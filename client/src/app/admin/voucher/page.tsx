@@ -699,7 +699,7 @@ const VoucherPage = () => {
 
         {/* Modal for Add/Edit Voucher */}
         {showModal && (
-          <div className={styles.modalOverlay} onClick={handleCloseModal}>
+          <div key="voucher-modal" className={styles.modalOverlay} onClick={handleCloseModal}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <h2>{editingVoucher ? 'Chỉnh sửa voucher' : 'Tạo voucher mới'}</h2>
@@ -829,7 +829,6 @@ const VoucherPage = () => {
           </div>
         )}
     </div>
-  
   )
 }
 

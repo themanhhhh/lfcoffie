@@ -16,7 +16,7 @@
 .headerMain h1 {
   margin: 0 0 0.5rem 0;
   font-size: 2rem;
-  color: #333;
+  color: #000000;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -24,7 +24,7 @@
 
 .headerMain p {
   margin: 0;
-  color: #666;
+  color: #000000;
   font-size: 1rem;
 }
 
@@ -42,12 +42,12 @@
 
 .statItem span {
   font-size: 0.9rem;
-  color: #666;
+  color: #000000;
 }
 
 .statItem strong {
   font-size: 1.5rem;
-  color: #8B4513;
+  color: #000000;
   font-weight: 700;
 }
 
@@ -73,7 +73,7 @@
 }
 
 .searchBox svg {
-  color: #666;
+  color: #000000;
   font-size: 1.1rem;
 }
 
@@ -84,7 +84,7 @@
   font-size: 1rem;
   background: transparent !important;
   background-color: transparent !important;
-  color: #333 !important;
+  color: #000000 !important;
 }
 
 .filterGroup {
@@ -100,6 +100,7 @@
   background: white;
   font-size: 1rem;
   cursor: pointer;
+  color: #000000;
 }
 
 .tableContainer {
@@ -122,13 +123,14 @@
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: #333;
+  color: #000000;
   border-bottom: 2px solid #e0e0e0;
 }
 
 .ordersTable td {
   padding: 1rem;
   border-bottom: 1px solid #f1f3f4;
+  color: #000000;
 }
 
 .ordersTable tbody tr:hover {
@@ -138,12 +140,12 @@
 .orderCode {
   font-family: 'Courier New', monospace;
   font-weight: 600;
-  color: #8B4513;
+  color: #000000;
 }
 
 .totalAmount {
   font-weight: 600;
-  color: #28a745;
+  color: #000000;
 }
 
 .actions {
@@ -185,7 +187,7 @@
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
-  color: #999;
+  color: #000000;
 }
 
 .emptyState svg {
@@ -196,12 +198,12 @@
 
 .emptyState h3 {
   margin: 0 0 0.5rem 0;
-  color: #666;
+  color: #000000;
 }
 
 .emptyState p {
   margin: 0;
-  color: #999;
+  color: #000000;
 }
 
 /* Modal Styles */
@@ -240,14 +242,14 @@
 .modalHeader h2 {
   margin: 0;
   font-size: 1.5rem;
-  color: #333;
+  color: #000000;
 }
 
 .closeBtn {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #666;
+  color: #000000;
   cursor: pointer;
   padding: 0.5rem;
   display: flex;
@@ -259,7 +261,7 @@
 
 .closeBtn:hover {
   background-color: #f0f0f0;
-  color: #333;
+  color: #000000;
 }
 
 .modalBody {
@@ -286,11 +288,11 @@
 
 .infoRow span:first-child {
   font-weight: 600;
-  color: #666;
+  color: #000000;
 }
 
 .infoRow span:last-child {
-  color: #333;
+  color: #000000;
 }
 
 .detailsTable {
@@ -300,7 +302,7 @@
 .detailsTable h3 {
   margin: 0 0 1rem 0;
   font-size: 1.2rem;
-  color: #333;
+  color: #000000;
 }
 
 .detailsTable table {
@@ -313,13 +315,14 @@
   text-align: left;
   background: #f8f9fa;
   font-weight: 600;
-  color: #333;
+  color: #000000;
   border-bottom: 2px solid #e0e0e0;
 }
 
 .detailsTable td {
   padding: 0.75rem;
   border-bottom: 1px solid #f1f3f4;
+  color: #000000;
 }
 
 .detailsTable tfoot {
