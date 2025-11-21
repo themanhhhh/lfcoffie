@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { FaArrowLeft, FaDoorOpen, FaMoneyBillWave, FaClipboardList, FaClock, FaUserClock, FaCheckCircle } from 'react-icons/fa'
+import { toast } from 'react-hot-toast'
 import styles from './openShift.module.css'
 
 type ShiftKey = 'morning' | 'afternoon' | 'evening'
@@ -45,8 +46,7 @@ const CASH_TEMPLATE: CashRow[] = [
   { label: 'Tiền 50.000đ', value: 50000, quantity: 0 },
   { label: 'Tiền 20.000đ', value: 20000, quantity: 0 },
   { label: 'Tiền 10.000đ', value: 10000, quantity: 0 },
-  { label: 'Tiền 5.000đ', value: 5000, quantity: 0 },
-  { label: 'Tiền xu / lẻ', value: 1000, quantity: 0 }
+  { label: 'Tiền 5.000đ', value: 5000, quantity: 0 }
 ]
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
@@ -94,7 +94,7 @@ const OpenShiftPage = () => {
       `Tiền đầu phiên: ${currencyFormatter.format(totalOpeningCash)}`
     ].join('\n')
 
-    alert(`Xác nhận mở phiên làm việc:\n\n${summary}`)
+    toast.success(`Xác nhận mở phiên làm việc:\n${summary}`)
   }
 
   return (
@@ -256,7 +256,6 @@ const OpenShiftPage = () => {
             <div className={styles.summaryCard}>
               <h3>Quỹ đầu ca</h3>
               <p className={styles.summaryAmount}>{currencyFormatter.format(totalOpeningCash)}</p>
-              <span>Đảm bảo phù hợp với hạn mức yêu cầu</span>
             </div>
           </div>
 

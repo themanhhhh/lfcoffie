@@ -3,17 +3,15 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import {
   FaSearch,
-  FaEdit,
   FaTrash,
   FaEye,
   FaReceipt,
-  FaCalendarAlt,
-  FaMoneyBillWave,
   FaFilter,
   FaTimes
 } from 'react-icons/fa'
 import styles from './orders.module.css'
 import { donHangApi, chiTietDonHangApi, ApiError, DonHang, ChiTietDonHang } from '../../../lib/api'
+import { toast } from 'react-hot-toast'
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState<DonHang[]>([])
@@ -80,9 +78,9 @@ const OrdersPage = () => {
     try {
       await donHangApi.delete(maDonHang)
       await loadOrders()
-      alert('Xóa đơn hàng thành công!')
+      toast.success('Xóa đơn hàng thành công!')
     } catch (err) {
-      alert('Lỗi khi xóa đơn hàng: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi khi xóa đơn hàng: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 

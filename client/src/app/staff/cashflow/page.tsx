@@ -12,6 +12,7 @@ import {
 import styles from './cashflow.module.css'
 import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError } from '../../../lib/api'
 import { useAuth } from '../../../contexts/AuthContext'
+import { toast } from 'react-hot-toast'
 
 type TransactionType = 'in' | 'out'
 
@@ -215,12 +216,12 @@ const CashflowPage = () => {
     const amount = Number(form.amount.replace(/\D/g, '')) || Number(form.amount)
 
     if (!form.reason || !form.performedBy || !amount) {
-      alert('Vui lòng nhập đầy đủ thông tin và số tiền hợp lệ.')
+      toast.error('Vui lòng nhập đầy đủ thông tin và số tiền hợp lệ.')
       return
     }
 
     if (!currentPhienLamViec) {
-      alert('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
+      toast.error('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
       return
     }
 
@@ -250,9 +251,9 @@ const CashflowPage = () => {
       // Reload data to get the latest transactions
       await loadData()
 
-      alert('Ghi nhận giao dịch thành công!')
+      toast.success('Ghi nhận giao dịch thành công!')
     } catch (err) {
-      alert('Lỗi khi ghi nhận giao dịch: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi khi ghi nhận giao dịch: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 

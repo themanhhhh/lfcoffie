@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fa'
 import styles from './voucher.module.css'
 import { apiFetch, ApiError } from '../../../lib/api'
+import { toast } from 'react-hot-toast'
 
 type VoucherType = 'percentage' | 'fixed' | 'free_item'
 type VoucherStatus = 'active' | 'inactive' | 'expired'
@@ -251,7 +252,7 @@ const VoucherPage = () => {
 
   const copyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code)
-    alert(`Đã sao chép mã: ${code}`)
+    toast.success(`Đã sao chép mã: ${code}`)
   }
 
   const loadVouchersData = async () => {
@@ -342,7 +343,7 @@ const VoucherPage = () => {
             LoaiCTKM: formData.loaiKM
           })
         })
-        alert('Cập nhật voucher thành công!')
+        toast.success('Cập nhật voucher thành công!')
       } else {
         // Create
         await apiFetch('/api/ctkm', {
@@ -353,13 +354,13 @@ const VoucherPage = () => {
             LoaiCTKM: formData.loaiKM
           })
         })
-        alert('Thêm voucher mới thành công!')
+        toast.success('Thêm voucher mới thành công!')
       }
 
       setShowModal(false)
       await loadVouchersData()
     } catch (err) {
-      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
@@ -382,9 +383,9 @@ const VoucherPage = () => {
       if (selectedVoucher?.id === voucherId) {
         setSelectedVoucher(null)
       }
-      alert('Xóa voucher thành công!')
+      toast.success('Xóa voucher thành công!')
     } catch (err) {
-      alert('Lỗi khi xóa voucher: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi khi xóa voucher: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 

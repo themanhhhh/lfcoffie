@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fa'
 import styles from './material.module.css'
 import { apiFetch, ApiError } from '../../../lib/api'
+import { toast } from 'react-hot-toast'
 
 type ReceiptStatus = 'completed' | 'pending' | 'scheduled'
 
@@ -245,9 +246,9 @@ const MaterialPage = () => {
       })
       
       await loadIngredientsData()
-      alert('Xóa nguyên liệu thành công!')
+      toast.success('Xóa nguyên liệu thành công!')
     } catch (err) {
-      alert('Lỗi khi xóa nguyên liệu: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi khi xóa nguyên liệu: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
@@ -261,20 +262,20 @@ const MaterialPage = () => {
           method: 'PUT',
           body: JSON.stringify(formData)
         })
-        alert('Cập nhật nguyên liệu thành công!')
+        toast.success('Cập nhật nguyên liệu thành công!')
       } else {
         // Create
         await apiFetch('/api/nguyenlieu', {
           method: 'POST',
           body: JSON.stringify(formData)
         })
-        alert('Thêm nguyên liệu mới thành công!')
+        toast.success('Thêm nguyên liệu mới thành công!')
       }
 
       setShowModal(false)
       await loadIngredientsData()
     } catch (err) {
-      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
@@ -580,7 +581,6 @@ const MaterialPage = () => {
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }

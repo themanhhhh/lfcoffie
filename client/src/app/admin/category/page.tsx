@@ -10,7 +10,8 @@ import {
   FaList
 } from 'react-icons/fa'
 import styles from './category.module.css'
-import { apiFetch, ApiError } from '../../../lib/api'
+import { apiFetch, ApiError, Mon } from '../../../lib/api'
+import { toast } from 'react-hot-toast'
 
 interface Category {
   maLoaiMon: string
@@ -43,7 +44,7 @@ const CategoryPage = () => {
     setError(null)
     try {
       // Get all mon and extract unique LoaiMon
-      const monData = await apiFetch<any[]>('/api/mon')
+      const monData = await apiFetch<Mon[]>('/api/mon')
       // Extract unique LoaiMon values
       const uniqueLoaiMon = Array.from(new Set(monData.map(m => m.LoaiMon)))
       // Map to Category format
@@ -81,13 +82,13 @@ const CategoryPage = () => {
     setShowModal(true)
   }
 
-  const handleDeleteCategory = async (category: Category) => {
-    alert('Chức năng xóa danh mục hiện chưa khả dụng. Danh mục được quản lý thông qua các món.')
+  const handleDeleteCategory = async () => {
+    toast('Chức năng xóa danh mục hiện chưa khả dụng. Danh mục được quản lý thông qua các món.')
   }
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault()
-    alert('Chức năng thêm/sửa danh mục hiện chưa khả dụng. Danh mục được tự động tạo từ LoaiMon của các món. Để thêm danh mục mới, hãy tạo món với LoaiMon mới.')
+    toast('Chức năng thêm/sửa danh mục hiện chưa khả dụng. Danh mục được tự động tạo từ LoaiMon của các món. Để thêm danh mục mới, hãy tạo món với LoaiMon mới.')
     setShowModal(false)
   }
 
@@ -163,7 +164,7 @@ const CategoryPage = () => {
                 </button>
                 <button
                   className={styles.deleteBtn}
-                  onClick={() => handleDeleteCategory(category)}
+                  onClick={handleDeleteCategory}
                   title="Xóa"
                 >
                   <FaTrash /> Xóa
@@ -225,7 +226,7 @@ const CategoryPage = () => {
           </div>
         </div>
       )}
-      </div>
+    </div>
   )
 }
 

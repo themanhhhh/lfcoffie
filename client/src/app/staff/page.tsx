@@ -23,6 +23,7 @@ import {
   FaStore,
   FaHome
 } from 'react-icons/fa'
+import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
 import { logo, coffeeBlack } from '../image/index'
@@ -51,9 +52,20 @@ interface Category {
 
 interface CartItem extends Product {
   quantity: number
+  topping?: string[]
+  size?: string
+  sugar?: string
+  ice?: string
+  note?: string
 }
 
 const CATEGORY_ICON_CYCLE: IconType[] = [MdLocalCafe, GiTeapot, MdLocalBar, MdCake, MdFastfood]
+
+interface ShiftInfo {
+  name?: string
+  start?: string
+  end?: string
+}
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price) + ' đ'
@@ -64,12 +76,6 @@ const quickActions = [
     icon: FaDoorOpen,
     title: 'Mở phiên làm việc',
     description: 'Thiết lập ca mới và phân công nhân sự'
-  },
-  {
-    href: '/staff/open-shift',
-    icon: FaMoneyBillWave,
-    title: 'Nhập tiền đầu phiên',
-    description: 'Ghi nhận tiền mặt tại quầy trước khi bán'
   },
   {
     href: '/staff/cashflow',
@@ -101,8 +107,18 @@ const Staff = () => {
   const [selectedTable, setSelectedTable] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('cash')
   const [currentPhienLamViec, setCurrentPhienLamViec] = useState<string | null>(null)
+  const [currentShiftInfo, setCurrentShiftInfo] = useState<ShiftInfo | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [customizeOptions, setCustomizeOptions] = useState({
+    topping: [] as string[],
+    size: 'M',
+    sugar: '100%',
+    ice: 'Bình thường',
+    note: ''
+  })
   
   const { user, logout } = useAuth()
   const router = useRouter()
@@ -141,6 +157,13 @@ const Staff = () => {
           )
           if (activePhien) {
             setCurrentPhienLamViec(activePhien.MaPhienLamViec)
+            if (activePhien.caLam) {
+              setCurrentShiftInfo({
+                name: activePhien.caLam.TenCaLam,
+                start: activePhien.caLam.ThoiGianBatDau,
+                end: activePhien.caLam.ThoiGianKetThuc
+              })
+            }
           }
         }
 
@@ -211,16 +234,56 @@ const Staff = () => {
     return products.filter((product) => product.categoryId === activeCategory)
   }, [activeCategory, products])
 
-  const addToCart = (product: Product) => {
+  const openCustomizeModal = (product: Product) => {
+    setSelectedProduct(product)
+    setCustomizeOptions({
+      topping: [],
+      size: 'M',
+      sugar: '100%',
+      ice: 'Bình thường',
+      note: ''
+    })
+    setShowCustomizeModal(true)
+  }
+
+  const handleAddCustomizedItem = () => {
+    if (!selectedProduct) return
+    
     setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id)
+      const existingItem = prevCart.find(
+        (item) => 
+          item.id === selectedProduct.id &&
+          item.size === customizeOptions.size &&
+          item.sugar === customizeOptions.sugar &&
+          item.ice === customizeOptions.ice &&
+          JSON.stringify(item.topping?.sort()) === JSON.stringify(customizeOptions.topping.sort()) &&
+          item.note === customizeOptions.note
+      )
+      
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === existingItem.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       }
-      return [...prevCart, { ...product, quantity: 1 }]
+      
+      return [...prevCart, {
+        ...selectedProduct,
+        quantity: 1,
+        topping: customizeOptions.topping.length > 0 ? customizeOptions.topping : undefined,
+        size: customizeOptions.size,
+        sugar: customizeOptions.sugar,
+        ice: customizeOptions.ice,
+        note: customizeOptions.note || undefined
+      }]
     })
+    
+    setShowCustomizeModal(false)
+    setSelectedProduct(null)
+    toast.success('Đã thêm món vào đơn hàng')
+  }
+
+  const addToCart = (product: Product) => {
+    openCustomizeModal(product)
   }
 
   const removeFromCart = (productId: string) => {
@@ -251,9 +314,12 @@ const Staff = () => {
   const handleOpenPaymentModal = () => {
     if (cart.length === 0) return
     setShowPaymentModal(true)
-    // Reset payment options
-    setOrderType('dine-in')
-    setSelectedTable('')
+    // Sync table selection with current input when dùng tại quán
+    if (orderType === 'dine-in') {
+      setSelectedTable(tableNumber)
+    } else {
+      setSelectedTable('')
+    }
     setPaymentMethod('cash')
   }
 
@@ -266,13 +332,13 @@ const Staff = () => {
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert('Vui lòng chọn file ảnh')
+        toast.error('Vui lòng chọn file ảnh')
         return
       }
       
       // Validate file size (max 2MB)
       if (file.size > 2 * 1024 * 1024) {
-        alert('Kích thước ảnh không được vượt quá 2MB')
+        toast.error('Kích thước ảnh không được vượt quá 2MB')
         return
       }
 
@@ -288,25 +354,24 @@ const Staff = () => {
 
   const handleProcessPayment = async () => {
     if (!currentPhienLamViec) {
-      alert('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
+      toast.error('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
       return
     }
 
     if (orderType === 'dine-in' && !selectedTable) {
-      alert('Vui lòng chọn số bàn')
+      toast.error('Vui lòng chọn số bàn')
       return
     }
 
     setIsProcessing(true)
     try {
-      const totalAmount = getTotalPrice()
       const now = new Date()
       
       // Tạo mã đơn hàng
       const maDonHang = `DH${Date.now().toString().slice(-6)}`
       
       // Tạo đơn hàng
-      const donHang = await donHangApi.create({
+      await donHangApi.create({
         MaDonHang: maDonHang,
         MaPhienLamViec: currentPhienLamViec,
         Ngay: now.toISOString().split('T')[0],
@@ -335,10 +400,10 @@ const Staff = () => {
         window.print()
       }, 500)
 
-      alert('Thanh toán thành công!')
+      toast.success('Thanh toán thành công!')
       clearCart()
     } catch (err) {
-      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Không thể tạo đơn hàng'))
+      toast.error('Lỗi: ' + (err instanceof ApiError ? err.message : 'Không thể tạo đơn hàng'))
     } finally {
       setIsProcessing(false)
     }
@@ -346,6 +411,34 @@ const Staff = () => {
 
   const getTotalPrice = () =>
     cart.reduce((total, item) => total + item.price * item.quantity, 0)
+
+  useEffect(() => {
+    if (!currentShiftInfo && user?.caLam) {
+      setCurrentShiftInfo({
+        name: user.caLam.TenCaLam,
+        start: user.caLam.ThoiGianBatDau,
+        end: user.caLam.ThoiGianKetThuc
+      })
+    }
+  }, [currentShiftInfo, user])
+
+  const shiftDisplay = useMemo(() => {
+    const info = currentShiftInfo
+    if (!info || (!info.name && !info.start && !info.end)) {
+      return 'Ca hiện tại: Chưa xác định'
+    }
+
+    const parts = []
+    if (info.name) {
+      parts.push(info.name)
+    }
+
+    if (info.start || info.end) {
+      parts.push(`${info.start || '??'} - ${info.end || '??'}`)
+    }
+
+    return `Ca hiện tại: ${parts.join(' · ')}`
+  }, [currentShiftInfo])
 
   return (
     <ProtectedRoute>
@@ -369,7 +462,7 @@ const Staff = () => {
             </div>
           </div>
           <div className={Style.headerRight}>
-            <div className={Style.workTime}>Ca hiện tại: 07:00 - 12:00</div>
+            <div className={Style.workTime}>{shiftDisplay}</div>
             <div className={Style.userIcon}>
               <FaUser />
             </div>
@@ -526,11 +619,22 @@ const Staff = () => {
                   <p>Chưa có món nào trong đơn hàng</p>
                 </div>
               ) : (
-                cart.map((item) => (
-                  <div key={item.id} className={Style.cartItem}>
+                cart.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className={Style.cartItem}>
                     <div className={Style.cartItemInfo}>
                       <h4>{item.name}</h4>
                       <p>{formatPrice(item.price)}</p>
+                      {(item.size || item.sugar || item.ice || item.topping?.length || item.note) && (
+                        <div className={Style.cartItemOptions}>
+                          {item.size && <span>Size: {item.size}</span>}
+                          {item.sugar && <span>Đường: {item.sugar}</span>}
+                          {item.ice && <span>Đá: {item.ice}</span>}
+                          {item.topping && item.topping.length > 0 && (
+                            <span>Topping: {item.topping.join(', ')}</span>
+                          )}
+                          {item.note && <span className={Style.cartItemNote}>Ghi chú: {item.note}</span>}
+                        </div>
+                      )}
                       <div className={Style.quantityControls}>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -587,6 +691,134 @@ const Staff = () => {
           </div>
         </div>
       </div>
+
+      {/* Customize Modal */}
+      {showCustomizeModal && selectedProduct && (
+        <div className={Style.paymentModalOverlay} onClick={() => setShowCustomizeModal(false)}>
+          <div className={Style.paymentModalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={Style.paymentModalHeader}>
+              <h2>Tùy chọn món: {selectedProduct.name}</h2>
+              <button className={Style.closeBtn} onClick={() => setShowCustomizeModal(false)}>
+                <FaTimes />
+              </button>
+            </div>
+
+            <div className={Style.paymentModalBody}>
+              {/* Size Selection */}
+              <div className={Style.paymentSection}>
+                <label>Size *</label>
+                <div className={Style.orderTypeButtons}>
+                  {['S', 'M', 'L'].map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      className={`${Style.orderTypeBtn} ${customizeOptions.size === size ? Style.active : ''}`}
+                      onClick={() => setCustomizeOptions({ ...customizeOptions, size })}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sugar Selection */}
+              <div className={Style.paymentSection}>
+                <label>Đường *</label>
+                <div className={Style.orderTypeButtons}>
+                  {['0%', '25%', '50%', '75%', '100%'].map((sugar) => (
+                    <button
+                      key={sugar}
+                      type="button"
+                      className={`${Style.orderTypeBtn} ${customizeOptions.sugar === sugar ? Style.active : ''}`}
+                      onClick={() => setCustomizeOptions({ ...customizeOptions, sugar })}
+                    >
+                      {sugar}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ice Selection */}
+              <div className={Style.paymentSection}>
+                <label>Đá *</label>
+                <div className={Style.orderTypeButtons}>
+                  {['Không đá', 'Ít đá', 'Bình thường', 'Nhiều đá'].map((ice) => (
+                    <button
+                      key={ice}
+                      type="button"
+                      className={`${Style.orderTypeBtn} ${customizeOptions.ice === ice ? Style.active : ''}`}
+                      onClick={() => setCustomizeOptions({ ...customizeOptions, ice })}
+                    >
+                      {ice}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Topping Selection */}
+              <div className={Style.paymentSection}>
+                <label>Topping (có thể chọn nhiều)</label>
+                <div className={Style.orderTypeButtons} style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {['Sữa', 'Kem', 'Bánh flan', 'Trân châu', 'Thạch', 'Đậu đỏ'].map((topping) => {
+                    const isSelected = customizeOptions.topping.includes(topping)
+                    return (
+                      <button
+                        key={topping}
+                        type="button"
+                        className={`${Style.orderTypeBtn} ${isSelected ? Style.active : ''}`}
+                        onClick={() => {
+                          if (isSelected) {
+                            setCustomizeOptions({
+                              ...customizeOptions,
+                              topping: customizeOptions.topping.filter(t => t !== topping)
+                            })
+                          } else {
+                            setCustomizeOptions({
+                              ...customizeOptions,
+                              topping: [...customizeOptions.topping, topping]
+                            })
+                          }
+                        }}
+                      >
+                        {topping}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Note Input */}
+              <div className={Style.paymentSection}>
+                <label>Ghi chú</label>
+                <textarea
+                  className={Style.tableInput}
+                  placeholder="Nhập ghi chú đặc biệt (nếu có)..."
+                  value={customizeOptions.note}
+                  onChange={(e) => setCustomizeOptions({ ...customizeOptions, note: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <div className={Style.paymentModalActions}>
+                <button
+                  type="button"
+                  className={Style.clearBtn}
+                  onClick={() => setShowCustomizeModal(false)}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  className={Style.paymentBtn}
+                  onClick={handleAddCustomizedItem}
+                >
+                  <FaCheck /> Thêm vào đơn
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Modal */}
       {showPaymentModal && (
@@ -687,10 +919,13 @@ const Staff = () => {
                   <div className={Style.qrCodeContainer}>
                     {qrCodeImage ? (
                       <div className={Style.qrCodeImageWrapper}>
-                        <img 
+                        <Image 
                           src={qrCodeImage} 
                           alt="QR Code thanh toán" 
                           className={Style.qrCodeImage}
+                          width={200}
+                          height={200}
+                          unoptimized
                         />
                         <div className={Style.qrAmount}>
                           {formatPrice(getTotalPrice())}

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa'
 import styles from './checkinCheckout.module.css'
 import { useAuth } from '../../../contexts/AuthContext'
+import { toast } from 'react-hot-toast'
 
 type ShiftStatus = 'pending' | 'working' | 'completed'
 
@@ -77,7 +78,7 @@ const CheckinCheckoutPage = () => {
   const handleCheckIn = () => {
     if (!selectedStaff) return
     if (selectedStaff.status === 'working') {
-      alert('Nhân viên đã check-in trong ca.')
+      toast.error('Nhân viên đã check-in trong ca.')
       return
     }
     const time = formatNow()
@@ -92,11 +93,11 @@ const CheckinCheckoutPage = () => {
   const handleCheckOut = () => {
     if (!selectedStaff) return
     if (selectedStaff.status === 'pending') {
-      alert('Nhân viên chưa check-in.')
+      toast.error('Nhân viên chưa check-in.')
       return
     }
     if (selectedStaff.status === 'completed') {
-      alert('Nhân viên đã kết ca.')
+      toast.error('Nhân viên đã kết ca.')
       return
     }
     const time = formatNow()

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa'
 import { coffeeBlack } from '../image/index'
 import { monApi, ApiError } from '../../lib/api'
+import { toast } from 'react-hot-toast'
 
 interface Category {
   id: string
@@ -219,9 +220,9 @@ const Admin = () => {
     try {
       await monApi.delete(item.id)
       await loadMenuData()
-      alert('Xóa món thành công!')
+      toast.success('Xóa món thành công!')
     } catch (err) {
-      alert('Lỗi khi xóa món: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi khi xóa món: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
@@ -232,17 +233,17 @@ const Admin = () => {
       if (editingProduct) {
         // Update
         await monApi.update(editingProduct.id, formData)
-        alert('Cập nhật món thành công!')
+        toast.success('Cập nhật món thành công!')
       } else {
         // Create
         await monApi.create(formData)
-        alert('Thêm món mới thành công!')
+        toast.success('Thêm món mới thành công!')
       }
 
       setShowModal(false)
       await loadMenuData()
     } catch (err) {
-      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 

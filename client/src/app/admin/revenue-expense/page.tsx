@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa'
 import styles from './revenue-expense.module.css'
 import { thuChiApi, nghiepVuApi, ApiError, ThuChi, NghiepVu } from '../../../lib/api'
+import { toast } from 'react-hot-toast'
 
 const RevenueExpensePage = () => {
   const [transactions, setTransactions] = useState<ThuChi[]>([])
@@ -130,16 +131,16 @@ const RevenueExpensePage = () => {
 
       if (editingTransaction) {
         await thuChiApi.update(editingTransaction.MaGiaoDich, submitData)
-        alert('Cập nhật giao dịch thành công!')
+        toast.success('Cập nhật giao dịch thành công!')
       } else {
         await thuChiApi.create(submitData)
-        alert('Thêm giao dịch mới thành công!')
+        toast.success('Thêm giao dịch mới thành công!')
       }
 
       setShowModal(false)
       await loadData()
     } catch (err) {
-      alert('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
@@ -151,9 +152,9 @@ const RevenueExpensePage = () => {
     try {
       await thuChiApi.delete(maGiaoDich)
       await loadData()
-      alert('Xóa giao dịch thành công!')
+      toast.success('Xóa giao dịch thành công!')
     } catch (err) {
-      alert('Lỗi khi xóa giao dịch: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+      toast.error('Lỗi khi xóa giao dịch: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
   }
 
