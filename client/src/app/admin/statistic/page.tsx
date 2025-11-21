@@ -134,7 +134,9 @@ const StatisticPage = () => {
       ]
     : []
 
-  const totalRevenue = revenueChannels.reduce((sum, item) => sum + item.value, 0)
+  const totalRevenue = revenueChannels
+    .filter(channel => !channel.label.toLowerCase().includes('giao hàng') && !channel.label.toLowerCase().includes('delivery'))
+    .reduce((sum, item) => sum + item.value, 0)
 
   return (
     <div className={styles.container}>
@@ -222,22 +224,26 @@ const StatisticPage = () => {
               <span>Tổng cộng: {totalRevenue.toLocaleString('vi-VN')} ₫</span>
             </div>
             <div className={styles.channelList}>
-              {revenueChannels.map(channel => {
-                const width = totalRevenue > 0 ? Math.round((channel.value / totalRevenue) * 100) : 0
-                return (
-                  <div key={channel.label} className={styles.channelRow}>
-                    <div className={styles.channelLabel}>
-                      <MdOutlineAnalytics /> {channel.label}
+              {revenueChannels
+                .filter(channel => !channel.label.toLowerCase().includes('giao hàng') && !channel.label.toLowerCase().includes('delivery'))
+                .map(channel => {
+                  const filteredChannels = revenueChannels.filter(c => !c.label.toLowerCase().includes('giao hàng') && !c.label.toLowerCase().includes('delivery'))
+                  const filteredTotal = filteredChannels.reduce((sum, c) => sum + c.value, 0)
+                  const width = filteredTotal > 0 ? Math.round((channel.value / filteredTotal) * 100) : 0
+                  return (
+                    <div key={channel.label} className={styles.channelRow}>
+                      <div className={styles.channelLabel}>
+                        <MdOutlineAnalytics /> {channel.label}
+                      </div>
+                      <div className={styles.channelProgress}>
+                        <div style={{ width: `${width}%` }} />
+                      </div>
+                      <div className={styles.channelValue}>
+                        {channel.value.toLocaleString('vi-VN')} ₫
+                      </div>
                     </div>
-                    <div className={styles.channelProgress}>
-                      <div style={{ width: `${width}%` }} />
-                    </div>
-                    <div className={styles.channelValue}>
-                      {channel.value.toLocaleString('vi-VN')} ₫
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
             </div>
           </div>
 
@@ -245,7 +251,7 @@ const StatisticPage = () => {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2>
-                <FaTrophy /> Top 10 món bán chạy
+                <FaTrophy /> Top 5 món bán chạy
               </h2>
               <span>Theo số lượng bán</span>
             </div>

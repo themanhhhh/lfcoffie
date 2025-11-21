@@ -94,7 +94,6 @@ const quickActions = [
 const Staff = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [cart, setCart] = useState<CartItem[]>([])
-  const [customerName, setCustomerName] = useState('')
   const [tableNumber, setTableNumber] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([
@@ -304,7 +303,6 @@ const Staff = () => {
 
   const clearCart = () => {
     setCart([])
-    setCustomerName('')
     setTableNumber('')
     setSelectedTable('')
     setOrderType('dine-in')
@@ -564,15 +562,6 @@ const Staff = () => {
             <h2>Đơn hàng hiện tại</h2>
 
             <div className={Style.customerInfo}>
-              <div className={Style.inputGroup}>
-                <label>Tên khách hàng</label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên khách hàng"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                />
-              </div>
               <div className={Style.inputGroup}>
                 <label>Loại đơn</label>
                 <div className={Style.orderTypeButtons}>
@@ -965,7 +954,7 @@ const Staff = () => {
                   <div className={Style.invoiceInfo}>
                     <div className={Style.invoiceRow}>
                       <span>Khách hàng:</span>
-                      <span>{customerName || 'Khách vãng lai'}</span>
+                      <span>Khách vãng lai</span>
                     </div>
                     {orderType === 'dine-in' && tableNumber && (
                       <div className={Style.invoiceRow}>
