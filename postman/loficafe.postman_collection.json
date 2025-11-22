@@ -995,10 +995,10 @@
       ]
     },
     {
-      "name": "Thẻ bàn",
+      "name": "số thẻ bàn",
       "item": [
         {
-          "name": "Danh sách thẻ bàn",
+          "name": "Danh sách số thẻ bàn",
           "request": {
             "method": "GET",
             "header": [],
@@ -1016,7 +1016,7 @@
           "response": []
         },
         {
-          "name": "Chi tiết thẻ bàn",
+          "name": "Chi tiết số thẻ bàn",
           "request": {
             "method": "GET",
             "header": [],
@@ -1035,7 +1035,7 @@
           "response": []
         },
         {
-          "name": "Tạo thẻ bàn",
+          "name": "Tạo số thẻ bàn",
           "request": {
             "method": "POST",
             "header": [
@@ -1068,7 +1068,7 @@
           "response": []
         },
         {
-          "name": "Cập nhật thẻ bàn",
+          "name": "Cập nhật số thẻ bàn",
           "request": {
             "method": "PUT",
             "header": [
@@ -1102,7 +1102,7 @@
           "response": []
         },
         {
-          "name": "Xóa thẻ bàn",
+          "name": "Xóa số thẻ bàn",
           "request": {
             "method": "DELETE",
             "header": [],

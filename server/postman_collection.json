@@ -866,10 +866,10 @@
 			]
 		},
 		{
-			"name": "Thẻ bàn",
+			"name": "số thẻ bàn",
 			"item": [
 				{
-					"name": "Get All Thẻ bàn",
+					"name": "Get All số thẻ bàn",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -886,7 +886,7 @@
 					}
 				},
 				{
-					"name": "Get Thẻ bàn by ID",
+					"name": "Get số thẻ bàn by ID",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -909,7 +909,7 @@
 					}
 				},
 				{
-					"name": "Create Thẻ bàn",
+					"name": "Create số thẻ bàn",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -934,7 +934,7 @@
 					}
 				},
 				{
-					"name": "Update Thẻ bàn",
+					"name": "Update số thẻ bàn",
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -965,7 +965,7 @@
 					}
 				},
 				{
-					"name": "Delete Thẻ bàn",
+					"name": "Delete số thẻ bàn",
 					"request": {
 						"method": "DELETE",
 						"header": [

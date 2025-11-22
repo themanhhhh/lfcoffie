@@ -56,7 +56,7 @@ if (pm.response.code === 200) {
 - **Món** - CRUD món ăn/đồ uống
 - **Đơn hàng** - CRUD đơn hàng
 - **Chi tiết đơn hàng** - CRUD chi tiết đơn hàng
-- **Thẻ bàn** - CRUD thẻ bàn
+- **số thẻ bàn** - CRUD số thẻ bàn
 - **CTKM** - CRUD chương trình khuyến mãi
 - **Giảm hóa đơn** - CRUD + Get active rules
 - **Giảm món** - CRUD + Get active rules for mon

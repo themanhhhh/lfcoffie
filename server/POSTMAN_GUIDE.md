@@ -89,12 +89,12 @@ if (pm.response.code === 200) {
 - `PUT /api/chitiethoadon/:id` - Cập nhật chi tiết đơn hàng
 - `DELETE /api/chitiethoadon/:id` - Xóa chi tiết đơn hàng
 
-### 🪑 Thẻ bàn
-- `GET /api/theban` - Lấy tất cả thẻ bàn
-- `GET /api/theban/:id` - Lấy thẻ bàn theo ID
-- `POST /api/theban` - Tạo thẻ bàn mới
-- `PUT /api/theban/:id` - Cập nhật thẻ bàn
-- `DELETE /api/theban/:id` - Xóa thẻ bàn
+### 🪑 số thẻ bàn
+- `GET /api/theban` - Lấy tất cả số thẻ bàn
+- `GET /api/theban/:id` - Lấy số thẻ bàn theo ID
+- `POST /api/theban` - Tạo số thẻ bàn mới
+- `PUT /api/theban/:id` - Cập nhật số thẻ bàn
+- `DELETE /api/theban/:id` - Xóa số thẻ bàn
 
 ### 🎁 CTKM (Chương trình khuyến mãi)
 - `GET /api/ctkm` - Lấy tất cả CTKM

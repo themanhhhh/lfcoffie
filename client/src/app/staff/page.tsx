@@ -403,7 +403,7 @@ const Staff = () => {
     }
 
     if (orderType === 'dine-in' && !selectedTable) {
-      toast.error('Vui lòng chọn số bàn')
+      toast.error('Vui lòng chọn số thẻ bàn')
       return
     }
 
@@ -646,10 +646,9 @@ const Staff = () => {
               </div>
               {orderType === 'dine-in' && (
                 <div className={Style.inputGroup}>
-                  <label>Số bàn *</label>
+                  <label>Số thẻ bàn *</label>
                   <input
                     type="text"
-                    placeholder="Nhập số bàn (VD: 1, 2, 3...)"
                     value={tableNumber}
                     onChange={(e) => setTableNumber(e.target.value)}
                     required
@@ -927,7 +926,7 @@ const Staff = () => {
               {/* Table Selection (only for dine-in) */}
               {orderType === 'dine-in' && (
                 <div className={Style.paymentSection}>
-                  <label>Số bàn *</label>
+                  <label>Số thẻ bàn *</label>
                   <div className={Style.tableGrid}>
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
                       <button
@@ -946,7 +945,7 @@ const Staff = () => {
                   <input
                     type="text"
                     className={Style.tableInput}
-                    placeholder="Hoặc nhập số bàn khác"
+                    placeholder="Hoặc nhập số thẻ bàn khác"
                     value={selectedTable}
                     onChange={(e) => {
                       setSelectedTable(e.target.value)
@@ -1034,7 +1033,7 @@ const Staff = () => {
                     </div>
                     {orderType === 'dine-in' && tableNumber && (
                       <div className={Style.invoiceRow}>
-                        <span>Số bàn:</span>
+                        <span>Số thẻ bàn:</span>
                         <span>{tableNumber}</span>
                       </div>
                     )}
