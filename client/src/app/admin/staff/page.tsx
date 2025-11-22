@@ -8,8 +8,7 @@ import {
   FaPhoneAlt,
   FaEnvelope,
   FaMapMarkerAlt,
-  FaCalendarAlt,
-  FaStar
+  FaCalendarAlt
 } from 'react-icons/fa'
 import { MdOutlineSchedule, MdOutlineAccessTime } from 'react-icons/md'
 import styles from './staff.module.css'
@@ -29,7 +28,6 @@ interface StaffMember {
   joinDate: string
   lastShift: string
   totalShifts: number
-  rating: number
   address: string
   username: string
   gender: string
@@ -133,8 +131,6 @@ const StaffPage = () => {
             status = 'probation'
           }
 
-          const rating = stat.total === 0 ? 3 : Math.min(5, 3 + stat.total / 50)
-
           return {
             id: employee.MaNhanVien,
             name: employee.TenNhanVien,
@@ -147,7 +143,6 @@ const StaffPage = () => {
             joinDate,
             lastShift,
             totalShifts: stat.total,
-            rating: Number(rating.toFixed(1)),
             address: 'Chưa cập nhật',
             username: employee.TaiKhoan,
             gender: employee.GioiTinh,
@@ -339,12 +334,6 @@ const StaffPage = () => {
                   <div>
                     <span>Tổng hóa đơn</span>
                     <strong>{selectedStaff.totalShifts}</strong>
-                  </div>
-                  <div>
-                    <span>Xếp hạng nội bộ</span>
-                    <strong>
-                      <FaStar /> {selectedStaff.rating.toFixed(1)}
-                    </strong>
                   </div>
                   <div>
                     <span>Trạng thái</span>

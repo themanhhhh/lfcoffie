@@ -28,7 +28,7 @@ import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
 import { logo, coffeeBlack } from '../image/index'
-import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, ApiError } from '../../lib/api'
+import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -53,7 +53,7 @@ interface Category {
 
 interface CartItem extends Product {
   quantity: number
-  topping?: string[]
+  topping?: TuyChon[]
   size?: string
   sugar?: string
   ice?: string
@@ -112,8 +112,9 @@ const Staff = () => {
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
   const [showCustomizeModal, setShowCustomizeModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [toppings, setToppings] = useState<TuyChon[]>([])
   const [customizeOptions, setCustomizeOptions] = useState({
-    topping: [] as string[],
+    topping: [] as TuyChon[],
     size: 'M',
     sugar: '100%',
     ice: 'Bình thường',
@@ -134,6 +135,19 @@ const Staff = () => {
     if (savedQrCode) {
       setQrCodeImage(savedQrCode)
     }
+  }, [])
+
+  // Load toppings from API
+  useEffect(() => {
+    const loadToppings = async () => {
+      try {
+        const toppingData = await tuyChonApi.getAll({ loaiTuyChon: 'topping' })
+        setToppings(toppingData)
+      } catch (err) {
+        console.error('Error loading toppings:', err)
+      }
+    }
+    loadToppings()
   }, [])
 
   useEffect(() => {
@@ -237,7 +251,7 @@ const Staff = () => {
   const openCustomizeModal = (product: Product) => {
     setSelectedProduct(product)
     setCustomizeOptions({
-      topping: [],
+      topping: [] as TuyChon[],
       size: 'M',
       sugar: '100%',
       ice: 'Bình thường',
@@ -251,13 +265,19 @@ const Staff = () => {
     
     setCart((prevCart) => {
       const existingItem = prevCart.find(
-        (item) => 
-          item.id === selectedProduct.id &&
-          item.size === customizeOptions.size &&
-          item.sugar === customizeOptions.sugar &&
-          item.ice === customizeOptions.ice &&
-          JSON.stringify(item.topping?.sort()) === JSON.stringify(customizeOptions.topping.sort()) &&
-          item.note === customizeOptions.note
+        (item) => {
+          const sameTopping = JSON.stringify(
+            (item.topping || []).map(t => t.MaTuyChon).sort()
+          ) === JSON.stringify(
+            customizeOptions.topping.map(t => t.MaTuyChon).sort()
+          )
+          return item.id === selectedProduct.id &&
+            item.size === customizeOptions.size &&
+            item.sugar === customizeOptions.sugar &&
+            item.ice === customizeOptions.ice &&
+            sameTopping &&
+            item.note === customizeOptions.note
+        }
       )
       
       if (existingItem) {
@@ -310,8 +330,33 @@ const Staff = () => {
     setPaymentMethod('cash')
   }
 
-  const handleOpenPaymentModal = () => {
+  const handleOpenPaymentModal = async () => {
     if (cart.length === 0) return
+    
+    // Reload phiên làm việc để đảm bảo có phiên mới nhất
+    if (user?.MaNhanVien) {
+      try {
+        const phienLamViecData = await phienLamViecApi.getAll()
+        const activePhien = phienLamViecData.find(
+          (plv) => plv.MaNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
+        )
+        if (activePhien) {
+          setCurrentPhienLamViec(activePhien.MaPhienLamViec)
+          if (activePhien.caLam) {
+            setCurrentShiftInfo({
+              name: activePhien.caLam.TenCaLam,
+              start: activePhien.caLam.ThoiGianBatDau,
+              end: activePhien.caLam.ThoiGianKetThuc
+            })
+          }
+        } else {
+          setCurrentPhienLamViec(null)
+        }
+      } catch (err) {
+        console.error('Error reloading phien lam viec:', err)
+      }
+    }
+    
     setShowPaymentModal(true)
     // Sync table selection with current input when dùng tại quán
     if (orderType === 'dine-in') {
@@ -409,7 +454,11 @@ const Staff = () => {
   }
 
   const getTotalPrice = () =>
-    cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    cart.reduce((total, item) => {
+      const itemPrice = item.price * item.quantity
+      const toppingPrice = (item.topping || []).reduce((sum, topping) => sum + topping.GiaCongThem * item.quantity, 0)
+      return total + itemPrice + toppingPrice
+    }, 0)
 
   useEffect(() => {
     if (!currentShiftInfo && user?.caLam) {
@@ -627,7 +676,14 @@ const Staff = () => {
                           {item.sugar && <span>Đường: {item.sugar}</span>}
                           {item.ice && <span>Đá: {item.ice}</span>}
                           {item.topping && item.topping.length > 0 && (
-                            <span>Topping: {item.topping.join(', ')}</span>
+                            <span>
+                              Topping: {item.topping.map(t => t.TenTuyChon).join(', ')}
+                              {item.topping.reduce((sum, t) => sum + t.GiaCongThem, 0) > 0 && (
+                                <span style={{ marginLeft: '0.5rem', color: '#8B4513', fontWeight: 600 }}>
+                                  (+{formatPrice(item.topping.reduce((sum, t) => sum + t.GiaCongThem, 0) * item.quantity)})
+                                </span>
+                              )}
+                            </span>
                           )}
                           {item.note && <span className={Style.cartItemNote}>Ghi chú: {item.note}</span>}
                         </div>
@@ -650,7 +706,10 @@ const Staff = () => {
                     </div>
                     <div className={Style.cartItemActions}>
                       <div className={Style.cartItemTotal}>
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice(
+                          item.price * item.quantity + 
+                          (item.topping || []).reduce((sum, t) => sum + t.GiaCongThem * item.quantity, 0)
+                        )}
                       </div>
                       <button
                         onClick={() => removeFromCart(item.id)}
@@ -756,31 +815,40 @@ const Staff = () => {
               <div className={Style.paymentSection}>
                 <label>Topping (có thể chọn nhiều)</label>
                 <div className={Style.orderTypeButtons} style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {['Sữa', 'Kem', 'Bánh flan', 'Trân châu', 'Thạch', 'Đậu đỏ'].map((topping) => {
-                    const isSelected = customizeOptions.topping.includes(topping)
-                    return (
-                      <button
-                        key={topping}
-                        type="button"
-                        className={`${Style.orderTypeBtn} ${isSelected ? Style.active : ''}`}
-                        onClick={() => {
-                          if (isSelected) {
-                            setCustomizeOptions({
-                              ...customizeOptions,
-                              topping: customizeOptions.topping.filter(t => t !== topping)
-                            })
-                          } else {
-                            setCustomizeOptions({
-                              ...customizeOptions,
-                              topping: [...customizeOptions.topping, topping]
-                            })
-                          }
-                        }}
-                      >
-                        {topping}
-                      </button>
-                    )
-                  })}
+                  {toppings.length > 0 ? (
+                    toppings.map((topping) => {
+                      const isSelected = customizeOptions.topping.some(t => t.MaTuyChon === topping.MaTuyChon)
+                      return (
+                        <button
+                          key={topping.MaTuyChon}
+                          type="button"
+                          className={`${Style.orderTypeBtn} ${isSelected ? Style.active : ''}`}
+                          onClick={() => {
+                            if (isSelected) {
+                              setCustomizeOptions({
+                                ...customizeOptions,
+                                topping: customizeOptions.topping.filter(t => t.MaTuyChon !== topping.MaTuyChon)
+                              })
+                            } else {
+                              setCustomizeOptions({
+                                ...customizeOptions,
+                                topping: [...customizeOptions.topping, topping]
+                              })
+                            }
+                          }}
+                        >
+                          {topping.TenTuyChon}
+                          {topping.GiaCongThem > 0 && (
+                            <span style={{ marginLeft: '0.5rem', fontSize: '0.85rem', opacity: 0.8 }}>
+                              (+{formatPrice(topping.GiaCongThem)})
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })
+                  ) : (
+                    <p style={{ color: '#999', fontSize: '0.9rem' }}>Đang tải danh sách topping...</p>
+                  )}
                 </div>
               </div>
 
@@ -996,6 +1064,19 @@ const Staff = () => {
               </div>
             </div>
 
+            {!currentPhienLamViec && (
+              <div style={{ 
+                padding: '12px', 
+                marginBottom: '16px', 
+                backgroundColor: '#fee2e2', 
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                color: '#991b1b',
+                fontSize: '0.9rem'
+              }}>
+                ⚠️ Chưa có phiên làm việc đang mở. Vui lòng <Link href="/staff/open-shift" style={{ color: '#dc2626', textDecoration: 'underline' }}>mở phiên làm việc</Link> trước khi thanh toán.
+              </div>
+            )}
             <div className={Style.paymentModalActions}>
               <button
                 type="button"
@@ -1009,7 +1090,8 @@ const Staff = () => {
                 type="button"
                 className={Style.confirmPaymentBtn}
                 onClick={handleProcessPayment}
-                disabled={isProcessing || (orderType === 'dine-in' && !selectedTable)}
+                disabled={isProcessing || !currentPhienLamViec || (orderType === 'dine-in' && !selectedTable)}
+                title={!currentPhienLamViec ? 'Vui lòng mở phiên làm việc trước' : undefined}
               >
                 {isProcessing ? 'Đang xử lý...' : (
                   <>

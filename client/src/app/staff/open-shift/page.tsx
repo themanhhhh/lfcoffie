@@ -1,8 +1,11 @@
 'use client'
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { FaArrowLeft, FaDoorOpen, FaMoneyBillWave, FaClipboardList, FaClock, FaUserClock, FaCheckCircle } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
+import { useAuth } from '@/contexts/AuthContext'
+import { phienLamViecApi, caLamApi, ApiError } from '@/lib/api'
 import styles from './openShift.module.css'
 
 type ShiftKey = 'morning' | 'afternoon' | 'evening'
@@ -55,7 +58,16 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0
 })
 
+// Map shift key to MaCaLam
+const SHIFT_TO_MACALAM: Record<ShiftKey, string> = {
+  morning: 'CL001', // Ca sáng
+  afternoon: 'CL002', // Ca chiều
+  evening: 'CL003' // Ca tối
+}
+
 const OpenShiftPage = () => {
+  const router = useRouter()
+  const { user } = useAuth()
   const today = useMemo(() => new Date().toISOString().split('T')[0], [])
 
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo>({
@@ -67,6 +79,7 @@ const OpenShiftPage = () => {
   })
 
   const [cashRows, setCashRows] = useState<CashRow[]>(CASH_TEMPLATE)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const totalOpeningCash = useMemo(
     () => cashRows.reduce((sum, row) => sum + row.value * row.quantity, 0),
@@ -85,16 +98,51 @@ const OpenShiftPage = () => {
     )
   }
 
-  const handleStartShift = () => {
-    const summary = [
-      `Ngày làm việc: ${shiftInfo.date}`,
-      `Ca: ${SHIFT_DETAILS[shiftInfo.shift].label} (${SHIFT_DETAILS[shiftInfo.shift].time})`,
-      `Thu ngân chính: ${shiftInfo.supervisor || 'Chưa nhập'}`,
-      `Phụ ca: ${shiftInfo.supportStaff || 'Chưa nhập'}`,
-      `Tiền đầu phiên: ${currencyFormatter.format(totalOpeningCash)}`
-    ].join('\n')
+  const handleStartShift = async () => {
+    if (!user?.MaNhanVien) {
+      toast.error('Không tìm thấy thông tin nhân viên. Vui lòng đăng nhập lại.')
+      return
+    }
 
-    toast.success(`Xác nhận mở phiên làm việc:\n${summary}`)
+    // Validate required fields
+    if (!shiftInfo.supervisor.trim()) {
+      toast.error('Vui lòng nhập tên thu ngân chính')
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      // Generate MaPhienLamViec
+      const timestamp = Date.now().toString().slice(-8)
+      const maPhienLamViec = `PLV${timestamp}`
+
+      // Get MaCaLam from shift selection
+      const maCaLam = SHIFT_TO_MACALAM[shiftInfo.shift]
+
+      // Create new phien lam viec
+      const newPhienLamViec = await phienLamViecApi.create({
+        MaPhienLamViec: maPhienLamViec,
+        MaCaLam: maCaLam,
+        MaNhanVien: user.MaNhanVien,
+        Ngay: shiftInfo.date,
+        TrangThai: 'mở'
+      })
+
+      // Open the shift
+      await phienLamViecApi.openShift(maPhienLamViec)
+
+      toast.success('Mở phiên làm việc thành công!')
+      
+      // Redirect to staff page
+      router.push('/staff')
+    } catch (err) {
+      const errorMessage = err instanceof ApiError 
+        ? err.message 
+        : 'Không thể mở phiên làm việc. Vui lòng thử lại.'
+      toast.error(errorMessage)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -266,8 +314,12 @@ const OpenShiftPage = () => {
             </div>
           )}
 
-          <button className={styles.submitButton} onClick={handleStartShift}>
-            Bắt đầu phiên làm việc
+          <button 
+            className={styles.submitButton} 
+            onClick={handleStartShift}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Đang xử lý...' : 'Bắt đầu phiên làm việc'}
           </button>
         </section>
       </div>
