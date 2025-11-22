@@ -295,11 +295,11 @@ const StatisticPage = () => {
               (() => {
                 const totalRevenue = top5Categories.reduce((sum, c) => sum + c.tongDoanhThu, 0)
                 const colors = [
-                  '#8B4513', // Brown
-                  '#A0522D', // Sienna
-                  '#CD853F', // Peru
+                  '#8CE4FF', // Brown
+                  '#FEEE91', // Sienna
+                  '#FFA239', // Peru
                   '#D2691E', // Chocolate
-                  '#DEB887'  // Burlywood
+                  '#FF5656'  // Burlywood
                 ]
                 return (
                   <div className={styles.pieChartContainer}>

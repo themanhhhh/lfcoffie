@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { FaUser, FaArrowLeft } from 'react-icons/fa'
 import { logo } from '../../image/index'
 import Style from './adminheader.module.css'
@@ -26,9 +27,9 @@ const AdminHeader = () => {
                 </div>
             </div>
             <div className={Style.headerRight}>
-                <button className={Style.backBtn}>
+                <Link href="/staff" className={Style.backBtn}>
                     <FaArrowLeft /> Về POS
-                </button>
+                </Link>
                 <div className={Style.userInfo}>
                     <span>Quản trị viên</span>
                     <span className={Style.userName}>Admin User</span>

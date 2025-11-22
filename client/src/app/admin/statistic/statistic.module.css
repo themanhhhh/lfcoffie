@@ -283,7 +283,7 @@
   height: 24px;
   border-radius: 50%;
   background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
-  color: white;
+  color: white!important;
   font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;

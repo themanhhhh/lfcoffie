@@ -21,7 +21,8 @@ import {
   FaQrcode,
   FaPrint,
   FaStore,
-  FaHome
+  FaHome,
+  FaUserCog
 } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
@@ -461,6 +462,13 @@ const Staff = () => {
           </div>
           <div className={Style.headerRight}>
             <div className={Style.workTime}>{shiftDisplay}</div>
+            <Link 
+              href="/admin/statistic"
+              className={Style.adminBtn}
+              title="Truy cập Admin Panel"
+            >
+              <FaUserCog /> Admin
+            </Link>
             <div className={Style.userIcon}>
               <FaUser />
             </div>
