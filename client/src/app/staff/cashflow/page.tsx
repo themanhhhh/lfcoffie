@@ -10,7 +10,7 @@ import {
   FaFileInvoice
 } from 'react-icons/fa'
 import styles from './cashflow.module.css'
-import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError } from '../../../lib/api'
+import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError, NghiepVu } from '../../../lib/api'
 import { useAuth } from '../../../contexts/AuthContext'
 import { toast } from 'react-hot-toast'
 
@@ -31,6 +31,8 @@ interface CashFormState {
   reason: string
   performedBy: string
   reference: string
+  nghiepVu: string
+  phuongThucThanhToan: string
 }
 
 
@@ -40,41 +42,13 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0
 })
 
-const initialTransactions: Transaction[] = [
-  {
-    id: 1,
-    type: 'in',
-    amount: 1500000,
-    reason: 'Thu tiền khách bàn B12',
-    performedBy: 'Nguyễn Thảo',
-    time: '09:20',
-    reference: 'POS-INV-1204'
-  },
-  {
-    id: 2,
-    type: 'out',
-    amount: 300000,
-    reason: 'Chi tiền mua đá viên',
-    performedBy: 'Trần Hữu Minh',
-    time: '10:05',
-    reference: 'EXP-2025-09'
-  },
-  {
-    id: 3,
-    type: 'in',
-    amount: 2200000,
-    reason: 'Thu tiền take-away',
-    performedBy: 'Nguyễn Thảo',
-    time: '11:40',
-    reference: 'POS-INV-1207'
-  }
-]
-
 const buildInitialFormState = (): CashFormState => ({
   amount: '',
   reason: '',
   performedBy: '',
-  reference: ''
+  reference: '',
+  nghiepVu: '',
+  phuongThucThanhToan: 'Tiền mặt'
 })
 
 const CashflowPage = () => {
@@ -84,10 +58,18 @@ const CashflowPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPhienLamViec, setCurrentPhienLamViec] = useState<string | null>(null)
-  const [nghiepVuThuId, setNghiepVuThuId] = useState<string>('NV001')
-  const [nghiepVuChiId, setNghiepVuChiId] = useState<string>('NV002')
+  const [nghiepVuThuList, setNghiepVuThuList] = useState<NghiepVu[]>([])
+  const [nghiepVuChiList, setNghiepVuChiList] = useState<NghiepVu[]>([])
   
   const { user } = useAuth()
+
+  const PHUONG_THUC_THANH_TOAN = [
+    'Tiền mặt',
+    'Chuyển khoản',
+    'Thẻ tín dụng',
+    'Ví điện tử',
+    'Khác'
+  ]
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -101,11 +83,15 @@ const CashflowPage = () => {
         nghiepVuApi.getAll({ loaiGiaoDich: 'chi' })
       ])
       
+      setNghiepVuThuList(nghiepVuThu)
+      setNghiepVuChiList(nghiepVuChi)
+      
+      // Set default nghiepVu for forms
       if (nghiepVuThu.length > 0) {
-        setNghiepVuThuId(nghiepVuThu[0].MaNghiepVu)
+        setCashInForm(prev => ({ ...prev, nghiepVu: nghiepVuThu[0].MaNghiepVu }))
       }
       if (nghiepVuChi.length > 0) {
-        setNghiepVuChiId(nghiepVuChi[0].MaNghiepVu)
+        setCashOutForm(prev => ({ ...prev, nghiepVu: nghiepVuChi[0].MaNghiepVu }))
       }
 
       // Load current phien lam viec
@@ -215,8 +201,8 @@ const CashflowPage = () => {
     const form = type === 'in' ? cashInForm : cashOutForm
     const amount = Number(form.amount.replace(/\D/g, '')) || Number(form.amount)
 
-    if (!form.reason || !form.performedBy || !amount) {
-      toast.error('Vui lòng nhập đầy đủ thông tin và số tiền hợp lệ.')
+    if (!form.reason || !amount || !form.nghiepVu || !form.phuongThucThanhToan) {
+      toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc: số tiền, nội dung, nghiệp vụ và phương thức thanh toán.')
       return
     }
 
@@ -226,17 +212,23 @@ const CashflowPage = () => {
     }
 
     try {
-      // Generate MaGiaoDich
-      const timestamp = Date.now().toString().slice(-6)
+      // Generate MaGiaoDich (max 10 characters: GD + 8 digits)
+      const timestamp = Date.now().toString().slice(-8)
       const maGiaoDich = `GD${timestamp}`
+
+      // Combine reason and reference into GhiChu if reference exists
+      let ghiChu = form.reason
+      if (form.reference && form.reference.trim()) {
+        ghiChu = `${form.reason}${form.reference ? ` (Chứng từ: ${form.reference})` : ''}`
+      }
 
       const payload = {
         MaGiaoDich: maGiaoDich,
         MaPhienLamViec: currentPhienLamViec,
-        MaNghiepVu: type === 'in' ? nghiepVuThuId : nghiepVuChiId,
+        MaNghiepVu: form.nghiepVu,
         ThoiGian: new Date().toISOString(),
-        PhuongThucThanhToan: 'Tiền mặt',
-        GhiChu: form.reason,
+        PhuongThucThanhToan: form.phuongThucThanhToan,
+        GhiChu: ghiChu,
         SoTien: amount
       }
 
@@ -346,22 +338,43 @@ const CashflowPage = () => {
             />
           </label>
           <label className={styles.field}>
-            <span>Nội dung thu</span>
+            <span>Nghiệp vụ thu <span style={{ color: 'red' }}>*</span></span>
+            <select
+              value={cashInForm.nghiepVu}
+              onChange={event => handleFormChange('in', 'nghiepVu', event.target.value)}
+              required
+            >
+              <option value="">-- Chọn nghiệp vụ --</option>
+              {nghiepVuThuList.map((nv) => (
+                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                  {nv.TenNghiepVu}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.field}>
+            <span>Nội dung thu <span style={{ color: 'red' }}>*</span></span>
             <input
               type="text"
               placeholder="Lý do thu tiền"
               value={cashInForm.reason}
               onChange={event => handleFormChange('in', 'reason', event.target.value)}
+              required
             />
           </label>
           <label className={styles.field}>
-            <span>Người thực hiện</span>
-            <input
-              type="text"
-              placeholder="Tên nhân viên phụ trách"
-              value={cashInForm.performedBy}
-              onChange={event => handleFormChange('in', 'performedBy', event.target.value)}
-            />
+            <span>Phương thức thanh toán <span style={{ color: 'red' }}>*</span></span>
+            <select
+              value={cashInForm.phuongThucThanhToan}
+              onChange={event => handleFormChange('in', 'phuongThucThanhToan', event.target.value)}
+              required
+            >
+              {PHUONG_THUC_THANH_TOAN.map((pttt) => (
+                <option key={pttt} value={pttt}>
+                  {pttt}
+                </option>
+              ))}
+            </select>
           </label>
           <label className={styles.field}>
             <span>Số chứng từ (nếu có)</span>
@@ -393,22 +406,43 @@ const CashflowPage = () => {
             />
           </label>
           <label className={styles.field}>
-            <span>Nội dung chi</span>
+            <span>Nghiệp vụ chi <span style={{ color: 'red' }}>*</span></span>
+            <select
+              value={cashOutForm.nghiepVu}
+              onChange={event => handleFormChange('out', 'nghiepVu', event.target.value)}
+              required
+            >
+              <option value="">-- Chọn nghiệp vụ --</option>
+              {nghiepVuChiList.map((nv) => (
+                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                  {nv.TenNghiepVu}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={styles.field}>
+            <span>Nội dung chi <span style={{ color: 'red' }}>*</span></span>
             <input
               type="text"
               placeholder="Lý do chi tiền"
               value={cashOutForm.reason}
               onChange={event => handleFormChange('out', 'reason', event.target.value)}
+              required
             />
           </label>
           <label className={styles.field}>
-            <span>Người thực hiện</span>
-            <input
-              type="text"
-              placeholder="Tên nhân viên phụ trách"
-              value={cashOutForm.performedBy}
-              onChange={event => handleFormChange('out', 'performedBy', event.target.value)}
-            />
+            <span>Phương thức thanh toán <span style={{ color: 'red' }}>*</span></span>
+            <select
+              value={cashOutForm.phuongThucThanhToan}
+              onChange={event => handleFormChange('out', 'phuongThucThanhToan', event.target.value)}
+              required
+            >
+              {PHUONG_THUC_THANH_TOAN.map((pttt) => (
+                <option key={pttt} value={pttt}>
+                  {pttt}
+                </option>
+              ))}
+            </select>
           </label>
           <label className={styles.field}>
             <span>Số chứng từ (nếu có)</span>

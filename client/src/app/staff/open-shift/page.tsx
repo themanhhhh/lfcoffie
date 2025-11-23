@@ -58,13 +58,6 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', {
   maximumFractionDigits: 0
 })
 
-// Map shift key to MaCaLam
-const SHIFT_TO_MACALAM: Record<ShiftKey, string> = {
-  morning: 'CL001', // Ca sáng
-  afternoon: 'CL002', // Ca chiều
-  evening: 'CL003' // Ca tối
-}
-
 const OpenShiftPage = () => {
   const router = useRouter()
   const { user } = useAuth()
@@ -80,11 +73,50 @@ const OpenShiftPage = () => {
 
   const [cashRows, setCashRows] = useState<CashRow[]>(CASH_TEMPLATE)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [shiftToMaCaLam, setShiftToMaCaLam] = useState<Record<ShiftKey, string>>({
+    morning: '',
+    afternoon: '',
+    evening: ''
+  })
 
   const totalOpeningCash = useMemo(
     () => cashRows.reduce((sum, row) => sum + row.value * row.quantity, 0),
     [cashRows]
   )
+
+  // Fetch ca làm việc từ API
+  useEffect(() => {
+    const fetchCaLam = async () => {
+      try {
+        const list = await caLamApi.getAll()
+        
+        // Map shift key với MaCaLam dựa trên tên ca
+        const mapping: Record<ShiftKey, string> = {
+          morning: '',
+          afternoon: '',
+          evening: ''
+        }
+        
+        list.forEach((caLam) => {
+          const tenCa = caLam.TenCaLam.toLowerCase()
+          if (tenCa.includes('sáng') || tenCa.includes('morning')) {
+            mapping.morning = caLam.MaCaLam
+          } else if (tenCa.includes('chiều') || tenCa.includes('afternoon')) {
+            mapping.afternoon = caLam.MaCaLam
+          } else if (tenCa.includes('tối') || tenCa.includes('evening')) {
+            mapping.evening = caLam.MaCaLam
+          }
+        })
+        
+        setShiftToMaCaLam(mapping)
+      } catch (err) {
+        console.error('Error fetching ca lam:', err)
+        toast.error('Không thể tải danh sách ca làm việc')
+      }
+    }
+    
+    fetchCaLam()
+  }, [])
 
   const handleShiftInfoChange = <K extends keyof ShiftInfo>(key: K, value: ShiftInfo[K]) => {
     setShiftInfo(prev => ({ ...prev, [key]: value }))
@@ -94,6 +126,22 @@ const OpenShiftPage = () => {
     setCashRows(prev =>
       prev.map((row, rowIndex) =>
         rowIndex === index ? { ...row, quantity: Math.max(0, quantity) } : row
+      )
+    )
+  }
+
+  const handleIncrement = (index: number) => {
+    setCashRows(prev =>
+      prev.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, quantity: row.quantity + 1 } : row
+      )
+    )
+  }
+
+  const handleDecrement = (index: number) => {
+    setCashRows(prev =>
+      prev.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, quantity: Math.max(0, row.quantity - 1) } : row
       )
     )
   }
@@ -112,15 +160,21 @@ const OpenShiftPage = () => {
 
     setIsSubmitting(true)
     try {
-      // Generate MaPhienLamViec
-      const timestamp = Date.now().toString().slice(-8)
+      // Generate MaPhienLamViec (max 10 characters: PLV + 7 digits)
+      const timestamp = Date.now().toString().slice(-7)
       const maPhienLamViec = `PLV${timestamp}`
 
       // Get MaCaLam from shift selection
-      const maCaLam = SHIFT_TO_MACALAM[shiftInfo.shift]
+      const maCaLam = shiftToMaCaLam[shiftInfo.shift]
+      
+      if (!maCaLam) {
+        toast.error('Không tìm thấy ca làm việc. Vui lòng thử lại.')
+        setIsSubmitting(false)
+        return
+      }
 
       // Create new phien lam viec
-      const newPhienLamViec = await phienLamViecApi.create({
+      await phienLamViecApi.create({
         MaPhienLamViec: maPhienLamViec,
         MaCaLam: maCaLam,
         MaNhanVien: user.MaNhanVien,
@@ -255,14 +309,31 @@ const OpenShiftPage = () => {
             {cashRows.map((row, index) => (
               <div key={row.label} className={styles.cashRow}>
                 <span>{row.label}</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={row.quantity}
-                  onChange={event =>
-                    handleCashQuantityChange(index, Number(event.target.value) || 0)
-                  }
-                />
+                <div className={styles.quantityControl}>
+                  <button
+                    type="button"
+                    className={styles.quantityButton}
+                    onClick={() => handleDecrement(index)}
+                    disabled={row.quantity === 0}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={0}
+                    value={row.quantity}
+                    onChange={event =>
+                      handleCashQuantityChange(index, Number(event.target.value) || 0)
+                    }
+                  />
+                  <button
+                    type="button"
+                    className={styles.quantityButton}
+                    onClick={() => handleIncrement(index)}
+                  >
+                    +
+                  </button>
+                </div>
                 <strong>{currencyFormatter.format(row.value * row.quantity)}</strong>
               </div>
             ))}

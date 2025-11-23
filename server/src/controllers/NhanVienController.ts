@@ -61,19 +61,48 @@ export class NhanVienController {
   }
 
   async update(req: Request, res: Response) {
-    const { id } = req.params;
-    const existed = await this.repository.findOne({ where: { MaNhanVien: id } } as any);
-    if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-    
-    // Hash password if provided in update
-    if (req.body.MatKhau) {
-      const saltRounds = 10;
-      req.body.MatKhau = await bcrypt.hash(req.body.MatKhau, saltRounds);
+    try {
+      const { id } = req.params;
+      const { MaCaLam, ...nhanVienData } = req.body;
+      
+      const existed = await this.repository.findOne({ 
+        where: { MaNhanVien: id } as any,
+        relations: ['caLam']
+      });
+      if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
+      
+      // Load CaLam if MaCaLam is provided
+      if (MaCaLam !== undefined) {
+        if (MaCaLam) {
+          const caLam = await this.caLamRepository.findOne({ where: { MaCaLam } as any });
+          if (!caLam) {
+            return res.status(400).json({ message: `Không tìm thấy ca làm với mã: ${MaCaLam}` });
+          }
+          existed.caLam = caLam;
+        } else {
+          existed.caLam = null as any;
+        }
+      }
+      
+      // Hash password if provided in update
+      if (nhanVienData.MatKhau) {
+        const saltRounds = 10;
+        nhanVienData.MatKhau = await bcrypt.hash(nhanVienData.MatKhau, saltRounds);
+      }
+      
+      Object.assign(existed, nhanVienData);
+      const saved = await this.repository.save(existed);
+      
+      // Reload with relations
+      const savedWithRelations = await this.repository.findOne({
+        where: { MaNhanVien: saved.MaNhanVien } as any,
+        relations: ['caLam']
+      });
+      
+      return res.json(savedWithRelations);
+    } catch (e: any) {
+      return res.status(400).json({ message: "Cập nhật thất bại", error: e.message });
     }
-    
-    Object.assign(existed, req.body);
-    const saved = await this.repository.save(existed);
-    return res.json(saved);
   }
 
   async remove(req: Request, res: Response) {

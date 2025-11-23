@@ -206,15 +206,57 @@
   background: #fffbf5;
 }
 
+.quantityControl {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantityButton {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d9cfc2;
+  border-radius: 8px;
+  background: white;
+  color: #8B4513;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.quantityButton:hover:not(:disabled) {
+  background: #8B4513;
+  color: white;
+  border-color: #8B4513;
+  transform: scale(1.05);
+}
+
+.quantityButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.quantityButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .cashRow input {
   border: 1px solid #d9cfc2;
   border-radius: 10px;
   padding: 0.5rem 0.75rem;
   font-size: 0.95rem;
-  text-align: right;
+  text-align: center;
   background: white;
   color: #3b2a21;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 80px;
+  flex: 1;
 }
 
 .cashRow input:focus {

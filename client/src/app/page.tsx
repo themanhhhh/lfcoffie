@@ -132,9 +132,6 @@ export default function Home() {
               <span className={styles.checkmark}></span>
               Ghi nhớ đăng nhập
             </label>
-            <Link href="/forgot-password" className={styles.forgotPassword}>
-              Quên mật khẩu?
-            </Link>
           </div>
 
           <button 
