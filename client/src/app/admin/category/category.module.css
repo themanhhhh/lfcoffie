@@ -143,10 +143,9 @@
   border-top: 1px solid #e0e0e0;
 }
 
-.editBtn,
-.deleteBtn {
-  flex: 1;
-  padding: 0.5rem;
+.viewStatsBtn {
+  width: 100%;
+  padding: 0.75rem;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
@@ -156,24 +155,14 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-.editBtn {
-  background-color: #4CAF50;
+  background-color: #8B4513;
   color: white;
 }
 
-.editBtn:hover {
-  background-color: #45a049;
-}
-
-.deleteBtn {
-  background-color: #f44336;
-  color: white;
-}
-
-.deleteBtn:hover {
-  background-color: #da190b;
+.viewStatsBtn:hover {
+  background-color: #6d3410;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
 }
 
 .emptyState {
@@ -335,6 +324,50 @@
   background-color: #6d3410;
 }
 
+/* Statistics Modal Styles */
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+}
+
+.statCard {
+  background: linear-gradient(135deg, #f5f0e8 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #8B4513;
+  margin-bottom: 0.5rem;
+}
+
+.statDescription {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -369,5 +402,9 @@
   .cancelBtn,
   .submitBtn {
     width: 100%;
+  }
+
+  .statsContainer {
+    grid-template-columns: 1fr;
   }
 }

@@ -2,23 +2,16 @@
 
 import React, { useEffect, useState } from 'react'
 import {
-  FaPlus,
-  FaEdit,
-  FaTrash,
   FaSearch,
   FaTimes,
-  FaList
+  FaList,
+  FaChartBar
 } from 'react-icons/fa'
 import styles from './category.module.css'
-import { apiFetch, ApiError, Mon } from '../../../lib/api'
+import { apiFetch, ApiError, Mon, thongKeApi, CategoryStats } from '../../../lib/api'
 import { toast } from 'react-hot-toast'
 
 interface Category {
-  maLoaiMon: string
-  tenLoaiMon: string
-}
-
-interface CategoryFormData {
   maLoaiMon: string
   tenLoaiMon: string
 }
@@ -28,12 +21,10 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [formData, setFormData] = useState<CategoryFormData>({
-    maLoaiMon: '',
-    tenLoaiMon: ''
-  })
+  const [showStatsModal, setShowStatsModal] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [categoryStats, setCategoryStats] = useState<CategoryStats | null>(null)
+  const [loadingStats, setLoadingStats] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -64,37 +55,32 @@ const CategoryPage = () => {
     }
   }
 
-  const handleAddCategory = () => {
-    setEditingCategory(null)
-    setFormData({
-      maLoaiMon: '',
-      tenLoaiMon: ''
-    })
-    setShowModal(true)
+  const handleViewStats = async (category: Category) => {
+    setSelectedCategory(category)
+    setShowStatsModal(true)
+    setLoadingStats(true)
+    setCategoryStats(null)
+    
+    try {
+      const stats = await thongKeApi.getCategoryStats({
+        loaiMon: category.tenLoaiMon
+      })
+      setCategoryStats(stats)
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError
+          ? err.message
+          : 'Không thể tải thống kê danh mục. Vui lòng thử lại.'
+      )
+    } finally {
+      setLoadingStats(false)
+    }
   }
 
-  const handleEditCategory = (category: Category) => {
-    setEditingCategory(category)
-    setFormData({
-      maLoaiMon: category.maLoaiMon,
-      tenLoaiMon: category.tenLoaiMon
-    })
-    setShowModal(true)
-  }
-
-  const handleDeleteCategory = async () => {
-    toast('Chức năng xóa danh mục hiện chưa khả dụng. Danh mục được quản lý thông qua các món.')
-  }
-
-  const handleSubmitForm = async (e: React.FormEvent) => {
-    e.preventDefault()
-    toast('Chức năng thêm/sửa danh mục hiện chưa khả dụng. Danh mục được tự động tạo từ LoaiMon của các món. Để thêm danh mục mới, hãy tạo món với LoaiMon mới.')
-    setShowModal(false)
-  }
-
-  const handleCloseModal = () => {
-    setShowModal(false)
-    setEditingCategory(null)
+  const handleCloseStatsModal = () => {
+    setShowStatsModal(false)
+    setSelectedCategory(null)
+    setCategoryStats(null)
   }
 
   const filteredCategories = categories.filter((cat) =>
@@ -125,11 +111,8 @@ const CategoryPage = () => {
             <h1>
               <FaList /> Quản lý Danh mục
             </h1>
-            <p>Quản lý các loại món ăn, đồ uống</p>
+            <p>Xem danh sách và thống kê các loại món ăn, đồ uống</p>
           </div>
-          <button className={styles.addButton} onClick={handleAddCategory}>
-            <FaPlus /> Thêm danh mục mới
-          </button>
         </div>
 
         <div className={styles.toolbar}>
@@ -156,18 +139,11 @@ const CategoryPage = () => {
               </div>
               <div className={styles.categoryActions}>
                 <button
-                  className={styles.editBtn}
-                  onClick={() => handleEditCategory(category)}
-                  title="Chỉnh sửa"
+                  className={styles.viewStatsBtn}
+                  onClick={() => handleViewStats(category)}
+                  title="Xem thống kê"
                 >
-                  <FaEdit /> Sửa
-                </button>
-                <button
-                  className={styles.deleteBtn}
-                  onClick={handleDeleteCategory}
-                  title="Xóa"
-                >
-                  <FaTrash /> Xóa
+                  <FaChartBar /> Xem thống kê
                 </button>
               </div>
             </div>
@@ -182,47 +158,57 @@ const CategoryPage = () => {
           )}
         </div>
 
-      {/* Modal for Add/Edit Category */}
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={handleCloseModal}>
+      {/* Modal for Category Statistics */}
+      {showStatsModal && (
+        <div className={styles.modalOverlay} onClick={handleCloseStatsModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2>{editingCategory ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'}</h2>
-              <button className={styles.closeBtn} onClick={handleCloseModal}>
+              <h2>
+                <FaChartBar /> Thống kê danh mục: {selectedCategory?.tenLoaiMon}
+              </h2>
+              <button className={styles.closeBtn} onClick={handleCloseStatsModal}>
                 <FaTimes />
               </button>
             </div>
-            <form onSubmit={handleSubmitForm} className={styles.modalForm}>
-              <div className={styles.formGroup}>
-                <label>Mã danh mục *</label>
-                <input
-                  type="text"
-                  value={formData.maLoaiMon}
-                  onChange={(e) => setFormData({ ...formData, maLoaiMon: e.target.value })}
-                  disabled={!!editingCategory}
-                  required
-                  placeholder="VD: LM01"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Tên danh mục *</label>
-                <input
-                  type="text"
-                  value={formData.tenLoaiMon}
-                  onChange={(e) => setFormData({ ...formData, tenLoaiMon: e.target.value })}
-                  required
-                  placeholder="VD: Cà phê"
-                />
-              </div>
+            <div className={styles.modalForm}>
+              {loadingStats ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  Đang tải thống kê...
+                </div>
+              ) : categoryStats ? (
+                <div className={styles.statsContainer}>
+                  <div className={styles.statCard}>
+                    <div className={styles.statLabel}>Số món</div>
+                    <div className={styles.statValue}>{categoryStats.soMon}</div>
+                    <div className={styles.statDescription}>Tổng số món trong danh mục</div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statLabel}>Tổng số lượng bán</div>
+                    <div className={styles.statValue}>{categoryStats.tongSoLuong.toLocaleString('vi-VN')}</div>
+                    <div className={styles.statDescription}>Tổng số lượng đã bán</div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statLabel}>Tổng doanh thu</div>
+                    <div className={styles.statValue}>{categoryStats.tongDoanhThu.toLocaleString('vi-VN')} ₫</div>
+                    <div className={styles.statDescription}>Doanh thu từ danh mục này</div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statLabel}>Số đơn hàng</div>
+                    <div className={styles.statValue}>{categoryStats.soDonHang}</div>
+                    <div className={styles.statDescription}>Số đơn hàng có món thuộc danh mục</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
+                  Không có dữ liệu thống kê
+                </div>
+              )}
               <div className={styles.modalActions}>
-                <button type="button" className={styles.cancelBtn} onClick={handleCloseModal}>
-                  Hủy
-                </button>
-                <button type="submit" className={styles.submitBtn}>
-                  {editingCategory ? 'Cập nhật' : 'Thêm mới'}
+                <button type="button" className={styles.cancelBtn} onClick={handleCloseStatsModal}>
+                  Đóng
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

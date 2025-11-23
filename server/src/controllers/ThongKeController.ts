@@ -456,5 +456,55 @@ export class ThongKeController {
       return res.status(500).json({ message: "Lỗi thống kê top 5 category", error: e.message });
     }
   }
+
+  // Thống kê theo danh mục cụ thể
+  async getCategoryStats(req: Request, res: Response) {
+    try {
+      const { loaiMon, startDate, endDate } = req.query;
+
+      if (!loaiMon) {
+        return res.status(400).json({ message: "Thiếu tham số loaiMon" });
+      }
+
+      const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(new Date().getDate() - 30));
+      const end = endDate ? new Date(endDate as string) : new Date();
+
+      // Use raw query to get statistics for specific category
+      const result = await this.chiTietDHRepo.query(`
+        SELECT 
+          mon."LoaiMon" as "loaiMon",
+          COUNT(DISTINCT mon."MaMon") as "soMon",
+          SUM(ctdh."SoLuong") as "tongSoLuong",
+          SUM(ctdh."SoLuong" * ctdh."DonGia") as "tongDoanhThu",
+          COUNT(DISTINCT dh."MaDonHang") as "soDonHang"
+        FROM "chitietdonhang" ctdh
+        LEFT JOIN "donhang" dh ON ctdh."MaDH" = dh."MaDonHang"
+        LEFT JOIN "mon" mon ON ctdh."MaMon" = mon."MaMon"
+        WHERE mon."LoaiMon" = $1 AND dh."Ngay" BETWEEN $2 AND $3
+        GROUP BY mon."LoaiMon"
+      `, [loaiMon, start, end]);
+
+      if (result.length === 0) {
+        return res.json({
+          loaiMon: loaiMon as string,
+          soMon: 0,
+          tongSoLuong: 0,
+          tongDoanhThu: 0,
+          soDonHang: 0
+        });
+      }
+
+      const item = result[0];
+      return res.json({
+        loaiMon: item.loaiMon || item.loaimon || loaiMon,
+        soMon: parseFloat(String(item.soMon || item.somon || 0)),
+        tongSoLuong: parseFloat(String(item.tongSoLuong || item.tongsoluong || 0)),
+        tongDoanhThu: parseFloat(String(item.tongDoanhThu || item.tongdoanhthu || 0)),
+        soDonHang: parseFloat(String(item.soDonHang || item.sodonhang || 0))
+      });
+    } catch (e: any) {
+      return res.status(500).json({ message: "Lỗi thống kê danh mục", error: e.message });
+    }
+  }
 }
 

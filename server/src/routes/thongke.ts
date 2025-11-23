@@ -13,6 +13,7 @@ router.get("/compare-yesterday", controller.compareRevenueWithYesterday.bind(con
 router.get("/7days-report", controller.get7DaysReport.bind(controller));
 router.get("/top-10-products", controller.getTop10Products.bind(controller));
 router.get("/top-5-categories", controller.getTop5Categories.bind(controller));
+router.get("/category-stats", controller.getCategoryStats.bind(controller));
 
 export default router;
 

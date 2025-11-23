@@ -528,6 +528,14 @@ export interface Top5Category {
   tongDoanhThu: number;
 }
 
+export interface CategoryStats {
+  loaiMon: string;
+  soMon: number;
+  tongSoLuong: number;
+  tongDoanhThu: number;
+  soDonHang: number;
+}
+
 export const thongKeApi = {
   getOverview: (params?: { startDate?: string; endDate?: string }): Promise<ThongKeOverview> => {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
@@ -567,5 +575,12 @@ export const thongKeApi = {
   getTop5Categories: (params?: { startDate?: string; endDate?: string }): Promise<Top5Category[]> => {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
     return apiFetch<Top5Category[]>(`/api/thongke/top-5-categories${queryString}`);
+  },
+  getCategoryStats: (params: { loaiMon: string; startDate?: string; endDate?: string }): Promise<CategoryStats> => {
+    const queryParams: Record<string, string> = { loaiMon: params.loaiMon };
+    if (params.startDate) queryParams.startDate = params.startDate;
+    if (params.endDate) queryParams.endDate = params.endDate;
+    const queryString = '?' + new URLSearchParams(queryParams).toString();
+    return apiFetch<CategoryStats>(`/api/thongke/category-stats${queryString}`);
   },
 };
