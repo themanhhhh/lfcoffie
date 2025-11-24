@@ -166,9 +166,10 @@ const Staff = () => {
 
         // Tìm phiên làm việc đang mở của nhân viên hiện tại
         if (user?.MaNhanVien) {
-          const activePhien = phienLamViecData.find(
-            (plv) => plv.MaNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
-          )
+          const activePhien = phienLamViecData.find((plv) => {
+            const maNhanVien = plv.MaNhanVien ?? plv.nhanVien?.MaNhanVien
+            return maNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
+          })
           if (activePhien) {
             setCurrentPhienLamViec(activePhien.MaPhienLamViec)
             if (activePhien.caLam) {
@@ -337,9 +338,10 @@ const Staff = () => {
     if (user?.MaNhanVien) {
       try {
         const phienLamViecData = await phienLamViecApi.getAll()
-        const activePhien = phienLamViecData.find(
-          (plv) => plv.MaNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
-        )
+        const activePhien = phienLamViecData.find((plv) => {
+          const maNhanVien = plv.MaNhanVien ?? plv.nhanVien?.MaNhanVien
+          return maNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
+        })
         if (activePhien) {
           setCurrentPhienLamViec(activePhien.MaPhienLamViec)
           if (activePhien.caLam) {
