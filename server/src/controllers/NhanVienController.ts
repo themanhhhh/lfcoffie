@@ -62,14 +62,14 @@ export class NhanVienController {
 
   async update(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+    const { id } = req.params;
       const { MaCaLam, ...nhanVienData } = req.body;
       
       const existed = await this.repository.findOne({ 
         where: { MaNhanVien: id } as any,
         relations: ['caLam']
       });
-      if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
+    if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
       
       // Load CaLam if MaCaLam is provided
       if (MaCaLam !== undefined) {
@@ -83,15 +83,15 @@ export class NhanVienController {
           existed.caLam = null as any;
         }
       }
-      
-      // Hash password if provided in update
+    
+    // Hash password if provided in update
       if (nhanVienData.MatKhau) {
-        const saltRounds = 10;
+      const saltRounds = 10;
         nhanVienData.MatKhau = await bcrypt.hash(nhanVienData.MatKhau, saltRounds);
-      }
-      
+    }
+    
       Object.assign(existed, nhanVienData);
-      const saved = await this.repository.save(existed);
+    const saved = await this.repository.save(existed);
       
       // Reload with relations
       const savedWithRelations = await this.repository.findOne({

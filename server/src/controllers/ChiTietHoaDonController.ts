@@ -19,7 +19,19 @@ export class ChiTietHoaDonController {
 
   async create(req: Request, res: Response) {
     try {
-      const obj = this.repository.create(req.body as ChiTietHoaDon);
+      // Frontend gửi các field: MaCTDH, MaDH, MaMon, DonGia, SoLuong
+      // Trong entity, quan hệ được định nghĩa qua "donHang" và "mon",
+      // nên cần map lại các field MaDH / MaMon vào quan hệ tương ứng.
+      const { MaCTDH, MaDH, MaMon, DonGia, SoLuong } = req.body as any;
+
+      const obj = this.repository.create({
+        MaCTDH,
+        DonGia,
+        SoLuong,
+        // Chỉ cần set khóa chính, TypeORM sẽ gán vào cột MaDH / MaMon
+        donHang: MaDH ? ({ MaDonHang: MaDH } as any) : undefined,
+        mon: MaMon ? ({ MaMon } as any) : undefined,
+      } as ChiTietHoaDon);
       const saved = await this.repository.save(obj);
       return res.status(201).json(saved);
     } catch (e:any) {

@@ -120,9 +120,41 @@ const Staff = () => {
     ice: 'Bình thường',
     note: ''
   })
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [invoiceData, setInvoiceData] = useState<{
+    maDonHang: string
+    ngayGio: Date
+    cart: CartItem[]
+    orderType: 'dine-in' | 'takeaway'
+    tableNumber: string | null
+    paymentMethod: 'cash' | 'transfer'
+    total: number
+  } | null>(null)
   
   const { user, logout } = useAuth()
   const router = useRouter()
+
+  const showInvoicePrint = (data: {
+    maDonHang: string
+    ngayGio: Date
+    cart: CartItem[]
+    orderType: 'dine-in' | 'takeaway'
+    tableNumber: string | null
+    paymentMethod: 'cash' | 'transfer'
+    total: number
+  }) => {
+    setInvoiceData(data)
+    setShowInvoiceModal(true)
+  }
+
+  const handlePrintInvoice = () => {
+    window.print()
+  }
+
+  const handleCloseInvoice = () => {
+    setShowInvoiceModal(false)
+    setInvoiceData(null)
+  }
 
   const handleLogout = () => {
     logout()
@@ -413,11 +445,12 @@ const Staff = () => {
     try {
       const now = new Date()
       
-      // Tạo mã đơn hàng
-      const maDonHang = `DH${Date.now().toString().slice(-6)}`
+      // Tạo mã đơn hàng (max 10 characters: DH + 8 digits)
+      const timestamp = Date.now().toString().slice(-8)
+      const maDonHang = `DH${timestamp}`
       
       // Tạo đơn hàng
-      await donHangApi.create({
+      const donHang = await donHangApi.create({
         MaDonHang: maDonHang,
         MaPhienLamViec: currentPhienLamViec,
         Ngay: now.toISOString().split('T')[0],
@@ -426,7 +459,9 @@ const Staff = () => {
 
       // Tạo chi tiết đơn hàng
       const chiTietPromises = cart.map(async (item, index) => {
-        const maCTDH = `CT${maDonHang}${String(index + 1).padStart(2, '0')}`
+        // MaCTDH tối đa 10 ký tự (varchar(10)): CT + 6 số + 2 số thứ tự
+        const detailTimestamp = Date.now().toString().slice(-6)
+        const maCTDH = `CT${detailTimestamp}${String(index + 1).padStart(2, '0')}`
         return chiTietDonHangApi.create({
           MaCTDH: maCTDH,
           MaDH: maDonHang,
@@ -438,13 +473,24 @@ const Staff = () => {
 
       await Promise.all(chiTietPromises)
 
+      // Lưu thông tin hóa đơn để hiển thị
+      const invoiceData = {
+        maDonHang,
+        ngayGio: now,
+        cart: [...cart],
+        orderType,
+        tableNumber: orderType === 'dine-in' ? selectedTable : null,
+        paymentMethod,
+        total: getTotalPrice()
+      }
+
       // Hiển thị hóa đơn
       setShowPaymentModal(false)
       
-      // In hóa đơn (có thể mở window print)
+      // Hiển thị modal hóa đơn để in
       setTimeout(() => {
-        window.print()
-      }, 500)
+        showInvoicePrint(invoiceData)
+      }, 300)
 
       toast.success('Thanh toán thành công!')
       clearCart()
@@ -1045,15 +1091,26 @@ const Staff = () => {
                     </div>
                     <div className={Style.invoiceDivider}></div>
                     <div className={Style.invoiceItems}>
-                      {cart.map((item) => (
-                        <div key={item.id} className={Style.invoiceItem}>
-                          <div>
-                            <span className={Style.invoiceItemName}>{item.name}</span>
-                            <span className={Style.invoiceItemQty}>x{item.quantity}</span>
+                      {cart.map((item) => {
+                        const itemTotal = item.price * item.quantity
+                        const toppingTotal = (item.topping || []).reduce((sum, t) => sum + t.GiaCongThem * item.quantity, 0)
+                        const total = itemTotal + toppingTotal
+                        return (
+                          <div key={item.id} className={Style.invoiceItem}>
+                            <div>
+                              <span className={Style.invoiceItemName}>{item.name}</span>
+                              {item.size && <span style={{ fontSize: '0.85rem', color: '#666', marginLeft: '0.5rem' }}>({item.size})</span>}
+                              <span className={Style.invoiceItemQty}>x{item.quantity}</span>
+                              {item.topping && item.topping.length > 0 && (
+                                <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem' }}>
+                                  Topping: {item.topping.map(t => t.TenTuyChon).join(', ')}
+                                </div>
+                              )}
+                            </div>
+                            <span>{formatPrice(total)}</span>
                           </div>
-                          <span>{formatPrice(item.price * item.quantity)}</span>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                     <div className={Style.invoiceDivider}></div>
                     <div className={Style.invoiceTotal}>
@@ -1099,6 +1156,105 @@ const Staff = () => {
                     <FaPrint /> Xác nhận và in hóa đơn
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Print Modal */}
+      {showInvoiceModal && invoiceData && (
+        <div className={Style.invoicePrintOverlay} id="invoice-print">
+          <div className={Style.invoicePrintContent}>
+            <div className={Style.invoicePrintHeader}>
+              <h2>LOFI COFFEE</h2>
+              <p>Hóa đơn thanh toán</p>
+            </div>
+            <div className={Style.invoicePrintInfo}>
+              <div className={Style.invoicePrintRow}>
+                <span>Mã đơn hàng:</span>
+                <strong>{invoiceData.maDonHang}</strong>
+              </div>
+              <div className={Style.invoicePrintRow}>
+                <span>Ngày giờ:</span>
+                <span>{invoiceData.ngayGio.toLocaleString('vi-VN')}</span>
+              </div>
+              <div className={Style.invoicePrintRow}>
+                <span>Nhân viên:</span>
+                <span>{user?.TenNhanVien || 'N/A'}</span>
+              </div>
+              {invoiceData.orderType === 'dine-in' && invoiceData.tableNumber && (
+                <div className={Style.invoicePrintRow}>
+                  <span>Số thẻ bàn:</span>
+                  <span>{invoiceData.tableNumber}</span>
+                </div>
+              )}
+              {invoiceData.orderType === 'takeaway' && (
+                <div className={Style.invoicePrintRow}>
+                  <span>Loại đơn:</span>
+                  <span>Mang về</span>
+                </div>
+              )}
+              <div className={Style.invoicePrintRow}>
+                <span>Phương thức:</span>
+                <span>{invoiceData.paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'}</span>
+              </div>
+              <div className={Style.invoicePrintDivider}></div>
+              <div className={Style.invoicePrintItems}>
+                {invoiceData.cart.map((item) => {
+                  const itemTotal = item.price * item.quantity
+                  const toppingTotal = (item.topping || []).reduce((sum, t) => sum + t.GiaCongThem * item.quantity, 0)
+                  const total = itemTotal + toppingTotal
+                  return (
+                    <div key={item.id} className={Style.invoicePrintItem}>
+                      <div>
+                        <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
+                          {item.name}
+                          {item.size && <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem', color: '#666' }}>({item.size})</span>}
+                          <span style={{ marginLeft: '0.5rem', color: '#666' }}>x{item.quantity}</span>
+                        </div>
+                        {item.topping && item.topping.length > 0 && (
+                          <div style={{ fontSize: '0.85rem', color: '#666', marginLeft: '1rem' }}>
+                            + {item.topping.map(t => t.TenTuyChon).join(', ')}
+                          </div>
+                        )}
+                        {(item.sugar || item.ice || item.note) && (
+                          <div style={{ fontSize: '0.85rem', color: '#999', marginLeft: '1rem', marginTop: '0.25rem' }}>
+                            {item.sugar && `Đường: ${item.sugar} `}
+                            {item.ice && `Đá: ${item.ice} `}
+                            {item.note && `Ghi chú: ${item.note}`}
+                          </div>
+                        )}
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{formatPrice(total)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className={Style.invoicePrintDivider}></div>
+              <div className={Style.invoicePrintTotal}>
+                <span>Tổng cộng:</span>
+                <strong className={Style.invoicePrintTotalAmount}>{formatPrice(invoiceData.total)}</strong>
+              </div>
+              <div style={{ textAlign: 'center', marginTop: '1.5rem', color: '#666', fontSize: '0.9rem' }}>
+                <p>Cảm ơn quý khách!</p>
+                <p>Hẹn gặp lại</p>
+              </div>
+            </div>
+            <div className={Style.invoicePrintActions}>
+              <button
+                type="button"
+                className={Style.cancelPaymentBtn}
+                onClick={handleCloseInvoice}
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                className={Style.confirmPaymentBtn}
+                onClick={handlePrintInvoice}
+              >
+                <FaPrint /> In hóa đơn
               </button>
             </div>
           </div>

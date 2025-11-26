@@ -318,14 +318,14 @@ const OpenShiftPage = () => {
                   >
                     −
                   </button>
-                  <input
-                    type="number"
-                    min={0}
-                    value={row.quantity}
-                    onChange={event =>
-                      handleCashQuantityChange(index, Number(event.target.value) || 0)
-                    }
-                  />
+                <input
+                  type="number"
+                  min={0}
+                  value={row.quantity}
+                  onChange={event =>
+                    handleCashQuantityChange(index, Number(event.target.value) || 0)
+                  }
+                />
                   <button
                     type="button"
                     className={styles.quantityButton}

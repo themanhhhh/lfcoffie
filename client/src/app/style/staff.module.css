@@ -1128,7 +1128,7 @@
 
 .invoiceHeader p {
   margin: 0;
-  color: #666;
+  color: #000;
   font-size: 0.9rem;
 }
 
@@ -1145,7 +1145,7 @@
 
 .invoiceRow span:first-child {
   font-weight: 500;
-  color: #666;
+  color: #000;
 }
 
 .invoiceRow span:last-child {
@@ -1264,32 +1264,136 @@
   box-shadow: none;
 }
 
+/* Invoice Print Modal */
+.invoicePrintOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.invoicePrintContent {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.invoicePrintHeader {
+  text-align: center;
+  padding: 2rem 1.5rem 1rem;
+  border-bottom: 2px solid #8B4513;
+}
+
+.invoicePrintHeader h2 {
+  margin: 0 0 0.5rem;
+  color: #8B4513;
+  font-size: 1.8rem;
+}
+
+.invoicePrintHeader p {
+  margin: 0;
+  color: #000;
+  font-size: 0.95rem;
+}
+
+.invoicePrintInfo {
+  padding: 1.5rem;
+}
+
+.invoicePrintRow {
+  color: #000;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.invoicePrintRow span:first-child {
+  color: #000;
+}
+
+.invoicePrintRow strong {
+  color: #8B4513;
+  font-size: 1.1rem;
+}
+
+.invoicePrintDivider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 1rem 0;
+}
+
+.invoicePrintItems {
+  margin: 1rem 0;
+}
+
+.invoicePrintItem {
+  color: #000;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed #e0e0e0;
+}
+
+.invoicePrintItem:last-child {
+  border-bottom: none;
+}
+
+.invoicePrintTotal {
+  color: #000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-top: 2px solid #8B4513;
+  margin-top: 1rem;
+}
+
+.invoicePrintTotalAmount {
+  font-size: 1.5rem;
+  color: #8B4513;
+}
+
+.invoicePrintActions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f8f8;
+}
+
 /* Print Styles */
 @media print {
-  .paymentModalOverlay {
+  .invoicePrintOverlay {
     position: static;
     background: white;
+    padding: 0;
   }
 
-  .paymentModalContent {
+  .invoicePrintContent {
     max-width: 100%;
     box-shadow: none;
     border: none;
   }
 
-  .paymentModalHeader,
-  .paymentModalActions,
-  .paymentSection:not(:last-child),
-  .orderTypeButtons,
-  .tableGrid,
-  .tableInput,
-  .paymentMethodButtons,
-  .qrCodeContainer {
+  .invoicePrintActions {
     display: none;
   }
 
-  .invoicePreview {
-    border: none;
-    background: white;
+  .paymentModalOverlay {
+    display: none;
   }
 }
