@@ -4,11 +4,13 @@ import {
   FaChartLine,
   FaStore,
   FaClipboardCheck,
-  FaMoneyBillWave,
   FaArrowUp,
   FaArrowDown,
   FaTrophy,
-  FaTags
+  FaTags,
+  FaFileExcel,
+  FaCalendarAlt,
+  FaTimes
 } from 'react-icons/fa'
 import { MdOutlineAnalytics } from 'react-icons/md'
 import styles from './statistic.module.css'
@@ -22,6 +24,8 @@ import {
   Top5Category,
   RevenueByChannel
 } from '../../../lib/api'
+import { exportBusinessActivity, exportDailyRevenue } from '../../../utils/excelExport'
+import { toast } from 'react-hot-toast'
 
 const StatisticPage = () => {
   const [overview, setOverview] = useState<ThongKeOverview | null>(null)
@@ -32,6 +36,8 @@ const StatisticPage = () => {
   const [revenueChannels, setRevenueChannels] = useState<RevenueByChannel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -39,6 +45,12 @@ const StatisticPage = () => {
       setLoading(true)
       setError(null)
       try {
+        // Prepare date params
+        const dateParams = dateFrom || dateTo ? {
+          startDate: dateFrom || undefined,
+          endDate: dateTo || undefined
+        } : undefined
+
         const [
           overviewData,
           comparisonData,
@@ -47,12 +59,12 @@ const StatisticPage = () => {
           top5Data,
           channelsData
         ] = await Promise.all([
-          thongKeApi.getOverview(),
+          thongKeApi.getOverview(dateParams),
           thongKeApi.compareRevenueWithYesterday(),
           thongKeApi.get7DaysReport(),
-          thongKeApi.getTop10Products(),
-          thongKeApi.getTop5Categories(),
-          thongKeApi.getRevenueByChannel()
+          thongKeApi.getTop10Products(dateParams),
+          thongKeApi.getTop5Categories(dateParams),
+          thongKeApi.getRevenueByChannel(dateParams)
         ])
 
         if (ignore) return
@@ -81,7 +93,36 @@ const StatisticPage = () => {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [dateFrom, dateTo])
+
+  const handleQuickDateFilter = (type: 'today' | 'week' | 'month' | 'clear') => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    if (type === 'clear') {
+      setDateFrom('')
+      setDateTo('')
+      return
+    }
+    
+    if (type === 'today') {
+      const dateStr = today.toISOString().split('T')[0]
+      setDateFrom(dateStr)
+      setDateTo(dateStr)
+    } else if (type === 'week') {
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekStart.getDate() + 6)
+      setDateFrom(weekStart.toISOString().split('T')[0])
+      setDateTo(weekEnd.toISOString().split('T')[0])
+    } else if (type === 'month') {
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      setDateFrom(monthStart.toISOString().split('T')[0])
+      setDateTo(monthEnd.toISOString().split('T')[0])
+    }
+  }
 
   if (loading) {
     return (
@@ -138,8 +179,126 @@ const StatisticPage = () => {
     .filter(channel => !channel.label.toLowerCase().includes('giao hàng') && !channel.label.toLowerCase().includes('delivery'))
     .reduce((sum, item) => sum + item.value, 0)
 
+  const handleExportBusinessActivity = () => {
+    if (!overview || !revenueComparison) {
+      toast.error('Chưa có dữ liệu để xuất Excel')
+      return
+    }
+    try {
+      exportBusinessActivity(overview, revenueComparison)
+      toast.success('Xuất Excel thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
+
+  const handleExportDailyRevenue = () => {
+    if (!sevenDaysReport || !sevenDaysReport.dailyData) {
+      toast.error('Chưa có dữ liệu để xuất Excel')
+      return
+    }
+    try {
+      const startDate = sevenDaysReport.period.startDate
+      const endDate = sevenDaysReport.period.endDate
+      const dailyData = sevenDaysReport.dailyData.map(d => ({
+        date: d.date,
+        revenue: d.revenue,
+        orderCount: d.orderCount || 0
+      }))
+      exportDailyRevenue(dailyData, startDate, endDate)
+      toast.success('Xuất Excel thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
+
   return (
     <div className={styles.container}>
+        {/* Header */}
+        <div className={styles.header}>
+          <h1 className={styles.pageTitle}>
+            <FaChartLine /> Thống kê và Báo cáo
+          </h1>
+          <div className={styles.headerActions}>
+            <button className={styles.excelBtn} onClick={handleExportBusinessActivity} disabled={!overview || !revenueComparison}>
+              <FaFileExcel /> Xuất Excel - Hoạt động kinh doanh
+            </button>
+            <button className={styles.excelBtn} onClick={handleExportDailyRevenue} disabled={!sevenDaysReport}>
+              <FaFileExcel /> Xuất Excel - Doanh thu theo ngày
+            </button>
+          </div>
+        </div>
+
+        {/* Date Filter */}
+        <div className={styles.dateFilterSection}>
+          <div className={styles.dateFilterGroup}>
+            <FaCalendarAlt />
+            <div className={styles.dateInputs}>
+              <input
+                type="date"
+                className={styles.dateInput}
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                placeholder="Từ ngày"
+              />
+              <span className={styles.dateSeparator}>-</span>
+              <input
+                type="date"
+                className={styles.dateInput}
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                placeholder="Đến ngày"
+              />
+            </div>
+            <div className={styles.quickDateButtons}>
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('today')}
+                title="Hôm nay"
+              >
+                Hôm nay
+              </button>
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('week')}
+                title="Tuần này"
+              >
+                Tuần này
+              </button>
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('month')}
+                title="Tháng này"
+              >
+                Tháng này
+              </button>
+              {(dateFrom || dateTo) && (
+                <button
+                  type="button"
+                  className={styles.quickDateBtn}
+                  onClick={() => handleQuickDateFilter('clear')}
+                  title="Xóa bộ lọc"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+          </div>
+          {(dateFrom || dateTo) && (
+            <div className={styles.dateFilterInfo}>
+              <span>
+                Đang lọc: {dateFrom ? `Từ ${new Date(dateFrom).toLocaleDateString('vi-VN')}` : ''} 
+                {dateFrom && dateTo ? ' - ' : ''}
+                {dateTo ? `Đến ${new Date(dateTo).toLocaleDateString('vi-VN')}` : ''}
+                {!dateFrom && !dateTo ? 'Tất cả thời gian' : ''}
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Summary Cards */}
         <section className={styles.summaryGrid}>
           {revenueSummary.map(item => (
@@ -251,7 +410,7 @@ const StatisticPage = () => {
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2>
-                <FaTrophy /> Top 5 món bán chạy
+                <FaTrophy /> Top {top10Products.length > 0 ? top10Products.length : 5} món bán chạy
               </h2>
               <span>Theo số lượng bán</span>
             </div>
@@ -385,9 +544,14 @@ const StatisticPage = () => {
             <div className={styles.card}>
               <div className={styles.cardHeader}>
                 <h2>
-                  <FaClipboardCheck /> Tổng quan tuần này
+                  <FaClipboardCheck /> Tổng quan {dateFrom || dateTo ? 'kỳ chọn' : 'tuần này'}
                 </h2>
-                <span>Thống kê tổng hợp</span>
+                <span>
+                  {dateFrom || dateTo 
+                    ? `${dateFrom ? new Date(dateFrom).toLocaleDateString('vi-VN') : '...'} - ${dateTo ? new Date(dateTo).toLocaleDateString('vi-VN') : '...'}`
+                    : 'Thống kê tổng hợp (7 ngày gần nhất)'
+                  }
+                </span>
               </div>
               <div className={styles.overviewList}>
                 <div className={styles.overviewItem}>

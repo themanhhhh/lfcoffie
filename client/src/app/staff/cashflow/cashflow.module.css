@@ -60,6 +60,34 @@
   color: white;
 }
 
+.excelBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.excelBtn:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.excelBtn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -327,4 +355,20 @@
   .tableWrapper td {
     padding: 0.75rem 0.9rem;
   }
+}
+
+/* Remove number input arrows - Force hide spinner */
+.field input[type="number"]::-webkit-inner-spin-button,
+.field input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+
+.field input[type="number"],
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
 }

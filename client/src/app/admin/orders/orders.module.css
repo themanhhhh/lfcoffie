@@ -103,6 +103,79 @@
   color: #000000;
 }
 
+/* Date Filter */
+.dateFilterGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.dateFilterGroup svg {
+  color: #000000;
+  font-size: 1.1rem;
+}
+
+.dateInputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dateInput {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #000000;
+  background: white;
+  cursor: pointer;
+}
+
+.dateInput:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.1);
+}
+
+.dateSeparator {
+  color: #666;
+  font-weight: 500;
+}
+
+.quickDateButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid #e0e0e0;
+}
+
+.quickDateBtn {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.85rem;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.quickDateBtn:hover {
+  background: #f8f9fa;
+  border-color: #8B4513;
+  color: #8B4513;
+}
+
+.quickDateBtn:active {
+  transform: scale(0.98);
+}
+
 .tableContainer {
   background: white;
   border-radius: 12px;
@@ -354,6 +427,30 @@
 
   .searchBox {
     max-width: 100%;
+  }
+
+  .dateFilterGroup {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .dateInputs {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .quickDateButtons {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .quickDateBtn {
+    flex: 1;
   }
 
   .tableContainer {

@@ -290,6 +290,11 @@
   color: #7d6d5b;
   font-size: 0.9rem;
   line-height: 1.4;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .voucherDetails {
@@ -428,7 +433,10 @@
   text-align: right;
   word-wrap: break-word;
   word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
   flex: 1;
+  max-width: 100%;
 }
 
 .codeValue {

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { FaArrowLeft, FaDoorOpen, FaMoneyBillWave, FaClipboardList, FaClock, FaUserClock, FaCheckCircle } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
-import { phienLamViecApi, caLamApi, ApiError } from '@/lib/api'
+import { phienLamViecApi, caLamApi, ApiError, CaLam } from '@/lib/api'
 import styles from './openShift.module.css'
 
 type ShiftKey = 'morning' | 'afternoon' | 'evening'
@@ -73,11 +73,8 @@ const OpenShiftPage = () => {
 
   const [cashRows, setCashRows] = useState<CashRow[]>(CASH_TEMPLATE)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [shiftToMaCaLam, setShiftToMaCaLam] = useState<Record<ShiftKey, string>>({
-    morning: '',
-    afternoon: '',
-    evening: ''
-  })
+  const [caLamList, setCaLamList] = useState<CaLam[]>([])
+  const [selectedMaCaLam, setSelectedMaCaLam] = useState<string>('')
 
   const totalOpeningCash = useMemo(
     () => cashRows.reduce((sum, row) => sum + row.value * row.quantity, 0),
@@ -89,26 +86,12 @@ const OpenShiftPage = () => {
     const fetchCaLam = async () => {
       try {
         const list = await caLamApi.getAll()
+        setCaLamList(list)
         
-        // Map shift key với MaCaLam dựa trên tên ca
-        const mapping: Record<ShiftKey, string> = {
-          morning: '',
-          afternoon: '',
-          evening: ''
+        // Tự động chọn ca đầu tiên nếu có
+        if (list.length > 0 && !selectedMaCaLam) {
+          setSelectedMaCaLam(list[0].MaCaLam)
         }
-        
-        list.forEach((caLam) => {
-          const tenCa = caLam.TenCaLam.toLowerCase()
-          if (tenCa.includes('sáng') || tenCa.includes('morning')) {
-            mapping.morning = caLam.MaCaLam
-          } else if (tenCa.includes('chiều') || tenCa.includes('afternoon')) {
-            mapping.afternoon = caLam.MaCaLam
-          } else if (tenCa.includes('tối') || tenCa.includes('evening')) {
-            mapping.evening = caLam.MaCaLam
-          }
-        })
-        
-        setShiftToMaCaLam(mapping)
       } catch (err) {
         console.error('Error fetching ca lam:', err)
         toast.error('Không thể tải danh sách ca làm việc')
@@ -116,6 +99,7 @@ const OpenShiftPage = () => {
     }
     
     fetchCaLam()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleShiftInfoChange = <K extends keyof ShiftInfo>(key: K, value: ShiftInfo[K]) => {
@@ -158,20 +142,19 @@ const OpenShiftPage = () => {
       return
     }
 
+    if (!selectedMaCaLam) {
+      toast.error('Vui lòng chọn ca làm việc')
+      return
+    }
+
     setIsSubmitting(true)
     try {
       // Generate MaPhienLamViec (max 10 characters: PLV + 7 digits)
       const timestamp = Date.now().toString().slice(-7)
       const maPhienLamViec = `PLV${timestamp}`
 
-      // Get MaCaLam from shift selection
-      const maCaLam = shiftToMaCaLam[shiftInfo.shift]
-      
-      if (!maCaLam) {
-        toast.error('Không tìm thấy ca làm việc. Vui lòng thử lại.')
-        setIsSubmitting(false)
-        return
-      }
+      // Use selectedMaCaLam directly from dropdown
+      const maCaLam = selectedMaCaLam
 
       // Create new phien lam viec
       await phienLamViecApi.create({
@@ -236,12 +219,15 @@ const OpenShiftPage = () => {
             <label className={styles.field}>
               <span>Chọn ca</span>
               <select
-                value={shiftInfo.shift}
-                onChange={event => handleShiftInfoChange('shift', event.target.value as ShiftKey)}
+                value={selectedMaCaLam}
+                onChange={event => setSelectedMaCaLam(event.target.value)}
               >
-                <option value="morning">Ca sáng (07:00 - 12:00)</option>
-                <option value="afternoon">Ca chiều (12:00 - 17:00)</option>
-                <option value="evening">Ca tối (17:00 - 22:00)</option>
+                <option value="">-- Chọn ca làm việc --</option>
+                {caLamList.map((caLam) => (
+                  <option key={caLam.MaCaLam} value={caLam.MaCaLam}>
+                    {caLam.TenCaLam} ({caLam.ThoiGianBatDau} - {caLam.ThoiGianKetThuc})
+                  </option>
+                ))}
               </select>
             </label>
 

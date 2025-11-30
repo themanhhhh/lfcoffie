@@ -49,13 +49,35 @@ const CheckinCheckoutPage = () => {
       return
     }
 
+    // Load history from localStorage
+    const storageKey = `checkin_history_${user.MaNhanVien}`
+    const savedHistory = localStorage.getItem(storageKey)
+    let history: HistoryItem[] = []
+    let savedStatus: ShiftStatus = 'pending'
+    let savedCheckIn: string | undefined = undefined
+    let savedCheckOut: string | undefined = undefined
+
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory)
+        history = parsed.history || []
+        savedStatus = parsed.status || 'pending'
+        savedCheckIn = parsed.checkIn
+        savedCheckOut = parsed.checkOut
+      } catch (e) {
+        console.error('Error parsing saved history:', e)
+      }
+    }
+
     // Sử dụng trực tiếp thông tin từ user context
     const mapped: StaffShift[] = [{
       id: user.MaNhanVien,
       name: user.TenNhanVien || 'Không tên',
       role: user.ChucVu || 'Nhân viên',
-      status: 'pending' as ShiftStatus,
-      history: []
+      status: savedStatus,
+      checkIn: savedCheckIn,
+      checkOut: savedCheckOut,
+      history: history
     }]
 
     setStaffShifts(mapped)
@@ -72,7 +94,21 @@ const CheckinCheckoutPage = () => {
     new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 
   const updateStaff = (id: string, updater: (staff: StaffShift) => StaffShift) => {
-    setStaffShifts(prev => prev.map(staff => (staff.id === id ? updater(staff) : staff)))
+    setStaffShifts(prev => {
+      const updated = prev.map(staff => (staff.id === id ? updater(staff) : staff))
+      // Save to localStorage
+      const updatedStaff = updated.find(s => s.id === id)
+      if (updatedStaff && user?.MaNhanVien) {
+        const storageKey = `checkin_history_${user.MaNhanVien}`
+        localStorage.setItem(storageKey, JSON.stringify({
+          status: updatedStaff.status,
+          checkIn: updatedStaff.checkIn,
+          checkOut: updatedStaff.checkOut,
+          history: updatedStaff.history
+        }))
+      }
+      return updated
+    })
   }
 
   const handleCheckIn = () => {

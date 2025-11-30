@@ -621,6 +621,18 @@
   cursor: not-allowed;
 }
 
+/* Remove number input arrows (spinner) */
+.formGroup input[type="number"]::-webkit-inner-spin-button,
+.formGroup input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.formGroup input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .formGroup textarea {
   resize: vertical;
   min-height: 80px;

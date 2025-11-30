@@ -6,6 +6,8 @@ import { Mon } from "../entities/Mon";
 import { ThuChi } from "../entities/ThuChi";
 import { NghiepVu } from "../entities/NghiepVu";
 import { PhienLamViec } from "../entities/PhienLamViec";
+import { GiamMon } from "../entities/GiamMon";
+import { GiamHoaDon } from "../entities/GiamHoaDon";
 import { Between } from "typeorm";
 
 export class ThongKeController {
@@ -172,18 +174,135 @@ export class ThongKeController {
       const { maPhienLamViec } = req.params;
       const phienLamViec = await this.phienLamViecRepo.findOne({
         where: { MaPhienLamViec: maPhienLamViec } as any,
-        relations: ['caLam', 'nhanVien', 'donHangs', 'donHangs.chiTietDonHangs', 'donHangs.chiTietDonHangs.mon', 'thuChis', 'thuChis.nghiepVu']
+        relations: [
+          'caLam', 
+          'nhanVien', 
+          'donHangs', 
+          'donHangs.chiTietDonHangs', 
+          'donHangs.chiTietDonHangs.mon',
+          'donHangs.ctkm',
+          'thuChis', 
+          'thuChis.nghiepVu'
+        ]
       });
 
       if (!phienLamViec) {
         return res.status(404).json({ message: "Không tìm thấy phiên làm việc" });
       }
 
-      // Tính tổng doanh thu từ đơn hàng
-      const totalRevenue = phienLamViec.donHangs?.reduce((sum, dh) => {
-        const dhTotal = dh.chiTietDonHangs?.reduce((s, ct) => s + (ct.SoLuong * ct.DonGia), 0) || 0;
-        return sum + dhTotal;
-      }, 0) || 0;
+      const giamMonRepo = AppDataSource.getRepository(GiamMon);
+      const giamHoaDonRepo = AppDataSource.getRepository(GiamHoaDon);
+
+      // Lấy tất cả GiamMon và GiamHoaDon đang active
+      const allGiamMons = await giamMonRepo.find({
+        where: { TrangThai: 'hoạt động' } as any,
+        relations: ['mon', 'ctkm']
+      });
+
+      const allGiamHoaDons = await giamHoaDonRepo.find({
+        where: { TrangThai: 'hoạt động' } as any,
+        relations: ['ctkm']
+      });
+
+      // Tính tổng doanh thu gốc (chưa trừ discount) từ đơn hàng
+      let totalRevenue = 0;
+      let totalGiamGiaMon = 0; // Tổng giảm giá món
+      let totalChietKhau = 0; // Tổng chiết khấu (từ GiamHoaDon)
+      let totalVoucherDiscount = 0; // Tổng giảm từ voucher (nếu có)
+
+      // Nhóm món theo NhomMon
+      const monByNhom: Record<string, { ten: string; soLuong: number; doanhThu: number }> = {};
+
+      // Nhóm theo CTKM
+      const ctkmStats: Record<string, { ten: string; soHoaDon: number; doanhThu: number }> = {};
+
+      // Phương thức thanh toán
+      const paymentMethods: Record<string, { soHoaDon: number; doanhThu: number }> = {};
+
+      // Nguồn đơn hàng (dine-in vs takeaway - cần thêm field này vào DonHang nếu chưa có)
+      const orderSources: Record<string, { ten: string; soHoaDon: number; doanhThu: number }> = {};
+
+      phienLamViec.donHangs?.forEach((dh) => {
+        // Tính doanh thu gốc của đơn hàng
+        const dhSubtotal = dh.chiTietDonHangs?.reduce((s, ct) => {
+          const itemTotal = ct.SoLuong * ct.DonGia;
+          
+          // Tính giảm giá món (GiamMon) - tìm trong allGiamMons
+          if (ct.mon) {
+            const applicableGiamMons = allGiamMons.filter(gm => 
+              gm.mon?.MaMon === ct.mon?.MaMon &&
+              gm.TrangThai === 'hoạt động'
+            );
+            
+            applicableGiamMons.forEach((gm) => {
+              const orderDate = new Date(dh.Ngay);
+              if (orderDate >= new Date(gm.NgayBatDau) && orderDate <= new Date(gm.NgayKetThuc)) {
+                let discount = 0;
+                if (gm.LoaiGiam === 'Phần trăm') {
+                  discount = itemTotal * (gm.SoTienGiam / 100);
+                } else {
+                  discount = gm.SoTienGiam * ct.SoLuong;
+                }
+                totalGiamGiaMon += discount;
+              }
+            });
+          }
+
+          // Nhóm món theo NhomMon
+          if (ct.mon) {
+            const nhom = ct.mon.NhomMon || 'Khác';
+            if (!monByNhom[nhom]) {
+              monByNhom[nhom] = { ten: nhom, soLuong: 0, doanhThu: 0 };
+            }
+            monByNhom[nhom].soLuong += ct.SoLuong;
+            monByNhom[nhom].doanhThu += itemTotal;
+          }
+
+          return s + itemTotal;
+        }, 0) || 0;
+
+        totalRevenue += dhSubtotal;
+
+        // Tính chiết khấu từ GiamHoaDon (CTKM) - tìm trong allGiamHoaDons
+        if (dh.ctkm) {
+          const applicableGiamHoaDons = allGiamHoaDons.filter(ghd => 
+            ghd.ctkm?.MaCTKM === dh.ctkm?.MaCTKM &&
+            ghd.TrangThai === 'hoạt động'
+          );
+          
+          applicableGiamHoaDons.forEach((ghd) => {
+            const orderDate = new Date(dh.Ngay);
+            if (orderDate >= new Date(ghd.NgayBatDau) && orderDate <= new Date(ghd.NgayKetThuc)) {
+              // Kiểm tra điều kiện GiaTriTu
+              if (!ghd.GiaTriTu || dhSubtotal >= ghd.GiaTriTu) {
+                let discount = 0;
+                if (ghd.LoaiGiam === 'Phần trăm') {
+                  discount = dhSubtotal * (ghd.SoTienGiam / 100);
+                } else {
+                  discount = ghd.SoTienGiam;
+                }
+                totalChietKhau += discount;
+              }
+            }
+          });
+
+          // Thống kê CTKM
+          const ctkmName = dh.ctkm.TenCTKM || 'Khuyến mãi';
+          if (!ctkmStats[ctkmName]) {
+            ctkmStats[ctkmName] = { ten: ctkmName, soHoaDon: 0, doanhThu: 0 };
+          }
+          ctkmStats[ctkmName].soHoaDon += 1;
+          ctkmStats[ctkmName].doanhThu += dhSubtotal;
+        }
+
+        // Thống kê phương thức thanh toán
+        const paymentMethod = dh.PhuongThucThanhToan || 'Khác';
+        if (!paymentMethods[paymentMethod]) {
+          paymentMethods[paymentMethod] = { soHoaDon: 0, doanhThu: 0 };
+        }
+        paymentMethods[paymentMethod].soHoaDon += 1;
+        paymentMethods[paymentMethod].doanhThu += dhSubtotal;
+      });
 
       // Tính tổng thu từ ThuChi
       const totalThu = phienLamViec.thuChis?.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'thu')
@@ -195,6 +314,20 @@ export class ThongKeController {
 
       // Số đơn hàng
       const orderCount = phienLamViec.donHangs?.length || 0;
+
+      // Trung bình hóa đơn
+      const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
+
+      // Tiền trong két (số dư cuối = số dư đầu + thu - chi)
+      // Số dư đầu có thể lấy từ phiên làm việc hoặc tính từ ThuChi đầu tiên
+      const soDuDau = phienLamViec.thuChis?.find(tc => 
+        tc.nghiepVu?.LoaiGiaoDich === 'thu' && 
+        tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')
+      )?.SoTien || 0;
+      const tienTrongKet = soDuDau + totalThu - totalChi;
+
+      // Giờ in (thời gian hiện tại)
+      const gioIn = new Date().toISOString();
 
       return res.json({
         phienLamViec: {
@@ -208,11 +341,25 @@ export class ThongKeController {
         },
         tongKet: {
           totalRevenue,
+          totalGiamGiaMon,
+          totalChietKhau,
+          totalVoucherDiscount,
           totalThu,
           totalChi,
           orderCount,
-          profit: totalThu - totalChi
+          averageOrder,
+          profit: totalThu - totalChi,
+          soDuDau,
+          tienTrongKet,
+          gioIn
         },
+        monByNhom: Object.values(monByNhom),
+        ctkmStats: Object.values(ctkmStats),
+        paymentMethods: Object.entries(paymentMethods).map(([key, value]) => ({
+          phuongThuc: key,
+          ...value
+        })),
+        orderSources: Object.values(orderSources),
         donHangs: phienLamViec.donHangs,
         thuChis: phienLamViec.thuChis
       });

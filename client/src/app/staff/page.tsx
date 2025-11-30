@@ -28,7 +28,7 @@ import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
 import { logo, coffeeBlack } from '../image/index'
-import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon } from '../../lib/api'
+import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon, giamHoaDonApi, GiamHoaDon } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -68,8 +68,10 @@ interface ShiftInfo {
   end?: string
 }
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(price) + ' đ'
+const formatPrice = (price: number) => {
+  // Format với dấu chấm ngăn cách phần nguyên (VD: 1.000.000 đ)
+  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' đ'
+}
 
 const quickActions = [
   {
@@ -110,14 +112,20 @@ const Staff = () => {
   const [currentShiftInfo, setCurrentShiftInfo] = useState<ShiftInfo | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
+  const [availablePromotions, setAvailablePromotions] = useState<GiamHoaDon[]>([])
+  const [selectedPromotion, setSelectedPromotion] = useState<GiamHoaDon | null>(null)
+  const [customerCash, setCustomerCash] = useState<string>('')
   const [showCustomizeModal, setShowCustomizeModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [toppings, setToppings] = useState<TuyChon[]>([])
+  const [sizes, setSizes] = useState<TuyChon[]>([])
+  const [sugars, setSugars] = useState<TuyChon[]>([])
+  const [ices, setIces] = useState<TuyChon[]>([])
   const [customizeOptions, setCustomizeOptions] = useState({
     topping: [] as TuyChon[],
-    size: 'M',
-    sugar: '100%',
-    ice: 'Bình thường',
+    size: '',
+    sugar: '',
+    ice: '',
     note: ''
   })
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
@@ -129,6 +137,8 @@ const Staff = () => {
     tableNumber: string | null
     paymentMethod: 'cash' | 'transfer'
     total: number
+    discount?: number
+    promotion?: string | null
   } | null>(null)
   
   const { user, logout } = useAuth()
@@ -171,15 +181,38 @@ const Staff = () => {
 
   // Load toppings from API
   useEffect(() => {
-    const loadToppings = async () => {
+    const loadTuyChons = async () => {
       try {
-        const toppingData = await tuyChonApi.getAll({ loaiTuyChon: 'topping' })
+        const [toppingData, sizeData, sugarData, iceData] = await Promise.all([
+          tuyChonApi.getAll({ loaiTuyChon: 'topping' }),
+          tuyChonApi.getAll({ loaiTuyChon: 'size' }),
+          tuyChonApi.getAll({ loaiTuyChon: 'sugar' }),
+          tuyChonApi.getAll({ loaiTuyChon: 'ice' })
+        ])
         setToppings(toppingData)
+        setSizes(sizeData)
+        setSugars(sugarData)
+        setIces(iceData)
+        
+        // Set default values if available
+        if (sizeData.length > 0 && !customizeOptions.size) {
+          const defaultSize = sizeData.find(s => s.TenTuyChon === 'M') || sizeData[0]
+          setCustomizeOptions(prev => ({ ...prev, size: defaultSize.TenTuyChon }))
+        }
+        if (sugarData.length > 0 && !customizeOptions.sugar) {
+          const defaultSugar = sugarData.find(s => s.TenTuyChon.includes('100')) || sugarData[0]
+          setCustomizeOptions(prev => ({ ...prev, sugar: defaultSugar.TenTuyChon }))
+        }
+        if (iceData.length > 0 && !customizeOptions.ice) {
+          const defaultIce = iceData.find(s => s.TenTuyChon.includes('Bình thường')) || iceData[0]
+          setCustomizeOptions(prev => ({ ...prev, ice: defaultIce.TenTuyChon }))
+        }
       } catch (err) {
-        console.error('Error loading toppings:', err)
+        console.error('Error loading tuy chons:', err)
       }
     }
-    loadToppings()
+    loadTuyChons()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -283,11 +316,15 @@ const Staff = () => {
 
   const openCustomizeModal = (product: Product) => {
     setSelectedProduct(product)
+    // Set default values from DB if available, otherwise empty
+    const defaultSize = sizes.find(s => s.TenTuyChon === 'M')?.TenTuyChon || sizes[0]?.TenTuyChon || ''
+    const defaultSugar = sugars.find(s => s.TenTuyChon.includes('100'))?.TenTuyChon || sugars[0]?.TenTuyChon || ''
+    const defaultIce = ices.find(s => s.TenTuyChon.includes('Bình thường'))?.TenTuyChon || ices[0]?.TenTuyChon || ''
     setCustomizeOptions({
       topping: [] as TuyChon[],
-      size: 'M',
-      sugar: '100%',
-      ice: 'Bình thường',
+      size: defaultSize,
+      sugar: defaultSugar,
+      ice: defaultIce,
       note: ''
     })
     setShowCustomizeModal(true)
@@ -399,6 +436,23 @@ const Staff = () => {
       setSelectedTable('')
     }
     setPaymentMethod('cash')
+    setSelectedPromotion(null)
+    setCustomerCash('')
+    
+    // Load available promotions
+    try {
+      const promotions = await giamHoaDonApi.getActiveRules()
+      const totalPrice = getTotalPrice()
+      // Filter promotions that apply to current order
+      const applicablePromotions = promotions.filter(promo => {
+        if (promo.GiaTriTu && totalPrice < promo.GiaTriTu) return false
+        return true
+      })
+      setAvailablePromotions(applicablePromotions)
+    } catch (err) {
+      console.error('Error loading promotions:', err)
+      setAvailablePromotions([])
+    }
   }
 
   const handleClosePaymentModal = () => {
@@ -450,11 +504,12 @@ const Staff = () => {
       const maDonHang = `DH${timestamp}`
       
       // Tạo đơn hàng
-      const donHang = await donHangApi.create({
+      await donHangApi.create({
         MaDonHang: maDonHang,
         MaPhienLamViec: currentPhienLamViec,
         Ngay: now.toISOString().split('T')[0],
-        PhuongThucThanhToan: paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản'
+        PhuongThucThanhToan: paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+        ...(selectedPromotion?.MaCTKM && { MaCTKM: selectedPromotion.MaCTKM })
       })
 
       // Tạo chi tiết đơn hàng
@@ -481,7 +536,9 @@ const Staff = () => {
         orderType,
         tableNumber: orderType === 'dine-in' ? selectedTable : null,
         paymentMethod,
-        total: getTotalPrice()
+        total: getTotalPrice(),
+        discount: getDiscountAmount(),
+        promotion: selectedPromotion?.ctkm?.TenCTKM || null
       }
 
       // Hiển thị hóa đơn
@@ -501,12 +558,33 @@ const Staff = () => {
     }
   }
 
-  const getTotalPrice = () =>
+  const getSubtotal = () =>
     cart.reduce((total, item) => {
       const itemPrice = item.price * item.quantity
       const toppingPrice = (item.topping || []).reduce((sum, topping) => sum + topping.GiaCongThem * item.quantity, 0)
       return total + itemPrice + toppingPrice
     }, 0)
+  
+  const getDiscountAmount = () => {
+    if (!selectedPromotion) return 0
+    const subtotal = getSubtotal()
+    return selectedPromotion.LoaiGiam === 'Phần trăm' 
+      ? subtotal * (selectedPromotion.SoTienGiam / 100)
+      : selectedPromotion.SoTienGiam
+  }
+  
+  const getTotalPrice = () => {
+    const subtotal = getSubtotal()
+    const discount = getDiscountAmount()
+    return Math.max(0, subtotal - discount)
+  }
+  
+  const getChangeAmount = () => {
+    if (paymentMethod !== 'cash' || !customerCash) return 0
+    const cashAmount = parseFloat(customerCash) || 0
+    const total = getTotalPrice()
+    return Math.max(0, cashAmount - total)
+  }
 
   useEffect(() => {
     if (!currentShiftInfo && user?.caLam) {
@@ -807,56 +885,83 @@ const Staff = () => {
             </div>
 
             <div className={Style.paymentModalBody}>
-              {/* Size Selection */}
-              <div className={Style.paymentSection}>
-                <label>Size *</label>
-                <div className={Style.orderTypeButtons}>
-                  {['S', 'M', 'L'].map((size) => (
+              {/* Size Selection - Optional */}
+              {sizes.length > 0 && (
+                <div className={Style.paymentSection}>
+                  <label>Size (tùy chọn)</label>
+                  <div className={Style.orderTypeButtons}>
                     <button
-                      key={size}
                       type="button"
-                      className={`${Style.orderTypeBtn} ${customizeOptions.size === size ? Style.active : ''}`}
-                      onClick={() => setCustomizeOptions({ ...customizeOptions, size })}
+                      className={`${Style.orderTypeBtn} ${!customizeOptions.size ? Style.active : ''}`}
+                      onClick={() => setCustomizeOptions({ ...customizeOptions, size: '' })}
                     >
-                      {size}
+                      Không chọn
                     </button>
-                  ))}
+                    {sizes.map((size) => (
+                      <button
+                        key={size.MaTuyChon}
+                        type="button"
+                        className={`${Style.orderTypeBtn} ${customizeOptions.size === size.TenTuyChon ? Style.active : ''}`}
+                        onClick={() => setCustomizeOptions({ ...customizeOptions, size: size.TenTuyChon })}
+                      >
+                        {size.TenTuyChon}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Sugar Selection */}
-              <div className={Style.paymentSection}>
-                <label>Đường *</label>
-                <div className={Style.orderTypeButtons}>
-                  {['0%', '25%', '50%', '75%', '100%'].map((sugar) => (
+              {/* Sugar Selection - Optional */}
+              {sugars.length > 0 && (
+                <div className={Style.paymentSection}>
+                  <label>Đường (tùy chọn)</label>
+                  <div className={Style.orderTypeButtons}>
                     <button
-                      key={sugar}
                       type="button"
-                      className={`${Style.orderTypeBtn} ${customizeOptions.sugar === sugar ? Style.active : ''}`}
-                      onClick={() => setCustomizeOptions({ ...customizeOptions, sugar })}
+                      className={`${Style.orderTypeBtn} ${!customizeOptions.sugar ? Style.active : ''}`}
+                      onClick={() => setCustomizeOptions({ ...customizeOptions, sugar: '' })}
                     >
-                      {sugar}
+                      Không chọn
                     </button>
-                  ))}
+                    {sugars.map((sugar) => (
+                      <button
+                        key={sugar.MaTuyChon}
+                        type="button"
+                        className={`${Style.orderTypeBtn} ${customizeOptions.sugar === sugar.TenTuyChon ? Style.active : ''}`}
+                        onClick={() => setCustomizeOptions({ ...customizeOptions, sugar: sugar.TenTuyChon })}
+                      >
+                        {sugar.TenTuyChon}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Ice Selection */}
-              <div className={Style.paymentSection}>
-                <label>Đá *</label>
-                <div className={Style.orderTypeButtons}>
-                  {['Không đá', 'Ít đá', 'Bình thường', 'Nhiều đá'].map((ice) => (
+              {/* Ice Selection - Optional */}
+              {ices.length > 0 && (
+                <div className={Style.paymentSection}>
+                  <label>Đá (tùy chọn)</label>
+                  <div className={Style.orderTypeButtons}>
                     <button
-                      key={ice}
                       type="button"
-                      className={`${Style.orderTypeBtn} ${customizeOptions.ice === ice ? Style.active : ''}`}
-                      onClick={() => setCustomizeOptions({ ...customizeOptions, ice })}
+                      className={`${Style.orderTypeBtn} ${!customizeOptions.ice ? Style.active : ''}`}
+                      onClick={() => setCustomizeOptions({ ...customizeOptions, ice: '' })}
                     >
-                      {ice}
+                      Không chọn
                     </button>
-                  ))}
+                    {ices.map((ice) => (
+                      <button
+                        key={ice.MaTuyChon}
+                        type="button"
+                        className={`${Style.orderTypeBtn} ${customizeOptions.ice === ice.TenTuyChon ? Style.active : ''}`}
+                        onClick={() => setCustomizeOptions({ ...customizeOptions, ice: ice.TenTuyChon })}
+                      >
+                        {ice.TenTuyChon}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Topping Selection */}
               <div className={Style.paymentSection}>
@@ -1003,6 +1108,42 @@ const Staff = () => {
                 </div>
               )}
 
+              {/* Promotion Selection */}
+              <div className={Style.paymentSection}>
+                <label>Khuyến mãi (tùy chọn)</label>
+                {availablePromotions.length > 0 ? (
+                  <select
+                    className={Style.promotionSelect}
+                    value={selectedPromotion?.MaGHD || ''}
+                    onChange={(e) => {
+                      const promo = availablePromotions.find(p => p.MaGHD === e.target.value)
+                      setSelectedPromotion(promo || null)
+                    }}
+                  >
+                    <option value="">-- Không chọn khuyến mãi --</option>
+                    {availablePromotions.map((promo) => (
+                      <option key={promo.MaGHD} value={promo.MaGHD}>
+                        {promo.ctkm?.TenCTKM || 'Khuyến mãi'} - {promo.LoaiGiam === 'Phần trăm' 
+                          ? `Giảm ${promo.SoTienGiam}%`
+                          : `Giảm ${formatPrice(promo.SoTienGiam)}`}
+                        {promo.GiaTriTu && ` (Từ ${formatPrice(promo.GiaTriTu)})`}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className={Style.promotionSelect} style={{ 
+                    padding: '0.75rem', 
+                    backgroundColor: '#f5f5f5', 
+                    color: '#999',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    cursor: 'not-allowed'
+                  }}>
+                    Không có khuyến mãi khả dụng
+                  </div>
+                )}
+              </div>
+
               {/* Payment Method Selection */}
               <div className={Style.paymentSection}>
                 <label>Phương thức thanh toán</label>
@@ -1010,19 +1151,68 @@ const Staff = () => {
                   <button
                     type="button"
                     className={`${Style.paymentMethodBtn} ${paymentMethod === 'cash' ? Style.active : ''}`}
-                    onClick={() => setPaymentMethod('cash')}
+                    onClick={() => {
+                      setPaymentMethod('cash')
+                      setCustomerCash('')
+                    }}
                   >
                     <FaMoneyBillWave /> Tiền mặt
                   </button>
                   <button
                     type="button"
                     className={`${Style.paymentMethodBtn} ${paymentMethod === 'transfer' ? Style.active : ''}`}
-                    onClick={() => setPaymentMethod('transfer')}
+                    onClick={() => {
+                      setPaymentMethod('transfer')
+                      setCustomerCash('')
+                    }}
                   >
                     <FaQrcode /> Chuyển khoản
                   </button>
                 </div>
               </div>
+
+              {/* Cash Input for Change Calculation */}
+              {paymentMethod === 'cash' && (
+                <div className={Style.paymentSection}>
+                  <label>Tiền khách đưa</label>
+                  <input
+                    type="number"
+                    className={Style.cashInput}
+                    placeholder="Nhập số tiền khách đưa"
+                    value={customerCash}
+                    onChange={(e) => setCustomerCash(e.target.value)}
+                    min={0}
+                  />
+                  {/* Quick Money Buttons */}
+                  <div className={Style.quickMoneyButtons}>
+                    {[1000, 2000, 5000, 10000, 20000, 50000, 100000].map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        className={Style.quickMoneyBtn}
+                        onClick={() => {
+                          const current = customerCash ? parseFloat(customerCash) || 0 : 0
+                          setCustomerCash(String(current + amount))
+                        }}
+                      >
+                        +{amount >= 1000 ? `${amount / 1000}k` : amount}
+                      </button>
+                    ))}
+                  </div>
+                  {customerCash && getChangeAmount() > 0 && (
+                    <div className={Style.changeAmount}>
+                      <span>Tiền thừa:</span>
+                      <strong>{formatPrice(getChangeAmount())}</strong>
+                    </div>
+                  )}
+                  {customerCash && getChangeAmount() < 0 && (
+                    <div className={Style.changeAmount} style={{ color: '#dc3545' }}>
+                      <span>Thiếu:</span>
+                      <strong>{formatPrice(Math.abs(getChangeAmount()))}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* QR Code for Transfer */}
               {paymentMethod === 'transfer' && (
@@ -1112,6 +1302,17 @@ const Staff = () => {
                         )
                       })}
                     </div>
+                    {selectedPromotion && getDiscountAmount() > 0 && (
+                      <>
+                        <div className={Style.invoiceDivider}></div>
+                        <div className={Style.invoiceRow}>
+                          <span>Khuyến mãi:</span>
+                          <span style={{ color: '#28a745' }}>
+                            -{formatPrice(getDiscountAmount())}
+                          </span>
+                        </div>
+                      </>
+                    )}
                     <div className={Style.invoiceDivider}></div>
                     <div className={Style.invoiceTotal}>
                       <span>Tổng cộng:</span>
@@ -1231,6 +1432,17 @@ const Staff = () => {
                   )
                 })}
               </div>
+              {invoiceData.discount && invoiceData.discount > 0 && (
+                <>
+                  <div className={Style.invoicePrintDivider}></div>
+                  <div className={Style.invoicePrintRow}>
+                    <span>Khuyến mãi:</span>
+                    <span style={{ color: '#28a745' }}>
+                      -{formatPrice(invoiceData.discount)}
+                    </span>
+                  </div>
+                </>
+              )}
               <div className={Style.invoicePrintDivider}></div>
               <div className={Style.invoicePrintTotal}>
                 <span>Tổng cộng:</span>

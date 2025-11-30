@@ -7,12 +7,14 @@ import {
   FaArrowCircleDown,
   FaArrowCircleUp,
   FaCalculator,
-  FaFileInvoice
+  FaFileInvoice,
+  FaFileExcel
 } from 'react-icons/fa'
 import styles from './cashflow.module.css'
 import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError, NghiepVu } from '../../../lib/api'
 import { useAuth } from '../../../contexts/AuthContext'
 import { toast } from 'react-hot-toast'
+import { exportCashflowReport } from '../../../utils/excelExport'
 
 type TransactionType = 'in' | 'out'
 
@@ -30,7 +32,6 @@ interface CashFormState {
   amount: string
   reason: string
   performedBy: string
-  reference: string
   nghiepVu: string
   phuongThucThanhToan: string
 }
@@ -46,7 +47,6 @@ const buildInitialFormState = (): CashFormState => ({
   amount: '',
   reason: '',
   performedBy: '',
-  reference: '',
   nghiepVu: '',
   phuongThucThanhToan: 'Tiền mặt'
 })
@@ -65,10 +65,7 @@ const CashflowPage = () => {
 
   const PHUONG_THUC_THANH_TOAN = [
     'Tiền mặt',
-    'Chuyển khoản',
-    'Thẻ tín dụng',
-    'Ví điện tử',
-    'Khác'
+    'Chuyển khoản'
   ]
 
   const loadData = useCallback(async () => {
@@ -183,6 +180,39 @@ const CashflowPage = () => {
 
   const netCash = totals.in - totals.out
 
+  const [allThuChis, setAllThuChis] = useState<any[]>([])
+
+  // Load all thu chi data for export
+  useEffect(() => {
+    const loadThuChisForExport = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        const [thuData, chiData] = await Promise.all([
+          thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'thu' }),
+          thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'chi' })
+        ])
+        setAllThuChis([...thuData, ...chiData])
+      } catch (err) {
+        console.error('Error loading thu chi for export:', err)
+      }
+    }
+    loadThuChisForExport()
+  }, [])
+
+  const handleExportExcel = async () => {
+    if (allThuChis.length === 0) {
+      toast.error('Không có dữ liệu để xuất Excel')
+      return
+    }
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      exportCashflowReport(allThuChis, totals, today, today)
+      toast.success('Xuất Excel thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
+
   const handleFormChange = (
     type: TransactionType,
     key: keyof CashFormState,
@@ -216,11 +246,8 @@ const CashflowPage = () => {
       const timestamp = Date.now().toString().slice(-8)
       const maGiaoDich = `GD${timestamp}`
 
-      // Combine reason and reference into GhiChu if reference exists
-      let ghiChu = form.reason
-      if (form.reference && form.reference.trim()) {
-        ghiChu = `${form.reason}${form.reference ? ` (Chứng từ: ${form.reference})` : ''}`
-      }
+      // Use reason as GhiChu
+      const ghiChu = form.reason
 
       const payload = {
         MaGiaoDich: maGiaoDich,
@@ -289,6 +316,9 @@ const CashflowPage = () => {
         <div className={styles.headerBadge}>
           <FaExchangeAlt />
         </div>
+        <button className={styles.excelBtn} onClick={handleExportExcel} disabled={transactions.length === 0}>
+          <FaFileExcel /> Xuất Excel
+        </button>
       </header>
 
       <section className={styles.summary}>
@@ -376,15 +406,6 @@ const CashflowPage = () => {
               ))}
             </select>
           </label>
-          <label className={styles.field}>
-            <span>Số chứng từ (nếu có)</span>
-            <input
-              type="text"
-              placeholder="Mã hóa đơn, POS..."
-              value={cashInForm.reference}
-              onChange={event => handleFormChange('in', 'reference', event.target.value)}
-            />
-          </label>
           <button type="submit" className={styles.submitIn}>
             Lưu phiếu thu
           </button>
@@ -443,15 +464,6 @@ const CashflowPage = () => {
                 </option>
               ))}
             </select>
-          </label>
-          <label className={styles.field}>
-            <span>Số chứng từ (nếu có)</span>
-            <input
-              type="text"
-              placeholder="Mã phiếu chi, yêu cầu tạm ứng..."
-              value={cashOutForm.reference}
-              onChange={event => handleFormChange('out', 'reference', event.target.value)}
-            />
           </label>
           <button type="submit" className={styles.submitOut}>
             Lưu phiếu chi

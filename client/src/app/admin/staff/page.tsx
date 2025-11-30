@@ -208,7 +208,7 @@ const StaffPage = () => {
 
   const departmentOptions = useMemo(() => {
     const unique = Array.from(new Set(staff.map((member) => member.department).filter(Boolean)))
-    return ['Tất cả bộ phận', ...unique]
+    return unique
   }, [staff])
 
   const filteredStaff = useMemo(() => {
@@ -257,7 +257,21 @@ const StaffPage = () => {
   }
 
   const handleOpenAddModal = () => {
-    resetForm()
+    // Auto-generate MaNhanVien
+    const timestamp = Date.now().toString().slice(-8)
+    const autoMaNhanVien = `NV${timestamp}`
+    setFormData({
+      MaNhanVien: autoMaNhanVien,
+      TenNhanVien: '',
+      SoDienThoai: '',
+      ChucVu: '',
+      GioiTinh: 'Nam',
+      NgaySinh: '',
+      TaiKhoan: '',
+      MatKhau: '',
+      MaCaLam: '',
+      TrangThai: 'active'
+    })
     setIsEditing(false)
     setShowModal(true)
   }
@@ -601,6 +615,7 @@ const StaffPage = () => {
                       required
                       disabled={isEditing}
                       maxLength={10}
+                      placeholder={isEditing ? '' : 'Tự động tạo'}
                     />
                   </label>
                   <label>

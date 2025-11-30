@@ -7,7 +7,8 @@ import {
   FaEye,
   FaReceipt,
   FaFilter,
-  FaTimes
+  FaTimes,
+  FaCalendarAlt
 } from 'react-icons/fa'
 import styles from './orders.module.css'
 import { donHangApi, chiTietDonHangApi, ApiError, DonHang, ChiTietDonHang } from '../../../lib/api'
@@ -19,6 +20,8 @@ const OrdersPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentFilter, setPaymentFilter] = useState('all')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<DonHang | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [orderDetails, setOrderDetails] = useState<ChiTietDonHang[]>([])
@@ -90,9 +93,62 @@ const OrdersPage = () => {
         order.MaDonHang.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.PhuongThucThanhToan.toLowerCase().includes(searchTerm.toLowerCase())
       const matchPayment = paymentFilter === 'all' || order.PhuongThucThanhToan === paymentFilter
-      return matchSearch && matchPayment
+      
+      // Filter by date range
+      let matchDate = true
+      if (dateFrom || dateTo) {
+        const orderDate = new Date(order.Ngay)
+        orderDate.setHours(0, 0, 0, 0)
+        
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom)
+          fromDate.setHours(0, 0, 0, 0)
+          if (orderDate < fromDate) {
+            matchDate = false
+          }
+        }
+        
+        if (dateTo) {
+          const toDate = new Date(dateTo)
+          toDate.setHours(23, 59, 59, 999)
+          if (orderDate > toDate) {
+            matchDate = false
+          }
+        }
+      }
+      
+      return matchSearch && matchPayment && matchDate
     })
-  }, [orders, searchTerm, paymentFilter])
+  }, [orders, searchTerm, paymentFilter, dateFrom, dateTo])
+
+  const handleQuickDateFilter = (type: 'today' | 'week' | 'month' | 'clear') => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    if (type === 'clear') {
+      setDateFrom('')
+      setDateTo('')
+      return
+    }
+    
+    if (type === 'today') {
+      const dateStr = today.toISOString().split('T')[0]
+      setDateFrom(dateStr)
+      setDateTo(dateStr)
+    } else if (type === 'week') {
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
+      const weekEnd = new Date(weekStart)
+      weekEnd.setDate(weekStart.getDate() + 6)
+      setDateFrom(weekStart.toISOString().split('T')[0])
+      setDateTo(weekEnd.toISOString().split('T')[0])
+    } else if (type === 'month') {
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      setDateFrom(monthStart.toISOString().split('T')[0])
+      setDateTo(monthEnd.toISOString().split('T')[0])
+    }
+  }
 
   const totalRevenue = useMemo(() => {
     return filteredOrders.reduce((sum, order) => {
@@ -154,6 +210,65 @@ const OrdersPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          
+          {/* Date Range Filter */}
+          <div className={styles.dateFilterGroup}>
+            <FaCalendarAlt />
+            <div className={styles.dateInputs}>
+              <input
+                type="date"
+                className={styles.dateInput}
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                placeholder="Từ ngày"
+              />
+              <span className={styles.dateSeparator}>-</span>
+              <input
+                type="date"
+                className={styles.dateInput}
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                placeholder="Đến ngày"
+              />
+            </div>
+            <div className={styles.quickDateButtons}>
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('today')}
+                title="Hôm nay"
+              >
+                Hôm nay
+              </button>
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('week')}
+                title="Tuần này"
+              >
+                Tuần này
+              </button>
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('month')}
+                title="Tháng này"
+              >
+                Tháng này
+              </button>
+              {(dateFrom || dateTo) && (
+                <button
+                  type="button"
+                  className={styles.quickDateBtn}
+                  onClick={() => handleQuickDateFilter('clear')}
+                  title="Xóa bộ lọc"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className={styles.filterGroup}>
             <FaFilter />
             <select

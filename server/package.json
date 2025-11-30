@@ -1,5 +1,5 @@
 {
-  "name": "xu-chi-backend",
+  "name": "loficoffie",
   "version": "1.0.0",
   "description": "Backend Node.js + Express + TypeORM + PostgreSQL (TypeScript) cho quán cà phê Xu-chi - CRUD cơ bản",
   "main": "dist/server.js",

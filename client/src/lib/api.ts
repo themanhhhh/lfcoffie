@@ -464,11 +464,38 @@ export interface ShiftClosingReport {
   };
   tongKet: {
     totalRevenue: number;
+    totalGiamGiaMon: number;
+    totalChietKhau: number;
+    totalVoucherDiscount: number;
     totalThu: number;
     totalChi: number;
     orderCount: number;
+    averageOrder: number;
     profit: number;
+    soDuDau: number;
+    tienTrongKet: number;
+    gioIn: string;
   };
+  monByNhom: Array<{
+    ten: string;
+    soLuong: number;
+    doanhThu: number;
+  }>;
+  ctkmStats: Array<{
+    ten: string;
+    soHoaDon: number;
+    doanhThu: number;
+  }>;
+  paymentMethods: Array<{
+    phuongThuc: string;
+    soHoaDon: number;
+    doanhThu: number;
+  }>;
+  orderSources: Array<{
+    ten: string;
+    soHoaDon: number;
+    doanhThu: number;
+  }>;
   donHangs: DonHang[];
   thuChis: ThuChi[];
 }
