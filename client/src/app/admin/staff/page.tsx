@@ -612,10 +612,15 @@ const StaffPage = () => {
                       type="text"
                       value={formData.MaNhanVien}
                       onChange={(e) => setFormData({ ...formData, MaNhanVien: e.target.value })}
+                      placeholder={isEditing ? "Mã nhân viên" : "Tự động tạo"}
                       required
-                      disabled={isEditing}
+                      disabled={true}
                       maxLength={10}
-                      placeholder={isEditing ? '' : 'Tự động tạo'}
+                      style={{ 
+                        backgroundColor: '#f5f5f5', 
+                        cursor: 'not-allowed',
+                        color: '#666'
+                      }}
                     />
                   </label>
                   <label>

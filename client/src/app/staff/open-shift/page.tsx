@@ -219,28 +219,28 @@ const OpenShiftPage = () => {
             </label>
 
             <label className={styles.field}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span>Chọn ca</span>
+              <span>Chọn ca</span>
+              <div className={styles.selectWithRefresh}>
+                <select
+                  value={selectedMaCaLam}
+                  onChange={event => setSelectedMaCaLam(event.target.value)}
+                >
+                  <option value="">-- Chọn ca làm việc --</option>
+                  {caLamList.map((caLam) => (
+                    <option key={caLam.MaCaLam} value={caLam.MaCaLam}>
+                      {caLam.TenCaLam} ({caLam.ThoiGianBatDau} - {caLam.ThoiGianKetThuc})
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={fetchCaLam}
                   className={styles.refreshBtn}
                   title="Làm mới danh sách ca"
                 >
-                  <FaSync /> Làm mới
+                  <FaSync />
                 </button>
               </div>
-              <select
-                value={selectedMaCaLam}
-                onChange={event => setSelectedMaCaLam(event.target.value)}
-              >
-                <option value="">-- Chọn ca làm việc --</option>
-                {caLamList.map((caLam) => (
-                  <option key={caLam.MaCaLam} value={caLam.MaCaLam}>
-                    {caLam.TenCaLam} ({caLam.ThoiGianBatDau} - {caLam.ThoiGianKetThuc})
-                  </option>
-                ))}
-              </select>
             </label>
 
             <label className={styles.field}>

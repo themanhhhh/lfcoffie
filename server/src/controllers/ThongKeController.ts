@@ -26,18 +26,26 @@ export class ThongKeController {
       const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(new Date().getDate() - 7));
       const end = endDate ? new Date(endDate as string) : new Date();
 
-      // Tổng doanh thu từ ThuChi với LoaiGiaoDich = 'thu'
-      const thuChis = await this.thuChiRepo.find({
+      // Tính doanh thu từ đơn hàng (DonHang + ChiTietDonHang)
+      const donHangs = await this.donHangRepo.find({
         where: {
-          ThoiGian: Between(start, end),
-          nghiepVu: {
-            LoaiGiaoDich: 'thu'
-          }
+          Ngay: Between(start, end)
         },
-        relations: ['nghiepVu']
+        relations: ['chiTietDonHangs']
       });
 
-      const totalRevenue = thuChis.reduce((sum, tc) => sum + tc.SoTien, 0);
+      const invoiceCount = donHangs.length;
+
+      // Tính tổng doanh thu từ các đơn hàng
+      let totalRevenue = 0;
+      for (const donHang of donHangs) {
+        if (donHang.chiTietDonHangs) {
+          const donHangTotal = donHang.chiTietDonHangs.reduce((sum, ctdh) => {
+            return sum + (ctdh.DonGia * ctdh.SoLuong);
+          }, 0);
+          totalRevenue += donHangTotal;
+        }
+      }
 
       // Tổng chi phí từ ThuChi với LoaiGiaoDich = 'chi'
       const chiChis = await this.thuChiRepo.find({
@@ -52,14 +60,19 @@ export class ThongKeController {
 
       const totalExpense = chiChis.reduce((sum, tc) => sum + tc.SoTien, 0);
 
-      // Số đơn hàng
-      const donHangs = await this.donHangRepo.find({
+      // Cộng thêm doanh thu từ ThuChi (nếu có các khoản thu khác ngoài đơn hàng)
+      const thuChis = await this.thuChiRepo.find({
         where: {
-          Ngay: Between(start, end)
-        }
+          ThoiGian: Between(start, end),
+          nghiepVu: {
+            LoaiGiaoDich: 'thu'
+          }
+        },
+        relations: ['nghiepVu']
       });
 
-      const invoiceCount = donHangs.length;
+      const thuChiRevenue = thuChis.reduce((sum, tc) => sum + tc.SoTien, 0);
+      totalRevenue += thuChiRevenue;
 
       // Lợi nhuận gộp
       const grossProfit = totalRevenue - totalExpense;

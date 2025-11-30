@@ -583,7 +583,7 @@ const Staff = () => {
     if (paymentMethod !== 'cash' || !customerCash) return 0
     const cashAmount = parseFloat(customerCash) || 0
     const total = getTotalPrice()
-    return Math.max(0, cashAmount - total)
+    return cashAmount - total // Trả về số dương nếu thừa, số âm nếu thiếu
   }
 
   useEffect(() => {
@@ -1180,8 +1180,14 @@ const Staff = () => {
                     className={Style.cashInput}
                     placeholder="Nhập số tiền khách đưa"
                     value={customerCash}
-                    onChange={(e) => setCustomerCash(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
+                        setCustomerCash(value)
+                      }
+                    }}
                     min={0}
+                    step={1000}
                   />
                   {/* Quick Money Buttons */}
                   <div className={Style.quickMoneyButtons}>
@@ -1199,17 +1205,30 @@ const Staff = () => {
                       </button>
                     ))}
                   </div>
-                  {customerCash && getChangeAmount() > 0 && (
-                    <div className={Style.changeAmount}>
-                      <span>Tiền thừa:</span>
-                      <strong>{formatPrice(getChangeAmount())}</strong>
-                    </div>
-                  )}
-                  {customerCash && getChangeAmount() < 0 && (
-                    <div className={Style.changeAmount} style={{ color: '#dc3545' }}>
-                      <span>Thiếu:</span>
-                      <strong>{formatPrice(Math.abs(getChangeAmount()))}</strong>
-                    </div>
+                  {customerCash && parseFloat(customerCash) > 0 && (
+                    <>
+                      <div className={Style.changeInfo}>
+                        <span>Tổng tiền cần thanh toán:</span>
+                        <strong>{formatPrice(getTotalPrice())}</strong>
+                      </div>
+                      {getChangeAmount() > 0 && (
+                        <div className={Style.changeAmount} style={{ color: '#28a745' }}>
+                          <span>Tiền thừa cần trả lại:</span>
+                          <strong>{formatPrice(getChangeAmount())}</strong>
+                        </div>
+                      )}
+                      {getChangeAmount() < 0 && (
+                        <div className={Style.changeAmount} style={{ color: '#dc3545' }}>
+                          <span>Khách còn thiếu:</span>
+                          <strong>{formatPrice(Math.abs(getChangeAmount()))}</strong>
+                        </div>
+                      )}
+                      {getChangeAmount() === 0 && (
+                        <div className={Style.changeAmount} style={{ color: '#28a745' }}>
+                          <span>Đủ tiền, không cần trả lại</span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}

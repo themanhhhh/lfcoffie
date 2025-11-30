@@ -1444,15 +1444,38 @@
 }
 
 /* Change Amount Display */
+.changeInfo {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e0e0e0;
+}
+
+.changeInfo span {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.changeInfo strong {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3f2c1f;
+}
+
 .changeAmount {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   padding: 0.75rem;
   background: #f8f8f8;
   border-radius: 8px;
   font-size: 1rem;
+  font-weight: 500;
 }
 
 .changeAmount span {
@@ -1462,8 +1485,7 @@
 
 .changeAmount strong {
   font-size: 1.2rem;
-  color: #28a745;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Quick Money Buttons */

@@ -16,7 +16,7 @@ import {
   FaTimes
 } from 'react-icons/fa'
 import styles from './voucher.module.css'
-import { apiFetch, ApiError } from '../../../lib/api'
+import { apiFetch, ApiError, monApi, Mon } from '../../../lib/api'
 import { toast } from 'react-hot-toast'
 
 type VoucherType = 'percentage' | 'fixed' | 'free_item'
@@ -66,6 +66,9 @@ interface VoucherFormData {
   moTa: string
   ngayBatDau: string
   ngayKetThuc: string
+  // Cho combo
+  MaMon?: string
+  SoLuong?: number
 }
 
 const TYPE_OPTIONS = [
@@ -102,8 +105,11 @@ const VoucherPage = () => {
     soLuongSuDung: 100,
     moTa: '',
     ngayBatDau: new Date().toISOString().split('T')[0],
-    ngayKetThuc: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    ngayKetThuc: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    MaMon: '',
+    SoLuong: 1
   })
+  const [monList, setMonList] = useState<Mon[]>([])
 
   useEffect(() => {
     let ignore = false
@@ -164,6 +170,19 @@ const VoucherPage = () => {
     return () => {
       ignore = true
     }
+  }, [])
+
+  // Load danh sách món
+  useEffect(() => {
+    const loadMonList = async () => {
+      try {
+        const data = await monApi.getAll()
+        setMonList(data)
+      } catch (err) {
+        console.error('Error loading mon list:', err)
+      }
+    }
+    loadMonList()
   }, [])
 
   const filteredVouchers = useMemo(() => {
@@ -333,6 +352,43 @@ const VoucherPage = () => {
     e.preventDefault()
 
     try {
+      // Map loaiKM từ form sang LoaiCTKM của database
+      // percentage/fixed -> giamhoadon, free_item -> combo
+      const loaiCTKM = formData.loaiKM === 'free_item' ? 'combo' : 'giamhoadon'
+      
+      interface CreateCTKMPayload {
+        MaCTKM: string
+        TenCTKM: string
+        LoaiCTKM: string
+        giaTriGiam: number
+        soTienToiThieu: number | null
+        giamToiDa: number | null
+        ngayBatDau: string
+        ngayKetThuc: string
+        loaiGiam: string
+        MaMon?: string
+        SoLuong?: number
+      }
+
+      const payload: CreateCTKMPayload = {
+        MaCTKM: formData.maKM,
+        TenCTKM: formData.tenKM,
+        LoaiCTKM: loaiCTKM,
+        // Thêm các thông tin để tạo bản ghi liên quan
+        giaTriGiam: formData.giaTriGiam,
+        soTienToiThieu: formData.soTienToiThieu || null,
+        giamToiDa: formData.giamToiDa || null,
+        ngayBatDau: formData.ngayBatDau,
+        ngayKetThuc: formData.ngayKetThuc,
+        loaiGiam: formData.loaiKM === 'percentage' ? 'Phần trăm' : 'VND'
+      }
+
+      // Nếu là combo, thêm thông tin món và số lượng
+      if (loaiCTKM === 'combo') {
+        payload.MaMon = formData.MaMon
+        payload.SoLuong = formData.SoLuong || 1
+      }
+
       if (editingVoucher) {
         // Update
         await apiFetch(`/api/ctkm/${editingVoucher.id}`, {
@@ -340,19 +396,15 @@ const VoucherPage = () => {
           body: JSON.stringify({
             MaCTKM: formData.maKM,
             TenCTKM: formData.tenKM,
-            LoaiCTKM: formData.loaiKM
+            LoaiCTKM: loaiCTKM
           })
         })
         toast.success('Cập nhật voucher thành công!')
       } else {
-        // Create
+        // Create - gửi đầy đủ dữ liệu để backend tạo các bản ghi liên quan
         await apiFetch('/api/ctkm', {
           method: 'POST',
-          body: JSON.stringify({
-            MaCTKM: formData.maKM,
-            TenCTKM: formData.tenKM,
-            LoaiCTKM: formData.loaiKM
-          })
+          body: JSON.stringify(payload)
         })
         toast.success('Thêm voucher mới thành công!')
       }
@@ -808,6 +860,37 @@ const VoucherPage = () => {
                     />
                   </div>
                 </div>
+                {/* Phần chọn món và số lượng cho combo */}
+                {formData.loaiKM === 'free_item' && (
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Chọn món *</label>
+                      <select
+                        value={formData.MaMon || ''}
+                        onChange={(e) => setFormData({ ...formData, MaMon: e.target.value })}
+                        required={formData.loaiKM === 'free_item'}
+                      >
+                        <option value="">-- Chọn món --</option>
+                        {monList.map((mon) => (
+                          <option key={mon.MaMon} value={mon.MaMon}>
+                            {mon.TenMon}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Số lượng *</label>
+                      <input
+                        type="number"
+                        value={formData.SoLuong || 1}
+                        onChange={(e) => setFormData({ ...formData, SoLuong: Number(e.target.value) })}
+                        min="1"
+                        required={formData.loaiKM === 'free_item'}
+                        placeholder="1"
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className={styles.formGroup}>
                   <label>Mô tả</label>
                   <textarea
