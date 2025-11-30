@@ -201,6 +201,42 @@
   background: white;
 }
 
+.field select {
+  border: 1px solid #d9cfc2;
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+  font-size: 1rem;
+  color: #3f2c1f;
+  background: #fffaf3;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%233f2c1f' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+}
+
+.field select:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.15);
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B4513' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+.field select:hover {
+  border-color: #8B4513;
+  background-color: white;
+}
+
+.field select option {
+  padding: 0.5rem;
+  background: white;
+  color: #3f2c1f;
+}
+
 .submitIn,
 .submitOut {
   border: none;
@@ -359,16 +395,13 @@
 
 /* Remove number input arrows - Force hide spinner */
 .field input[type="number"]::-webkit-inner-spin-button,
-.field input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+.field input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none !important;
   margin: 0 !important;
   display: none !important;
 }
 
-.field input[type="number"],
-input[type="number"] {
+.field input[type="number"] {
   -moz-appearance: textfield !important;
   appearance: textfield !important;
 }

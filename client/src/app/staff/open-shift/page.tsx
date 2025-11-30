@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FaArrowLeft, FaDoorOpen, FaMoneyBillWave, FaClipboardList, FaClock, FaUserClock, FaCheckCircle } from 'react-icons/fa'
+import { FaArrowLeft, FaDoorOpen, FaMoneyBillWave, FaClipboardList, FaClock, FaUserClock, FaCheckCircle, FaSync } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { phienLamViecApi, caLamApi, ApiError, CaLam } from '@/lib/api'
@@ -49,7 +49,9 @@ const CASH_TEMPLATE: CashRow[] = [
   { label: 'Tiền 50.000đ', value: 50000, quantity: 0 },
   { label: 'Tiền 20.000đ', value: 20000, quantity: 0 },
   { label: 'Tiền 10.000đ', value: 10000, quantity: 0 },
-  { label: 'Tiền 5.000đ', value: 5000, quantity: 0 }
+  { label: 'Tiền 5.000đ', value: 5000, quantity: 0 },
+  { label: 'Tiền 2.000đ', value: 2000, quantity: 0 },
+  { label: 'Tiền 1.000đ', value: 1000, quantity: 0 }
 ]
 
 const currencyFormatter = new Intl.NumberFormat('vi-VN', {
@@ -82,22 +84,22 @@ const OpenShiftPage = () => {
   )
 
   // Fetch ca làm việc từ API
-  useEffect(() => {
-    const fetchCaLam = async () => {
-      try {
-        const list = await caLamApi.getAll()
-        setCaLamList(list)
-        
-        // Tự động chọn ca đầu tiên nếu có
-        if (list.length > 0 && !selectedMaCaLam) {
-          setSelectedMaCaLam(list[0].MaCaLam)
-        }
-      } catch (err) {
-        console.error('Error fetching ca lam:', err)
-        toast.error('Không thể tải danh sách ca làm việc')
+  const fetchCaLam = async () => {
+    try {
+      const list = await caLamApi.getAll()
+      setCaLamList(list)
+      
+      // Tự động chọn ca đầu tiên nếu có và chưa chọn ca nào
+      if (list.length > 0 && !selectedMaCaLam) {
+        setSelectedMaCaLam(list[0].MaCaLam)
       }
+    } catch (err) {
+      console.error('Error fetching ca lam:', err)
+      toast.error('Không thể tải danh sách ca làm việc')
     }
-    
+  }
+
+  useEffect(() => {
     fetchCaLam()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -217,7 +219,17 @@ const OpenShiftPage = () => {
             </label>
 
             <label className={styles.field}>
-              <span>Chọn ca</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span>Chọn ca</span>
+                <button
+                  type="button"
+                  onClick={fetchCaLam}
+                  className={styles.refreshBtn}
+                  title="Làm mới danh sách ca"
+                >
+                  <FaSync /> Làm mới
+                </button>
+              </div>
               <select
                 value={selectedMaCaLam}
                 onChange={event => setSelectedMaCaLam(event.target.value)}

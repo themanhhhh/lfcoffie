@@ -11,7 +11,7 @@ import {
   FaFileExcel
 } from 'react-icons/fa'
 import styles from './cashflow.module.css'
-import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError, NghiepVu } from '../../../lib/api'
+import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError, NghiepVu, ThuChi } from '../../../lib/api'
 import { useAuth } from '../../../contexts/AuthContext'
 import { toast } from 'react-hot-toast'
 import { exportCashflowReport } from '../../../utils/excelExport'
@@ -25,7 +25,6 @@ interface Transaction {
   reason: string
   performedBy: string
   time: string
-  reference?: string
 }
 
 interface CashFormState {
@@ -63,10 +62,6 @@ const CashflowPage = () => {
   
   const { user } = useAuth()
 
-  const PHUONG_THUC_THANH_TOAN = [
-    'Tiền mặt',
-    'Chuyển khoản'
-  ]
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -120,8 +115,7 @@ const CashflowPage = () => {
           amount: tc.SoTien,
           reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Thu tiền',
           performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
-          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
-          reference: tc.MaGiaoDich
+          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
         })
       })
 
@@ -134,8 +128,7 @@ const CashflowPage = () => {
           amount: tc.SoTien,
           reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Chi tiền',
           performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
-          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
-          reference: tc.MaGiaoDich
+          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
         })
       })
 
@@ -180,7 +173,7 @@ const CashflowPage = () => {
 
   const netCash = totals.in - totals.out
 
-  const [allThuChis, setAllThuChis] = useState<any[]>([])
+  const [allThuChis, setAllThuChis] = useState<ThuChi[]>([])
 
   // Load all thu chi data for export
   useEffect(() => {
@@ -231,8 +224,8 @@ const CashflowPage = () => {
     const form = type === 'in' ? cashInForm : cashOutForm
     const amount = Number(form.amount.replace(/\D/g, '')) || Number(form.amount)
 
-    if (!form.reason || !amount || !form.nghiepVu || !form.phuongThucThanhToan) {
-      toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc: số tiền, nội dung, nghiệp vụ và phương thức thanh toán.')
+    if (!form.reason || !amount || !form.nghiepVu) {
+      toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc: số tiền, nội dung và nghiệp vụ.')
       return
     }
 
@@ -254,7 +247,7 @@ const CashflowPage = () => {
         MaPhienLamViec: currentPhienLamViec,
         MaNghiepVu: form.nghiepVu,
         ThoiGian: new Date().toISOString(),
-        PhuongThucThanhToan: form.phuongThucThanhToan,
+        PhuongThucThanhToan: 'Tiền mặt',
         GhiChu: ghiChu,
         SoTien: amount
       }
@@ -374,12 +367,15 @@ const CashflowPage = () => {
               onChange={event => handleFormChange('in', 'nghiepVu', event.target.value)}
               required
             >
-              <option value="">-- Chọn nghiệp vụ --</option>
-              {nghiepVuThuList.map((nv) => (
-                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
-                  {nv.TenNghiepVu}
-                </option>
-              ))}
+              {nghiepVuThuList.length === 0 ? (
+                <option value="">Chưa có nghiệp vụ thu</option>
+              ) : (
+                nghiepVuThuList.map((nv) => (
+                  <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                    {nv.TenNghiepVu}
+                  </option>
+                ))
+              )}
             </select>
           </label>
           <label className={styles.field}>
@@ -391,20 +387,6 @@ const CashflowPage = () => {
               onChange={event => handleFormChange('in', 'reason', event.target.value)}
               required
             />
-          </label>
-          <label className={styles.field}>
-            <span>Phương thức thanh toán <span style={{ color: 'red' }}>*</span></span>
-            <select
-              value={cashInForm.phuongThucThanhToan}
-              onChange={event => handleFormChange('in', 'phuongThucThanhToan', event.target.value)}
-              required
-            >
-              {PHUONG_THUC_THANH_TOAN.map((pttt) => (
-                <option key={pttt} value={pttt}>
-                  {pttt}
-                </option>
-              ))}
-            </select>
           </label>
           <button type="submit" className={styles.submitIn}>
             Lưu phiếu thu
@@ -433,12 +415,15 @@ const CashflowPage = () => {
               onChange={event => handleFormChange('out', 'nghiepVu', event.target.value)}
               required
             >
-              <option value="">-- Chọn nghiệp vụ --</option>
-              {nghiepVuChiList.map((nv) => (
-                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
-                  {nv.TenNghiepVu}
-                </option>
-              ))}
+              {nghiepVuChiList.length === 0 ? (
+                <option value="">Chưa có nghiệp vụ chi</option>
+              ) : (
+                nghiepVuChiList.map((nv) => (
+                  <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                    {nv.TenNghiepVu}
+                  </option>
+                ))
+              )}
             </select>
           </label>
           <label className={styles.field}>
@@ -450,20 +435,6 @@ const CashflowPage = () => {
               onChange={event => handleFormChange('out', 'reason', event.target.value)}
               required
             />
-          </label>
-          <label className={styles.field}>
-            <span>Phương thức thanh toán <span style={{ color: 'red' }}>*</span></span>
-            <select
-              value={cashOutForm.phuongThucThanhToan}
-              onChange={event => handleFormChange('out', 'phuongThucThanhToan', event.target.value)}
-              required
-            >
-              {PHUONG_THUC_THANH_TOAN.map((pttt) => (
-                <option key={pttt} value={pttt}>
-                  {pttt}
-                </option>
-              ))}
-            </select>
           </label>
           <button type="submit" className={styles.submitOut}>
             Lưu phiếu chi
@@ -485,7 +456,6 @@ const CashflowPage = () => {
                 <th>Số tiền</th>
                 <th>Nội dung</th>
                 <th>Nhân viên</th>
-                <th>Chứng từ</th>
               </tr>
             </thead>
             <tbody>
@@ -504,7 +474,6 @@ const CashflowPage = () => {
                   <td>{currencyFormatter.format(transaction.amount)}</td>
                   <td>{transaction.reason}</td>
                   <td>{transaction.performedBy}</td>
-                  <td>{transaction.reference || '—'}</td>
                 </tr>
               ))}
             </tbody>

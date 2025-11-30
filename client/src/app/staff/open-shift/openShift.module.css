@@ -133,6 +133,31 @@
   background: white;
 }
 
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background: #f8f3eb;
+  border: 1px solid #d9cfc2;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #5c4b3a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refreshBtn:hover {
+  background: #8B4513;
+  color: white;
+  border-color: #8B4513;
+  transform: translateY(-1px);
+}
+
+.refreshBtn:active {
+  transform: translateY(0);
+}
+
 .fullWidth {
   grid-column: 1 / -1;
 }
