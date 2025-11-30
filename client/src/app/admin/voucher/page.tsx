@@ -66,16 +66,15 @@ interface VoucherFormData {
   moTa: string
   ngayBatDau: string
   ngayKetThuc: string
-  // Cho combo
-  MaMon?: string
-  SoLuong?: number
+  // Cho combo - mảng các món
+  comboItems?: Array<{ MaMon: string; SoLuong: number }>
 }
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Tất cả loại' },
   { value: 'percentage', label: 'Phần trăm' },
   { value: 'fixed', label: 'Giá trị cố định' },
-  { value: 'free_item', label: 'Tặng sản phẩm' }
+  { value: 'free_item', label: 'Combo' }
 ]
 
 const STATUS_OPTIONS = [
@@ -106,8 +105,7 @@ const VoucherPage = () => {
     moTa: '',
     ngayBatDau: new Date().toISOString().split('T')[0],
     ngayKetThuc: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    MaMon: '',
-    SoLuong: 1
+    comboItems: []
   })
   const [monList, setMonList] = useState<Mon[]>([])
 
@@ -224,7 +222,7 @@ const VoucherPage = () => {
     switch (type) {
       case 'percentage': return 'Phần trăm'
       case 'fixed': return 'Giá trị cố định'
-      case 'free_item': return 'Tặng sản phẩm'
+      case 'free_item': return 'Combo'
       default: return 'Không xác định'
     }
   }
@@ -263,7 +261,7 @@ const VoucherPage = () => {
       case 'fixed':
         return `${voucher.value.toLocaleString('vi-VN')}đ`
       case 'free_item':
-        return 'Tặng sản phẩm'
+        return 'Combo'
       default:
         return 'N/A'
     }
@@ -366,8 +364,7 @@ const VoucherPage = () => {
         ngayBatDau: string
         ngayKetThuc: string
         loaiGiam: string
-        MaMon?: string
-        SoLuong?: number
+        comboItems?: Array<{ MaMon: string; SoLuong: number }>
       }
 
       const payload: CreateCTKMPayload = {
@@ -376,17 +373,17 @@ const VoucherPage = () => {
         LoaiCTKM: loaiCTKM,
         // Thêm các thông tin để tạo bản ghi liên quan
         giaTriGiam: formData.giaTriGiam,
-        soTienToiThieu: formData.soTienToiThieu || null,
-        giamToiDa: formData.giamToiDa || null,
+        // Nếu là combo, không gửi soTienToiThieu và giamToiDa
+        soTienToiThieu: loaiCTKM === 'combo' ? null : (formData.soTienToiThieu || null),
+        giamToiDa: loaiCTKM === 'combo' ? null : (formData.giamToiDa || null),
         ngayBatDau: formData.ngayBatDau,
         ngayKetThuc: formData.ngayKetThuc,
         loaiGiam: formData.loaiKM === 'percentage' ? 'Phần trăm' : 'VND'
       }
 
-      // Nếu là combo, thêm thông tin món và số lượng
+      // Nếu là combo, thêm thông tin các món
       if (loaiCTKM === 'combo') {
-        payload.MaMon = formData.MaMon
-        payload.SoLuong = formData.SoLuong || 1
+        payload.comboItems = formData.comboItems || []
       }
 
       if (editingVoucher) {
@@ -673,6 +670,20 @@ const VoucherPage = () => {
                         <span>{selectedVoucher.description}</span>
                       </div>
                     </div>
+                    <div className={styles.detailsActions}>
+                      <button 
+                        className={styles.primaryBtn}
+                        onClick={() => handleEditVoucher(selectedVoucher)}
+                      >
+                        <FaEdit /> Chỉnh sửa
+                      </button>
+                      <button 
+                        className={styles.secondaryBtn}
+                        onClick={() => copyToClipboard(selectedVoucher.code)}
+                      >
+                        <FaCopy /> Sao chép mã
+                      </button>
+                    </div>
                   </div>
 
                   <div className={styles.detailSection}>
@@ -723,21 +734,6 @@ const VoucherPage = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className={styles.detailsActions}>
-                  <button 
-                    className={styles.primaryBtn}
-                    onClick={() => handleEditVoucher(selectedVoucher)}
-                  >
-                    <FaEdit /> Chỉnh sửa
-                  </button>
-                  <button 
-                    className={styles.secondaryBtn}
-                    onClick={() => copyToClipboard(selectedVoucher.code)}
-                  >
-                    <FaCopy /> Sao chép mã
-                  </button>
                 </div>
               </div>
             ) : (
@@ -791,21 +787,21 @@ const VoucherPage = () => {
                   >
                     <option value="percentage">Phần trăm</option>
                     <option value="fixed">Giá trị cố định</option>
-                    <option value="free_item">Tặng sản phẩm</option>
+                    <option value="free_item">Combo</option>
                   </select>
                 </div>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label>Giá trị giảm *</label>
+                    <label>{formData.loaiKM === 'free_item' ? 'Giá combo *' : 'Giá trị giảm *'}</label>
                     <input
                       type="number"
                       value={formData.giaTriGiam}
                       onChange={(e) => setFormData({ ...formData, giaTriGiam: Number(e.target.value) })}
                       required
                       min="0"
-                      placeholder={formData.loaiKM === 'percentage' ? '10' : '50000'}
+                      placeholder={formData.loaiKM === 'percentage' ? '10' : formData.loaiKM === 'free_item' ? '50000' : '50000'}
                     />
-                    <small>{formData.loaiKM === 'percentage' ? '(%)' : '(VNĐ)'}</small>
+                    <small>{formData.loaiKM === 'percentage' ? '(%)' : formData.loaiKM === 'free_item' ? '(VNĐ)' : '(VNĐ)'}</small>
                   </div>
                   <div className={styles.formGroup}>
                     <label>Số lần sử dụng *</label>
@@ -818,28 +814,30 @@ const VoucherPage = () => {
                     />
                   </div>
                 </div>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Đơn hàng tối thiểu</label>
-                    <input
-                      type="number"
-                      value={formData.soTienToiThieu}
-                      onChange={(e) => setFormData({ ...formData, soTienToiThieu: Number(e.target.value) })}
-                      min="0"
-                      placeholder="0"
-                    />
+                {formData.loaiKM !== 'free_item' && (
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Đơn hàng tối thiểu</label>
+                      <input
+                        type="number"
+                        value={formData.soTienToiThieu}
+                        onChange={(e) => setFormData({ ...formData, soTienToiThieu: Number(e.target.value) })}
+                        min="0"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Giảm tối đa</label>
+                      <input
+                        type="number"
+                        value={formData.giamToiDa}
+                        onChange={(e) => setFormData({ ...formData, giamToiDa: Number(e.target.value) })}
+                        min="0"
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
-                  <div className={styles.formGroup}>
-                    <label>Giảm tối đa</label>
-                    <input
-                      type="number"
-                      value={formData.giamToiDa}
-                      onChange={(e) => setFormData({ ...formData, giamToiDa: Number(e.target.value) })}
-                      min="0"
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
+                )}
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
                     <label>Ngày bắt đầu *</label>
@@ -862,32 +860,62 @@ const VoucherPage = () => {
                 </div>
                 {/* Phần chọn món và số lượng cho combo */}
                 {formData.loaiKM === 'free_item' && (
-                  <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                      <label>Chọn món *</label>
-                      <select
-                        value={formData.MaMon || ''}
-                        onChange={(e) => setFormData({ ...formData, MaMon: e.target.value })}
-                        required={formData.loaiKM === 'free_item'}
+                  <div className={styles.formGroup}>
+                    <label>Món trong combo *</label>
+                    <div className={styles.comboItemsList}>
+                      {(formData.comboItems || []).map((item, index) => (
+                        <div key={index} className={styles.comboItemRow}>
+                          <select
+                            value={item.MaMon}
+                            onChange={(e) => {
+                              const newItems = [...(formData.comboItems || [])]
+                              newItems[index].MaMon = e.target.value
+                              setFormData({ ...formData, comboItems: newItems })
+                            }}
+                            required
+                          >
+                            <option value="">-- Chọn món --</option>
+                            {monList.map((mon) => (
+                              <option key={mon.MaMon} value={mon.MaMon}>
+                                {mon.TenMon}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="number"
+                            value={item.SoLuong}
+                            onChange={(e) => {
+                              const newItems = [...(formData.comboItems || [])]
+                              newItems[index].SoLuong = Number(e.target.value) || 1
+                              setFormData({ ...formData, comboItems: newItems })
+                            }}
+                            min="1"
+                            placeholder="Số lượng"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newItems = (formData.comboItems || []).filter((_, i) => i !== index)
+                              setFormData({ ...formData, comboItems: newItems })
+                            }}
+                            className={styles.removeBtn}
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            comboItems: [...(formData.comboItems || []), { MaMon: '', SoLuong: 1 }]
+                          })
+                        }}
+                        className={styles.addItemBtn}
                       >
-                        <option value="">-- Chọn món --</option>
-                        {monList.map((mon) => (
-                          <option key={mon.MaMon} value={mon.MaMon}>
-                            {mon.TenMon}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label>Số lượng *</label>
-                      <input
-                        type="number"
-                        value={formData.SoLuong || 1}
-                        onChange={(e) => setFormData({ ...formData, SoLuong: Number(e.target.value) })}
-                        min="1"
-                        required={formData.loaiKM === 'free_item'}
-                        placeholder="1"
-                      />
+                        <FaPlus /> Thêm món
+                      </button>
                     </div>
                   </div>
                 )}

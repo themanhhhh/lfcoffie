@@ -91,26 +91,15 @@ export class CTKMController {
           await this.giamMonRepo.save(giamMon);
         }
       } else if (saved.LoaiCTKM === 'combo') {
-        // Tạo Combo: cần tạo DSMonTrongCombo trước
-        // Body cần có: MaMon (món trong combo), SoLuong (số lượng món)
-        if (body.MaMon && body.SoLuong) {
-          // 1. Tạo DSMonTrongCombo trước
-          const maDSMonCombo = `DS${Date.now().toString().slice(-6)}`;
-          const dsMonTrongComboData: any = {
-            MaDSMonCombo: maDSMonCombo,
-            MaMon: body.MaMon,
-            SoLuong: body.SoLuong
-          };
-          
-          const dsMonTrongCombo = this.dsMonTrongComboRepo.create(dsMonTrongComboData);
-          const savedDSMonTrongComboResult = await this.dsMonTrongComboRepo.save(dsMonTrongCombo);
-          const savedDSMonTrongCombo = Array.isArray(savedDSMonTrongComboResult) ? savedDSMonTrongComboResult[0] : savedDSMonTrongComboResult;
-          
-          // 2. Tạo Combo với MaDSMonCombo vừa tạo
+        // Tạo Combo: có thể có nhiều món
+        // Body cần có: comboItems (mảng các món với MaMon và SoLuong)
+        const comboItems = body.comboItems || [];
+        
+        if (comboItems.length > 0) {
+          // 1. Tạo 1 Combo duy nhất
           const maCombo = `CB${Date.now().toString().slice(-6)}`;
           const comboData: any = {
             MaCombo: maCombo,
-            MaDSMonCombo: savedDSMonTrongCombo.MaDSMonCombo,
             TenCombo: saved.TenCTKM,
             GiaCombo: body.giaTriGiam || 0,
             NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
@@ -119,7 +108,25 @@ export class CTKMController {
           };
           
           const combo = this.comboRepo.create(comboData);
-          await this.comboRepo.save(combo);
+          const savedComboResult = await this.comboRepo.save(combo);
+          const savedCombo = Array.isArray(savedComboResult) ? savedComboResult[0] : savedComboResult;
+          
+          // 2. Tạo nhiều DSMonTrongCombo, mỗi cái cho 1 món, liên kết với Combo
+          for (let i = 0; i < comboItems.length; i++) {
+            const item = comboItems[i];
+            if (item.MaMon && item.SoLuong) {
+              const maDSMonCombo = `DS${Date.now().toString().slice(-6)}${i}`;
+              const dsMonTrongComboData: any = {
+                MaDSMonCombo: maDSMonCombo,
+                MaMon: item.MaMon,
+                SoLuong: item.SoLuong,
+                MaCombo: savedCombo.MaCombo
+              };
+              
+              const dsMonTrongCombo = this.dsMonTrongComboRepo.create(dsMonTrongComboData);
+              await this.dsMonTrongComboRepo.save(dsMonTrongCombo);
+            }
+          }
         }
       }
 

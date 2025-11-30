@@ -14,7 +14,11 @@ export class DSMonTrongCombo {
   @Column({ type: "int" })
   SoLuong!: number;
 
-  @OneToMany(() => Combo, (c) => c.dsMonTrongCombo)
-  combos!: Combo[];
+  @Column({ type: "varchar", length: 10, nullable: true })
+  MaCombo?: string | null;
+
+  @ManyToOne(() => Combo, (c) => c.dsMonTrongCombos, { nullable: true })
+  @JoinColumn({ name: "MaCombo" })
+  combo?: Combo | null;
 }
 

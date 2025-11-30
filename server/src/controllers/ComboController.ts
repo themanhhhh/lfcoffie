@@ -9,7 +9,7 @@ export class ComboController {
   async getAll(req: Request, res: Response) {
     try {
       const list = await this.repository.find({
-        relations: ['dsMonTrongCombo']
+        relations: ['dsMonTrongCombos', 'dsMonTrongCombos.mon']
       });
       return res.json(list);
     } catch (e: any) {
@@ -22,7 +22,7 @@ export class ComboController {
       const { id } = req.params;
       const item = await this.repository.findOne({ 
         where: { MaCombo: id } as any,
-        relations: ['dsMonTrongCombo']
+        relations: ['dsMonTrongCombos', 'dsMonTrongCombos.mon']
       });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
       return res.json(item);
@@ -79,7 +79,7 @@ export class ComboController {
           NgayBatDau: Between(new Date(0), now) as any,
           NgayKetThuc: Between(now, new Date(9999, 11, 31)) as any
         },
-        relations: ['dsMonTrongCombo']
+        relations: ['dsMonTrongCombos', 'dsMonTrongCombos.mon']
       });
 
       const activeCombos = combos.filter(combo => {

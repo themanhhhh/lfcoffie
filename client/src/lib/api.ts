@@ -337,7 +337,6 @@ export const giamMonApi = {
 // Combo API
 export interface Combo {
   MaCombo: string;
-  MaDSMonCombo: string;
   TenCombo: string;
   GiaCombo: number;
   NgayBatDau: string;
@@ -346,7 +345,7 @@ export interface Combo {
   GioBatDau?: string;
   GioKetThuc?: string;
   TrangThai: string;
-  dsMonTrongCombo?: DSMonTrongCombo;
+  dsMonTrongCombos?: DSMonTrongCombo[];
 }
 
 export interface DSMonTrongCombo {

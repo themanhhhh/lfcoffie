@@ -28,7 +28,7 @@ import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
 import { logo, coffeeBlack } from '../image/index'
-import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon, giamHoaDonApi, GiamHoaDon } from '../../lib/api'
+import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon, giamHoaDonApi, GiamHoaDon, comboApi } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -222,9 +222,10 @@ const Staff = () => {
       setLoading(true)
       setError(null)
       try {
-        const [monData, phienLamViecData] = await Promise.all([
+        const [monData, phienLamViecData, comboData] = await Promise.all([
           monApi.getAll(),
-          phienLamViecApi.getAll()
+          phienLamViecApi.getAll(),
+          comboApi.getActiveCombos().catch(() => []) // Load combo, nếu lỗi thì trả về mảng rỗng
         ])
 
         if (ignore) return
@@ -258,6 +259,7 @@ const Staff = () => {
           }))
         ]
 
+        // Map món thành products
         const mappedProducts: Product[] = monData.map((item) => ({
           id: item.MaMon,
           name: item.TenMon,
@@ -268,16 +270,40 @@ const Staff = () => {
           categoryName: item.LoaiMon ?? 'Khác'
         }))
 
+        // Map combo thành products
+        const mappedCombos: Product[] = comboData.map((combo) => {
+          const itemsDesc = combo.dsMonTrongCombos 
+            ? combo.dsMonTrongCombos.map(ds => `${ds.mon?.TenMon || ''} x${ds.SoLuong}`).join(', ')
+            : 'Combo'
+          return {
+            id: combo.MaCombo,
+            name: combo.TenCombo,
+            description: `Combo: ${itemsDesc}`,
+            price: combo.GiaCombo ?? 0,
+            image: coffeeBlack,
+            categoryId: 'combo',
+            categoryName: 'Combo'
+          }
+        })
+
+        // Combine products và combos
+        const allProducts = [...mappedProducts, ...mappedCombos]
+
         const hasOtherCategory = mappedProducts.some(
           (product) => product.categoryId === 'other'
         )
 
-        const mappedCategories = hasOtherCategory
-          ? [...baseCategories, { id: 'other', name: 'Khác', icon: MdFastfood }]
+        // Thêm category combo nếu có combo
+        const finalCategories = comboData.length > 0
+          ? [...baseCategories, { id: 'combo', name: 'Combo', icon: MdFastfood }]
           : baseCategories
 
+        const mappedCategories = hasOtherCategory
+          ? [...finalCategories, { id: 'other', name: 'Khác', icon: MdFastfood }]
+          : finalCategories
+
         setCategories(mappedCategories)
-        setProducts(mappedProducts)
+        setProducts(allProducts)
 
         if (mappedProducts.length === 0) {
           setActiveCategory('all')
@@ -373,7 +399,22 @@ const Staff = () => {
   }
 
   const addToCart = (product: Product) => {
-    openCustomizeModal(product)
+    // Nếu là combo, thêm trực tiếp vào giỏ hàng (không cần customize)
+    if (product.categoryId === 'combo') {
+      const existingItem = cart.find(item => item.id === product.id)
+      if (existingItem) {
+        updateQuantity(product.id, existingItem.quantity + 1)
+      } else {
+        setCart(prevCart => [...prevCart, {
+          ...product,
+          quantity: 1
+        }])
+      }
+      toast.success(`Đã thêm ${product.name} vào giỏ hàng`)
+    } else {
+      // Món thường, mở modal customize
+      openCustomizeModal(product)
+    }
   }
 
   const removeFromCart = (productId: string) => {

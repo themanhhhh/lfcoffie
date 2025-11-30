@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryColumn, Column, OneToMany } from "typeorm";
 import { DSMonTrongCombo } from "./DSMonTrongCombo";
 
 @Entity({ name: "combo" })
@@ -6,9 +6,8 @@ export class Combo {
   @PrimaryColumn({ type: "varchar", length: 10 })
   MaCombo!: string;
 
-  @ManyToOne(() => DSMonTrongCombo, (ds) => ds.combos, { eager: true })
-  @JoinColumn({ name: "MaDSMonCombo" })
-  dsMonTrongCombo!: DSMonTrongCombo;
+  @OneToMany(() => DSMonTrongCombo, (ds) => ds.combo)
+  dsMonTrongCombos!: DSMonTrongCombo[];
 
   @Column({ type: "varchar", length: 100 })
   TenCombo!: string;
