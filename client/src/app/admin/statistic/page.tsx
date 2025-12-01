@@ -151,13 +151,6 @@ const StatisticPage = () => {
           description: `So với hôm qua (${revenueComparison.yesterday.revenue.toLocaleString('vi-VN')} đ)`
         },
         {
-          title: 'Lợi nhuận gộp',
-          value: overview.grossProfit,
-          change: overview.totalRevenue > 0 ? ((overview.grossProfit / overview.totalRevenue) * 100) : 0,
-          positive: overview.grossProfit > 0,
-          description: `Biên lợi nhuận ${overview.totalRevenue > 0 ? ((overview.grossProfit / overview.totalRevenue) * 100).toFixed(1) : 0}%`
-        },
-        {
           title: 'Chi phí',
           value: overview.totalExpense,
           change: 0,
@@ -562,24 +555,12 @@ const StatisticPage = () => {
                   <span>Tổng chi phí:</span>
                   <strong>{overview.totalExpense.toLocaleString('vi-VN')} ₫</strong>
                 </div>
-                <div className={styles.overviewItem}>
-                  <span>Lợi nhuận gộp:</span>
-                  <strong className={styles.profitText}>
-                    {overview.grossProfit.toLocaleString('vi-VN')} ₫
-                  </strong>
-                </div>
+                
                 <div className={styles.overviewItem}>
                   <span>Số hóa đơn:</span>
                   <strong>{overview.invoiceCount}</strong>
                 </div>
-                {overview.totalRevenue > 0 && (
-                  <div className={styles.overviewItem}>
-                    <span>Tỷ suất lợi nhuận:</span>
-                    <strong>
-                      {((overview.grossProfit / overview.totalRevenue) * 100).toFixed(1)}%
-                    </strong>
-                  </div>
-                )}
+               
               </div>
             </div>
           )}
