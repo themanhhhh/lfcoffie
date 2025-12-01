@@ -381,6 +381,9 @@ export const thuChiApi = {
     const queryString = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
     return apiFetch<ThuChi[]>(`/api/thuchi${queryString}`);
   },
+  getPaymentMethods: (): Promise<string[]> => {
+    return apiFetch<string[]>('/api/thuchi/payment-methods');
+  },
 };
 
 // NghiepVu API

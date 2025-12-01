@@ -10,11 +10,13 @@ import {
   FaMoneyBillWave,
   FaArrowUp,
   FaArrowDown,
-  FaTimes
+  FaTimes,
+  FaFileExcel
 } from 'react-icons/fa'
 import styles from './revenue-expense.module.css'
 import { thuChiApi, nghiepVuApi, ApiError, ThuChi, NghiepVu } from '../../../lib/api'
 import { toast } from 'react-hot-toast'
+import { exportCashflowReport } from '../../../utils/excelExport'
 
 const RevenueExpensePage = () => {
   const [transactions, setTransactions] = useState<ThuChi[]>([])
@@ -182,6 +184,25 @@ const RevenueExpensePage = () => {
     )
   }, [filteredTransactions])
 
+  const handleExportExcel = async () => {
+    if (filteredTransactions.length === 0) {
+      toast.error('Không có dữ liệu để xuất Excel')
+      return
+    }
+    try {
+      const exportStartDate = startDate || new Date().toISOString().split('T')[0]
+      const exportEndDate = endDate || new Date().toISOString().split('T')[0]
+      const totals = {
+        in: stats.revenue,
+        out: stats.expense
+      }
+      exportCashflowReport(filteredTransactions, totals, exportStartDate, exportEndDate)
+      toast.success('Xuất Excel thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
+
   const revenueCategories = useMemo(() => {
     return categories.filter(cat => cat.LoaiGiaoDich === 'thu')
   }, [categories])
@@ -215,9 +236,14 @@ const RevenueExpensePage = () => {
             </h1>
             <p>Quản lý các giao dịch thu chi của quán</p>
           </div>
-          <button className={styles.addButton} onClick={handleAddTransaction}>
-            <FaPlus /> Thêm giao dịch
-          </button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button className={styles.addButton} onClick={handleExportExcel} disabled={filteredTransactions.length === 0}>
+              <FaFileExcel /> Xuất Excel
+            </button>
+            <button className={styles.addButton} onClick={handleAddTransaction}>
+              <FaPlus /> Thêm giao dịch
+            </button>
+          </div>
         </div>
 
         <div className={styles.statsGrid}>
@@ -239,15 +265,7 @@ const RevenueExpensePage = () => {
               <strong>{stats.expense.toLocaleString('vi-VN')} đ</strong>
             </div>
           </div>
-          <div className={styles.statCard}>
-            <div className={`${styles.statIcon} ${styles.balanceIcon}`}>
-              <FaMoneyBillWave />
-            </div>
-            <div className={styles.statContent}>
-              <span>Lợi nhuận</span>
-              <strong>{(stats.revenue - stats.expense).toLocaleString('vi-VN')} đ</strong>
-            </div>
-          </div>
+       
         </div>
 
         <div className={styles.filters}>

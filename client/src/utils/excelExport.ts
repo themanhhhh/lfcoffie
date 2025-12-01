@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { ShiftClosingReport, RevenueComparison, ThuChi } from '../lib/api'
 
 // Format số tiền cho Excel
 const formatPrice = (price: number) => {
@@ -6,7 +7,7 @@ const formatPrice = (price: number) => {
 }
 
 // Xuất báo cáo chốt ca
-export const exportShiftClosingReport = (report: any, fileName: string = 'Bao_cao_chot_ca.xlsx') => {
+export const exportShiftClosingReport = (report: ShiftClosingReport, fileName: string = 'Bao_cao_chot_ca.xlsx') => {
   const workbook = XLSX.utils.book_new()
 
   // Sheet 1: Thông tin phiên làm việc và tổng kết
@@ -43,8 +44,8 @@ export const exportShiftClosingReport = (report: any, fileName: string = 'Bao_ca
     const monData = [
       ['Tên nhóm', 'Số lượng', 'Doanh thu']
     ]
-    report.monByNhom.forEach((item: any) => {
-      monData.push([item.ten, item.soLuong, formatPrice(item.doanhThu)])
+    report.monByNhom.forEach((item) => {
+      monData.push([item.ten, String(item.soLuong), formatPrice(item.doanhThu)])
     })
     const monSheet = XLSX.utils.aoa_to_sheet(monData)
     XLSX.utils.book_append_sheet(workbook, monSheet, 'Món và nhóm món')
@@ -55,8 +56,8 @@ export const exportShiftClosingReport = (report: any, fileName: string = 'Bao_ca
     const ctkmData = [
       ['Tên CTKM', 'Số hóa đơn', 'Doanh thu']
     ]
-    report.ctkmStats.forEach((item: any) => {
-      ctkmData.push([item.ten, item.soHoaDon, formatPrice(item.doanhThu)])
+    report.ctkmStats.forEach((item) => {
+      ctkmData.push([item.ten, String(item.soHoaDon), formatPrice(item.doanhThu)])
     })
     const ctkmSheet = XLSX.utils.aoa_to_sheet(ctkmData)
     XLSX.utils.book_append_sheet(workbook, ctkmSheet, 'CTKM')
@@ -67,8 +68,8 @@ export const exportShiftClosingReport = (report: any, fileName: string = 'Bao_ca
     const paymentData = [
       ['Phương thức', 'Số hóa đơn', 'Doanh thu']
     ]
-    report.paymentMethods.forEach((item: any) => {
-      paymentData.push([item.phuongThuc, item.soHoaDon, formatPrice(item.doanhThu)])
+    report.paymentMethods.forEach((item) => {
+      paymentData.push([item.phuongThuc, String(item.soHoaDon), formatPrice(item.doanhThu)])
     })
     const paymentSheet = XLSX.utils.aoa_to_sheet(paymentData)
     XLSX.utils.book_append_sheet(workbook, paymentSheet, 'Phương thức thanh toán')
@@ -78,22 +79,28 @@ export const exportShiftClosingReport = (report: any, fileName: string = 'Bao_ca
 }
 
 // Xuất báo cáo doanh thu theo ngày
-export const exportDailyRevenue = (data: any[], startDate: string, endDate: string) => {
+interface DailyRevenueItem {
+  date: string;
+  revenue?: number;
+  orderCount?: number;
+}
+
+export const exportDailyRevenue = (data: DailyRevenueItem[], startDate: string, endDate: string) => {
   const workbook = XLSX.utils.book_new()
 
   const reportData = [
-    ['BÁO CÁO DOANH THU THEO NGÀY'],
+    ['BÁO CÁO DOANH THU BÁN HÀNG THEO NGÀY'],
     ['Từ ngày', new Date(startDate).toLocaleDateString('vi-VN')],
     ['Đến ngày', new Date(endDate).toLocaleDateString('vi-VN')],
     [],
     ['Ngày', 'Doanh thu', 'Số hóa đơn', 'Trung bình hóa đơn']
   ]
 
-  data.forEach((item: any) => {
+  data.forEach((item) => {
     reportData.push([
       new Date(item.date).toLocaleDateString('vi-VN'),
       formatPrice(item.revenue || 0),
-      item.orderCount || 0,
+      String(item.orderCount || 0),
       formatPrice((item.revenue || 0) / Math.max(item.orderCount || 1, 1))
     ])
   })
@@ -104,7 +111,14 @@ export const exportDailyRevenue = (data: any[], startDate: string, endDate: stri
 }
 
 // Xuất báo cáo hoạt động kinh doanh
-export const exportBusinessActivity = (overview: any, revenueComparison: any, fileName: string = 'Bao_cao_hoat_dong_kinh_doanh.xlsx') => {
+interface BusinessOverview {
+  totalRevenue?: number;
+  totalExpense?: number;
+  grossProfit?: number;
+  invoiceCount?: number;
+}
+
+export const exportBusinessActivity = (overview: BusinessOverview, revenueComparison: RevenueComparison, fileName: string = 'Bao_cao_hoat_dong_kinh_doanh.xlsx') => {
   const workbook = XLSX.utils.book_new()
 
   const reportData = [
@@ -116,8 +130,8 @@ export const exportBusinessActivity = (overview: any, revenueComparison: any, fi
     ['Tổng chi phí', formatPrice(overview.totalExpense || 0)],
     ['Lợi nhuận gộp', formatPrice(overview.grossProfit || 0)],
     ['Số hóa đơn', overview.invoiceCount || 0],
-    ['Tỷ suất lợi nhuận', overview.totalRevenue > 0 
-      ? `${((overview.grossProfit / overview.totalRevenue) * 100).toFixed(1)}%` 
+    ['Tỷ suất lợi nhuận', (overview.totalRevenue && overview.totalRevenue > 0) 
+      ? `${(((overview.grossProfit || 0) / overview.totalRevenue) * 100).toFixed(1)}%` 
       : '0%'],
     [],
     ['So sánh với hôm qua'],
@@ -143,7 +157,12 @@ export const exportBusinessActivity = (overview: any, revenueComparison: any, fi
 }
 
 // Xuất báo cáo thu chi
-export const exportCashflowReport = (transactions: any[], totals: any, startDate: string, endDate: string) => {
+interface CashflowTotals {
+  in?: number;
+  out?: number;
+}
+
+export const exportCashflowReport = (transactions: ThuChi[], totals: CashflowTotals, startDate: string, endDate: string) => {
   const workbook = XLSX.utils.book_new()
 
   // Sheet 1: Tổng kết
@@ -166,15 +185,15 @@ export const exportCashflowReport = (transactions: any[], totals: any, startDate
     ['Thời gian', 'Loại', 'Nghiệp vụ', 'Nội dung', 'Số tiền', 'Phương thức', 'Người thực hiện', 'Ghi chú']
   ]
 
-  transactions.forEach((tx: any) => {
+  transactions.forEach((tx) => {
     transactionData.push([
       tx.ThoiGian ? new Date(tx.ThoiGian).toLocaleString('vi-VN') : 'N/A',
       tx.nghiepVu?.LoaiGiaoDich === 'thu' ? 'Thu' : 'Chi',
       tx.nghiepVu?.TenNghiepVu || 'N/A',
-      tx.GhiChu || tx.NoiDung || '',
+      tx.GhiChu || '',
       formatPrice(tx.SoTien || 0),
       tx.PhuongThucThanhToan || 'N/A',
-      tx.phienLamViec?.nhanVien?.TenNhanVien || tx.nhanVien?.TenNhanVien || 'N/A',
+      tx.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
       tx.GhiChu || ''
     ])
   })

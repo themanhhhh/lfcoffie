@@ -7,14 +7,12 @@ import {
   FaArrowCircleDown,
   FaArrowCircleUp,
   FaCalculator,
-  FaFileInvoice,
-  FaFileExcel
+  FaFileInvoice
 } from 'react-icons/fa'
 import styles from './cashflow.module.css'
 import { thuChiApi, nghiepVuApi, phienLamViecApi, ApiError, NghiepVu, ThuChi } from '../../../lib/api'
 import { useAuth } from '../../../contexts/AuthContext'
 import { toast } from 'react-hot-toast'
-import { exportCashflowReport } from '../../../utils/excelExport'
 
 type TransactionType = 'in' | 'out'
 
@@ -25,6 +23,7 @@ interface Transaction {
   reason: string
   performedBy: string
   time: string
+  phuongThucThanhToan: string
 }
 
 interface CashFormState {
@@ -59,6 +58,7 @@ const CashflowPage = () => {
   const [currentPhienLamViec, setCurrentPhienLamViec] = useState<string | null>(null)
   const [nghiepVuThuList, setNghiepVuThuList] = useState<NghiepVu[]>([])
   const [nghiepVuChiList, setNghiepVuChiList] = useState<NghiepVu[]>([])
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(['Tiền mặt'])
   
   const { user } = useAuth()
 
@@ -69,14 +69,16 @@ const CashflowPage = () => {
     try {
       const today = new Date().toISOString().split('T')[0]
       
-      // Load nghiepvu for thu and chi
-      const [nghiepVuThu, nghiepVuChi] = await Promise.all([
+      // Load nghiepvu for thu and chi, and payment methods
+      const [nghiepVuThu, nghiepVuChi, paymentMethodsData] = await Promise.all([
         nghiepVuApi.getAll({ loaiGiaoDich: 'thu' }),
-        nghiepVuApi.getAll({ loaiGiaoDich: 'chi' })
+        nghiepVuApi.getAll({ loaiGiaoDich: 'chi' }),
+        thuChiApi.getPaymentMethods().catch(() => ['Tiền mặt', 'Chuyển khoản', 'Thẻ']) // Fallback nếu API lỗi
       ])
       
       setNghiepVuThuList(nghiepVuThu)
       setNghiepVuChiList(nghiepVuChi)
+      setPaymentMethods(paymentMethodsData.length > 0 ? paymentMethodsData : ['Tiền mặt', 'Chuyển khoản', 'Thẻ'])
       
       // Set default nghiepVu for forms
       if (nghiepVuThu.length > 0) {
@@ -89,19 +91,31 @@ const CashflowPage = () => {
       // Load current phien lam viec
       if (user?.MaNhanVien) {
         const phienLamViecList = await phienLamViecApi.getAll()
-        const activePhien = phienLamViecList.find(
-          (plv) => plv.MaNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
-        )
+        const activePhien = phienLamViecList.find((plv) => {
+          const maNhanVien = plv.MaNhanVien ?? plv.nhanVien?.MaNhanVien
+          return maNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
+        })
         if (activePhien) {
           setCurrentPhienLamViec(activePhien.MaPhienLamViec)
+        } else {
+          console.warn('Không tìm thấy phiên làm việc đang mở cho nhân viên:', user.MaNhanVien)
+          console.log('Danh sách phiên làm việc:', phienLamViecList)
         }
       }
 
-      // Load thu chi data
-      const [thuData, chiData] = await Promise.all([
-        thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'thu' }),
-        thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'chi' })
-      ])
+      // Load thu chi data - load tất cả rồi phân loại ở frontend để tránh mất dữ liệu khi MaNghiepVu null
+      const allThuChiData = await thuChiApi.getAll({ startDate: today, endDate: today })
+      
+      // Phân loại thu/chi dựa trên nghiepVu hoặc dựa vào type từ form (nếu không có nghiepVu)
+      // Nếu không có nghiepVu, sẽ không hiển thị, nhưng ít nhất sẽ load được tất cả dữ liệu
+      const thuData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'thu')
+      const chiData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi')
+      
+      // Nếu có dữ liệu không có nghiepVu, log để debug
+      const dataWithoutNghiepVu = allThuChiData.filter(tc => !tc.nghiepVu)
+      if (dataWithoutNghiepVu.length > 0) {
+        console.warn('Có dữ liệu thu chi không có nghiepVu:', dataWithoutNghiepVu)
+      }
 
       const allTransactions: Transaction[] = []
       let id = 1
@@ -115,7 +129,8 @@ const CashflowPage = () => {
           amount: tc.SoTien,
           reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Thu tiền',
           performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
-          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+          phuongThucThanhToan: tc.PhuongThucThanhToan || 'Tiền mặt'
         })
       })
 
@@ -128,7 +143,8 @@ const CashflowPage = () => {
           amount: tc.SoTien,
           reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Chi tiền',
           performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
-          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+          time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+          phuongThucThanhToan: tc.PhuongThucThanhToan || 'Tiền mặt'
         })
       })
 
@@ -173,39 +189,6 @@ const CashflowPage = () => {
 
   const netCash = totals.in - totals.out
 
-  const [allThuChis, setAllThuChis] = useState<ThuChi[]>([])
-
-  // Load all thu chi data for export
-  useEffect(() => {
-    const loadThuChisForExport = async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0]
-        const [thuData, chiData] = await Promise.all([
-          thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'thu' }),
-          thuChiApi.getAll({ startDate: today, endDate: today, loaiGiaoDich: 'chi' })
-        ])
-        setAllThuChis([...thuData, ...chiData])
-      } catch (err) {
-        console.error('Error loading thu chi for export:', err)
-      }
-    }
-    loadThuChisForExport()
-  }, [])
-
-  const handleExportExcel = async () => {
-    if (allThuChis.length === 0) {
-      toast.error('Không có dữ liệu để xuất Excel')
-      return
-    }
-    try {
-      const today = new Date().toISOString().split('T')[0]
-      exportCashflowReport(allThuChis, totals, today, today)
-      toast.success('Xuất Excel thành công!')
-    } catch (err) {
-      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
-    }
-  }
-
   const handleFormChange = (
     type: TransactionType,
     key: keyof CashFormState,
@@ -224,13 +207,46 @@ const CashflowPage = () => {
     const form = type === 'in' ? cashInForm : cashOutForm
     const amount = Number(form.amount.replace(/\D/g, '')) || Number(form.amount)
 
-    if (!form.reason || !amount || !form.nghiepVu) {
+    // Debug log
+    console.log('Form data:', { 
+      reason: form.reason, 
+      amount: form.amount, 
+      parsedAmount: amount, 
+      nghiepVu: form.nghiepVu,
+      phuongThucThanhToan: form.phuongThucThanhToan
+    })
+
+    if (!form.reason?.trim() || !amount || amount <= 0 || !form.nghiepVu?.trim()) {
+      console.error('Validation failed:', {
+        hasReason: !!form.reason?.trim(),
+        hasAmount: !!amount && amount > 0,
+        hasNghiepVu: !!form.nghiepVu?.trim()
+      })
       toast.error('Vui lòng nhập đầy đủ thông tin bắt buộc: số tiền, nội dung và nghiệp vụ.')
       return
     }
 
-    if (!currentPhienLamViec) {
+    // Kiểm tra và load lại phiên làm việc nếu chưa có
+    let maPhienLamViec = currentPhienLamViec
+    if (!maPhienLamViec && user?.MaNhanVien) {
+      try {
+        const phienLamViecList = await phienLamViecApi.getAll()
+        const activePhien = phienLamViecList.find((plv) => {
+          const maNhanVien = plv.MaNhanVien ?? plv.nhanVien?.MaNhanVien
+          return maNhanVien === user.MaNhanVien && plv.TrangThai === 'mở'
+        })
+        if (activePhien) {
+          maPhienLamViec = activePhien.MaPhienLamViec
+          setCurrentPhienLamViec(maPhienLamViec)
+        }
+      } catch (err) {
+        console.error('Error loading phien lam viec:', err)
+      }
+    }
+
+    if (!maPhienLamViec) {
       toast.error('Chưa có phiên làm việc đang mở. Vui lòng mở phiên làm việc trước.')
+      console.error('Không tìm thấy phiên làm việc đang mở. User:', user?.MaNhanVien)
       return
     }
 
@@ -242,15 +258,38 @@ const CashflowPage = () => {
       // Use reason as GhiChu
       const ghiChu = form.reason
 
-      const payload = {
+      // Tạo ThoiGian với local timezone để đảm bảo match với filter date
+      const now = new Date()
+      const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
+      const thoiGian = localDate.toISOString()
+
+      interface CreateThuChiPayload {
+        MaGiaoDich: string
+        ThoiGian: string
+        PhuongThucThanhToan: string
+        GhiChu: string
+        SoTien: number
+        MaPhienLamViec?: string
+        MaNghiepVu?: string
+      }
+
+      const payload: CreateThuChiPayload = {
         MaGiaoDich: maGiaoDich,
-        MaPhienLamViec: currentPhienLamViec,
-        MaNghiepVu: form.nghiepVu,
-        ThoiGian: new Date().toISOString(),
-        PhuongThucThanhToan: 'Tiền mặt',
+        ThoiGian: thoiGian,
+        PhuongThucThanhToan: form.phuongThucThanhToan || 'Tiền mặt',
         GhiChu: ghiChu,
         SoTien: amount
       }
+      
+      // Chỉ thêm MaPhienLamViec và MaNghiepVu nếu có giá trị
+      if (maPhienLamViec) {
+        payload.MaPhienLamViec = maPhienLamViec
+      }
+      if (form.nghiepVu && form.nghiepVu.trim()) {
+        payload.MaNghiepVu = form.nghiepVu
+      }
+      
+      console.log('Submitting payload:', payload)
 
       await thuChiApi.create(payload)
 
@@ -261,7 +300,62 @@ const CashflowPage = () => {
       }
 
       // Reload data to get the latest transactions
-      await loadData()
+      // Thêm delay nhỏ để đảm bảo database đã commit transaction
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Force reload bằng cách gọi lại logic load thu chi data
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        // Load tất cả rồi phân loại ở frontend
+        const allThuChiData = await thuChiApi.getAll({ startDate: today, endDate: today })
+        const thuData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'thu')
+        const chiData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi')
+
+        const allTransactions: Transaction[] = []
+        let id = 1
+
+        // Transform thu data
+        thuData.forEach((tc) => {
+          const date = new Date(tc.ThoiGian)
+          allTransactions.push({
+            id: id++,
+            type: 'in',
+            amount: tc.SoTien,
+            reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Thu tiền',
+            performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
+            time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+            phuongThucThanhToan: tc.PhuongThucThanhToan || 'Tiền mặt'
+          })
+        })
+
+        // Transform chi data
+        chiData.forEach((tc) => {
+          const date = new Date(tc.ThoiGian)
+          allTransactions.push({
+            id: id++,
+            type: 'out',
+            amount: tc.SoTien,
+            reason: tc.nghiepVu?.TenNghiepVu || tc.GhiChu || 'Chi tiền',
+            performedBy: tc.phienLamViec?.nhanVien?.TenNhanVien || 'N/A',
+            time: `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`,
+            phuongThucThanhToan: tc.PhuongThucThanhToan || 'Tiền mặt'
+          })
+        })
+
+        // Sắp xếp theo thời gian
+        allTransactions.sort((a, b) => {
+          const [aH, aM] = a.time.split(':').map(Number)
+          const [bH, bM] = b.time.split(':').map(Number)
+          return (bH * 60 + bM) - (aH * 60 + aM)
+        })
+
+        setTransactions(allTransactions)
+        console.log('Reloaded transactions:', allTransactions.length, 'items')
+      } catch (reloadErr) {
+        console.error('Error reloading transactions:', reloadErr)
+        // Fallback: gọi loadData nếu reload thủ công thất bại
+        await loadData()
+      }
 
       toast.success('Ghi nhận giao dịch thành công!')
     } catch (err) {
@@ -309,9 +403,6 @@ const CashflowPage = () => {
         <div className={styles.headerBadge}>
           <FaExchangeAlt />
         </div>
-        <button className={styles.excelBtn} onClick={handleExportExcel} disabled={transactions.length === 0}>
-          <FaFileExcel /> Xuất Excel
-        </button>
       </header>
 
       <section className={styles.summary}>
@@ -388,6 +479,20 @@ const CashflowPage = () => {
               required
             />
           </label>
+          <label className={styles.field}>
+            <span>Phương thức thanh toán <span style={{ color: 'red' }}>*</span></span>
+            <select
+              value={cashInForm.phuongThucThanhToan}
+              onChange={event => handleFormChange('in', 'phuongThucThanhToan', event.target.value)}
+              required
+            >
+              {paymentMethods.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="submit" className={styles.submitIn}>
             Lưu phiếu thu
           </button>
@@ -436,6 +541,20 @@ const CashflowPage = () => {
               required
             />
           </label>
+          <label className={styles.field}>
+            <span>Phương thức thanh toán <span style={{ color: 'red' }}>*</span></span>
+            <select
+              value={cashOutForm.phuongThucThanhToan}
+              onChange={event => handleFormChange('out', 'phuongThucThanhToan', event.target.value)}
+              required
+            >
+              {paymentMethods.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="submit" className={styles.submitOut}>
             Lưu phiếu chi
           </button>
@@ -455,6 +574,7 @@ const CashflowPage = () => {
                 <th>Loại</th>
                 <th>Số tiền</th>
                 <th>Nội dung</th>
+                <th>Phương thức</th>
                 <th>Nhân viên</th>
               </tr>
             </thead>
@@ -473,6 +593,7 @@ const CashflowPage = () => {
                   </td>
                   <td>{currencyFormatter.format(transaction.amount)}</td>
                   <td>{transaction.reason}</td>
+                  <td>{transaction.phuongThucThanhToan}</td>
                   <td>{transaction.performedBy}</td>
                 </tr>
               ))}

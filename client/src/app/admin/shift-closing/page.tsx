@@ -47,6 +47,7 @@ const ShiftClosingPage = () => {
 
   useEffect(() => {
     loadAvailablePhienLamViec()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -203,7 +204,7 @@ const ShiftClosingPage = () => {
             </div>
             <div className={styles.infoItem}>
               <span>Giờ in:</span>
-              <strong>{report.gioIn ? formatDateTime(report.gioIn) : formatDateTime(new Date().toISOString())}</strong>
+              <strong>{report.tongKet.gioIn ? formatDateTime(report.tongKet.gioIn) : formatDateTime(new Date().toISOString())}</strong>
             </div>
             <div className={styles.infoItem}>
               <span>Thu ngân:</span>
@@ -218,7 +219,7 @@ const ShiftClosingPage = () => {
             <FaMoneyBillWave />
             <div>
               <span>Số dư đầu</span>
-              <strong>{formatPrice(report.soDuDau || 0)}</strong>
+              <strong>{formatPrice(report.tongKet.soDuDau || 0)}</strong>
             </div>
           </div>
           <div className={styles.summaryCard}>
@@ -246,7 +247,7 @@ const ShiftClosingPage = () => {
             <FaBox />
             <div>
               <span>Tổng thu/chi</span>
-              <strong>{formatPrice(report.tongKet.totalThuChi || 0)}</strong>
+              <strong>{formatPrice((report.tongKet.totalThu || 0) + (report.tongKet.totalChi || 0))}</strong>
             </div>
           </div>
           <div className={styles.summaryCard}>

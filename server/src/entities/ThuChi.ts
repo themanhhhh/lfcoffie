@@ -7,13 +7,19 @@ export class ThuChi {
   @PrimaryColumn({ type: "varchar", length: 10 })
   MaGiaoDich!: string;
 
-  @ManyToOne(() => PhienLamViec, (plv) => plv.thuChis, { eager: true })
-  @JoinColumn({ name: "MaPhienLamViec" })
-  phienLamViec!: PhienLamViec;
+  @Column({ type: "varchar", length: 10, nullable: true })
+  MaPhienLamViec?: string | null;
 
-  @ManyToOne(() => NghiepVu, (nv) => nv.thuChis, { eager: true })
+  @ManyToOne(() => PhienLamViec, (plv) => plv.thuChis, { eager: true, nullable: true })
+  @JoinColumn({ name: "MaPhienLamViec" })
+  phienLamViec?: PhienLamViec | null;
+
+  @Column({ type: "varchar", length: 10, nullable: true })
+  MaNghiepVu?: string | null;
+
+  @ManyToOne(() => NghiepVu, (nv) => nv.thuChis, { eager: true, nullable: true })
   @JoinColumn({ name: "MaNghiepVu" })
-  nghiepVu!: NghiepVu;
+  nghiepVu?: NghiepVu | null;
 
   @Column({ type: "timestamp" })
   ThoiGian!: Date;

@@ -18,6 +18,14 @@ export class ThongKeController {
   private nghiepVuRepo = AppDataSource.getRepository(NghiepVu);
   private phienLamViecRepo = AppDataSource.getRepository(PhienLamViec);
 
+  // Helper function to format date as YYYY-MM-DD in local timezone
+  private formatDateLocal(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   // Lấy tổng quan thống kê
   async getOverview(req: Request, res: Response) {
     try {
@@ -339,8 +347,19 @@ export class ThongKeController {
       )?.SoTien || 0;
       const tienTrongKet = soDuDau + totalThu - totalChi;
 
-      // Giờ in (thời gian hiện tại)
-      const gioIn = new Date().toISOString();
+      // Giờ in: ưu tiên dùng ThoiGianDong nếu có, nếu không thì dùng thời gian hiện tại
+      // Kết hợp Ngay và ThoiGianDong để tạo datetime đầy đủ
+      let gioIn: string;
+      if (phienLamViec.ThoiGianDong) {
+        // Kết hợp Ngay và ThoiGianDong để tạo datetime ISO string
+        const ngayDong = new Date(phienLamViec.Ngay);
+        const [hours, minutes, seconds] = phienLamViec.ThoiGianDong.split(':');
+        ngayDong.setHours(parseInt(hours || '0', 10), parseInt(minutes || '0', 10), parseInt(seconds || '0', 10), 0);
+        gioIn = ngayDong.toISOString();
+      } else {
+        // Nếu chưa đóng ca, dùng thời gian hiện tại
+        gioIn = new Date().toISOString();
+      }
 
       return res.json({
         phienLamViec: {
@@ -429,12 +448,12 @@ export class ThongKeController {
 
       return res.json({
         today: {
-          date: today.toISOString().split('T')[0],
+          date: this.formatDateLocal(today),
           revenue: todayRevenue,
           orderCount: todayOrders.length
         },
         yesterday: {
-          date: yesterday.toISOString().split('T')[0],
+          date: this.formatDateLocal(yesterday),
           revenue: yesterdayRevenue,
           orderCount: yesterdayOrders.length
         },
@@ -474,7 +493,7 @@ export class ThongKeController {
       for (let i = 0; i < 7; i++) {
         const date = new Date(sevenDaysAgo);
         date.setDate(date.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = this.formatDateLocal(date);
         dailyStats[dateStr] = {
           revenue: 0,
           orderCount: 0,
@@ -484,7 +503,9 @@ export class ThongKeController {
 
       // Tính toán cho từng đơn hàng
       orders.forEach(dh => {
-        const dateStr = new Date(dh.Ngay).toISOString().split('T')[0];
+        // Convert dh.Ngay to Date if it's not already, then format in local timezone
+        const orderDate = dh.Ngay instanceof Date ? dh.Ngay : new Date(dh.Ngay);
+        const dateStr = this.formatDateLocal(orderDate);
         if (dailyStats[dateStr]) {
           const dhTotal = dh.chiTietDonHangs?.reduce((s, ct) => s + (ct.SoLuong * ct.DonGia), 0) || 0;
           dailyStats[dateStr].revenue += dhTotal;
@@ -504,8 +525,8 @@ export class ThongKeController {
 
       return res.json({
         period: {
-          startDate: sevenDaysAgo.toISOString().split('T')[0],
-          endDate: today.toISOString().split('T')[0],
+          startDate: this.formatDateLocal(sevenDaysAgo),
+          endDate: this.formatDateLocal(today),
           days: 7
         },
         summary: {
