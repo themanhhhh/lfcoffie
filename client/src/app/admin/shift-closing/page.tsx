@@ -169,7 +169,7 @@ const ShiftClosingPage = () => {
     }
 
     try {
-      const wsData: any[][] = [
+      const wsData: (string | number)[][] = [
         ['BÁO CÁO KẾT QUẢ KINH DOANH'],
         [],
         ['Từ ngày:', startDate],
@@ -394,7 +394,7 @@ const ShiftClosingPage = () => {
 
       {!businessReport && !loadingBusinessReport && (
         <div className={styles.emptyState}>
-          <p>Vui lòng chọn khoảng thời gian và nhấn "Tạo" để xem báo cáo</p>
+          <p>Vui lòng chọn khoảng thời gian và nhấn &quot;Tạo&quot; để xem báo cáo</p>
         </div>
       )}
 
