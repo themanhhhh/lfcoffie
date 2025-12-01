@@ -14,5 +14,8 @@ export class NghiepVu {
 
   @OneToMany(() => ThuChi, (tc) => tc.nghiepVu)
   thuChis!: ThuChi[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

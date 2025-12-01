@@ -25,5 +25,8 @@ export class CTKM {
 
   @OneToMany(() => GiamMon, (gm) => gm.ctkm)
   giamMons!: GiamMon[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

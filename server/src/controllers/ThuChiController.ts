@@ -10,7 +10,7 @@ export class ThuChiController {
   async getAll(req: Request, res: Response) {
     try {
       const { startDate, endDate, loaiGiaoDich } = req.query;
-      let where: any = {};
+      let where: any = { isDelete: false };
       
       if (startDate && endDate) {
         // Set start date to beginning of day and end date to end of day
@@ -41,7 +41,7 @@ export class ThuChiController {
     try {
       const { id } = req.params;
       const item = await this.repository.findOne({ 
-        where: { MaGiaoDich: id } as any,
+        where: { MaGiaoDich: id, isDelete: false } as any,
         relations: ['phienLamViec', 'nghiepVu']
       });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
@@ -86,7 +86,7 @@ export class ThuChiController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaGiaoDich: id } as any });
+      const existed = await this.repository.findOne({ where: { MaGiaoDich: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
       Object.assign(existed, req.body);
       const saved = await this.repository.save(existed);
@@ -99,9 +99,10 @@ export class ThuChiController {
   async remove(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaGiaoDich: id } as any });
+      const existed = await this.repository.findOne({ where: { MaGiaoDich: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-      await this.repository.remove(existed);
+      existed.isDelete = true;
+      await this.repository.save(existed);
       return res.json({ message: "Đã xóa" });
     } catch (e: any) {
       return res.status(400).json({ message: "Xóa thất bại", error: e.message });
@@ -119,6 +120,7 @@ export class ThuChiController {
         .createQueryBuilder('thuchi')
         .select('DISTINCT thuchi.PhuongThucThanhToan', 'PhuongThucThanhToan')
         .where('thuchi.PhuongThucThanhToan IS NOT NULL')
+        .andWhere('thuchi.isDelete = :isDelete', { isDelete: false })
         .getRawMany();
 
       // Lấy từ DonHang
@@ -126,6 +128,7 @@ export class ThuChiController {
         .createQueryBuilder('donhang')
         .select('DISTINCT donhang.PhuongThucThanhToan', 'PhuongThucThanhToan')
         .where('donhang.PhuongThucThanhToan IS NOT NULL')
+        .andWhere('donhang.isDelete = :isDelete', { isDelete: false })
         .getRawMany();
 
       // Kết hợp và loại bỏ trùng lặp

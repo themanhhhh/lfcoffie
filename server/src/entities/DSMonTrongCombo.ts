@@ -20,5 +20,8 @@ export class DSMonTrongCombo {
   @ManyToOne(() => Combo, (c) => c.dsMonTrongCombos, { nullable: true })
   @JoinColumn({ name: "MaCombo" })
   combo?: Combo | null;
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

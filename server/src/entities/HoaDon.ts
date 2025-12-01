@@ -24,6 +24,9 @@ export class DonHang {
 
   @OneToMany(() => ChiTietDonHang, (ctdh) => ctdh.donHang)
   chiTietDonHangs!: ChiTietDonHang[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 
 // Export alias for backward compatibility

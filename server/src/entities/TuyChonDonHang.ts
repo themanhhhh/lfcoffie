@@ -14,5 +14,8 @@ export class TuyChonDonHang {
   @ManyToOne(() => TuyChon, (tc) => tc.tuyChonDonHangs, { eager: true })
   @JoinColumn({ name: "MaTuyChon" })
   tuyChon!: TuyChon;
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

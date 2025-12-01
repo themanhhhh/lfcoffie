@@ -32,5 +32,8 @@ export class Combo {
 
   @Column({ type: "varchar", length: 20, default: "hoạt động" })
   TrangThai!: string;
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

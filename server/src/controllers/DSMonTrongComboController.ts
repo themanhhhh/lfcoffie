@@ -8,6 +8,7 @@ export class DSMonTrongComboController {
   async getAll(req: Request, res: Response) {
     try {
       const list = await this.repository.find({
+        where: { isDelete: false },
         relations: ['mon']
       });
       return res.json(list);
@@ -20,7 +21,7 @@ export class DSMonTrongComboController {
     try {
       const { id } = req.params;
       const item = await this.repository.findOne({ 
-        where: { MaDSMonCombo: id } as any,
+        where: { MaDSMonCombo: id, isDelete: false } as any,
         relations: ['mon']
       });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
@@ -43,7 +44,7 @@ export class DSMonTrongComboController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaDSMonCombo: id } as any });
+      const existed = await this.repository.findOne({ where: { MaDSMonCombo: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
       Object.assign(existed, req.body);
       const saved = await this.repository.save(existed);
@@ -56,9 +57,10 @@ export class DSMonTrongComboController {
   async remove(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaDSMonCombo: id } as any });
+      const existed = await this.repository.findOne({ where: { MaDSMonCombo: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-      await this.repository.remove(existed);
+      existed.isDelete = true;
+      await this.repository.save(existed);
       return res.json({ message: "Đã xóa" });
     } catch (e: any) {
       return res.status(400).json({ message: "Xóa thất bại", error: e.message });

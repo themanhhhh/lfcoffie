@@ -10,4 +10,7 @@ export class TheBan {
 
   @Column({ type: "varchar", length: 20 })
   TrangThai!: string;
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }

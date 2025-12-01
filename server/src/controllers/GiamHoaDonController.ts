@@ -9,6 +9,7 @@ export class GiamHoaDonController {
   async getAll(req: Request, res: Response) {
     try {
       const list = await this.repository.find({
+        where: { isDelete: false },
         relations: ['ctkm']
       });
       return res.json(list);
@@ -21,7 +22,7 @@ export class GiamHoaDonController {
     try {
       const { id } = req.params;
       const item = await this.repository.findOne({ 
-        where: { MaGHD: id } as any,
+        where: { MaGHD: id, isDelete: false } as any,
         relations: ['ctkm']
       });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
@@ -44,7 +45,7 @@ export class GiamHoaDonController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaGHD: id } as any });
+      const existed = await this.repository.findOne({ where: { MaGHD: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
       Object.assign(existed, req.body);
       const saved = await this.repository.save(existed);
@@ -57,9 +58,10 @@ export class GiamHoaDonController {
   async remove(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaGHD: id } as any });
+      const existed = await this.repository.findOne({ where: { MaGHD: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-      await this.repository.remove(existed);
+      existed.isDelete = true;
+      await this.repository.save(existed);
       return res.json({ message: "Đã xóa" });
     } catch (e: any) {
       return res.status(400).json({ message: "Xóa thất bại", error: e.message });
@@ -75,6 +77,7 @@ export class GiamHoaDonController {
 
       const rules = await this.repository.find({
         where: {
+          isDelete: false,
           TrangThai: 'hoạt động',
           NgayBatDau: Between(new Date(0), now) as any,
           NgayKetThuc: Between(now, new Date(9999, 11, 31)) as any

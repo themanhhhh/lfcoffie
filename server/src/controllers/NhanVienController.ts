@@ -9,14 +9,14 @@ export class NhanVienController {
   private caLamRepository = AppDataSource.getRepository(CaLam);
 
   async getAll(req: Request, res: Response) {
-    const list = await this.repository.find({ relations: ['caLam'] });
+    const list = await this.repository.find({ where: { isDelete: false }, relations: ['caLam'] });
     return res.json(list);
   }
 
   async getOne(req: Request, res: Response) {
     const { id } = req.params;
     const item = await this.repository.findOne({ 
-      where: { MaNhanVien: id } as any,
+      where: { MaNhanVien: id, isDelete: false } as any,
       relations: ['caLam']
     });
     if (!item) return res.status(404).json({ message: "Không tìm thấy" });
@@ -30,7 +30,7 @@ export class NhanVienController {
       // Load CaLam if MaCaLam is provided
       let caLam = null;
       if (MaCaLam) {
-        caLam = await this.caLamRepository.findOne({ where: { MaCaLam } as any });
+        caLam = await this.caLamRepository.findOne({ where: { MaCaLam, isDelete: false } as any });
         if (!caLam) {
           return res.status(400).json({ message: `Không tìm thấy ca làm với mã: ${MaCaLam}` });
         }
@@ -66,7 +66,7 @@ export class NhanVienController {
       const { MaCaLam, ...nhanVienData } = req.body;
       
       const existed = await this.repository.findOne({ 
-        where: { MaNhanVien: id } as any,
+        where: { MaNhanVien: id, isDelete: false } as any,
         relations: ['caLam']
       });
     if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
@@ -74,7 +74,7 @@ export class NhanVienController {
       // Load CaLam if MaCaLam is provided
       if (MaCaLam !== undefined) {
         if (MaCaLam) {
-          const caLam = await this.caLamRepository.findOne({ where: { MaCaLam } as any });
+          const caLam = await this.caLamRepository.findOne({ where: { MaCaLam, isDelete: false } as any });
           if (!caLam) {
             return res.status(400).json({ message: `Không tìm thấy ca làm với mã: ${MaCaLam}` });
           }
@@ -95,7 +95,7 @@ export class NhanVienController {
       
       // Reload with relations
       const savedWithRelations = await this.repository.findOne({
-        where: { MaNhanVien: saved.MaNhanVien } as any,
+        where: { MaNhanVien: saved.MaNhanVien, isDelete: false } as any,
         relations: ['caLam']
       });
       
@@ -107,9 +107,10 @@ export class NhanVienController {
 
   async remove(req: Request, res: Response) {
     const { id } = req.params;
-    const existed = await this.repository.findOne({ where: { MaNhanVien: id } } as any);
+    const existed = await this.repository.findOne({ where: { MaNhanVien: id, isDelete: false } } as any);
     if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-    await this.repository.remove(existed);
+    existed.isDelete = true;
+    await this.repository.save(existed);
     return res.json({ message: "Đã xóa" });
   }
 }

@@ -34,5 +34,8 @@ export class PhienLamViec {
 
   @OneToMany(() => ThuChi, (tc) => tc.phienLamViec)
   thuChis!: ThuChi[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

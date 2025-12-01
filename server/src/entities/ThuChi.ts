@@ -32,5 +32,8 @@ export class ThuChi {
 
   @Column({ type: "int" })
   SoTien!: number;
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

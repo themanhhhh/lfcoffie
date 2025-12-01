@@ -13,7 +13,7 @@ export class PhienLamViecController {
   async getAll(req: Request, res: Response) {
     try {
       const { startDate, endDate } = req.query;
-      let where: any = {};
+      let where: any = { isDelete: false };
       
       if (startDate && endDate) {
         where.Ngay = Between(new Date(startDate as string), new Date(endDate as string));
@@ -33,7 +33,7 @@ export class PhienLamViecController {
     try {
       const { id } = req.params;
       const item = await this.repository.findOne({ 
-        where: { MaPhienLamViec: id } as any,
+        where: { MaPhienLamViec: id, isDelete: false } as any,
         relations: ['caLam', 'nhanVien', 'donHangs', 'thuChis']
       });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
@@ -68,7 +68,7 @@ export class PhienLamViecController {
 
       // Validate MaCaLam exists
       const caLam = await this.caLamRepo.findOne({ 
-        where: { MaCaLam } as any 
+        where: { MaCaLam, isDelete: false } as any 
       });
       if (!caLam) {
         return res.status(400).json({ 
@@ -79,7 +79,7 @@ export class PhienLamViecController {
 
       // Validate MaNhanVien exists
       const nhanVien = await this.nhanVienRepo.findOne({ 
-        where: { MaNhanVien } as any 
+        where: { MaNhanVien, isDelete: false } as any 
       });
       if (!nhanVien) {
         return res.status(400).json({ 
@@ -122,7 +122,7 @@ export class PhienLamViecController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaPhienLamViec: id } } as any);
+      const existed = await this.repository.findOne({ where: { MaPhienLamViec: id, isDelete: false } } as any);
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
       Object.assign(existed, req.body);
       const saved = await this.repository.save(existed);
@@ -135,9 +135,10 @@ export class PhienLamViecController {
   async remove(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaPhienLamViec: id } } as any);
+      const existed = await this.repository.findOne({ where: { MaPhienLamViec: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-      await this.repository.remove(existed);
+      existed.isDelete = true;
+      await this.repository.save(existed);
       return res.json({ message: "Đã xóa" });
     } catch (e: any) {
       return res.status(400).json({ message: "Xóa thất bại", error: e.message });
@@ -149,7 +150,7 @@ export class PhienLamViecController {
     try {
       const { maPhienLamViec } = req.body;
       const phienLamViec = await this.repository.findOne({ 
-        where: { MaPhienLamViec: maPhienLamViec } as any 
+        where: { MaPhienLamViec: maPhienLamViec, isDelete: false } as any 
       });
       if (!phienLamViec) return res.status(404).json({ message: "Không tìm thấy phiên làm việc" });
       
@@ -167,7 +168,7 @@ export class PhienLamViecController {
     try {
       const { maPhienLamViec } = req.body;
       const phienLamViec = await this.repository.findOne({ 
-        where: { MaPhienLamViec: maPhienLamViec } as any 
+        where: { MaPhienLamViec: maPhienLamViec, isDelete: false } as any 
       });
       if (!phienLamViec) return res.status(404).json({ message: "Không tìm thấy phiên làm việc" });
       

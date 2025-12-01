@@ -15,6 +15,9 @@ export class TuyChon {
   @Column({ type: "int", default: 0 })
   GiaCongThem!: number;
 
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
+
   @OneToMany(() => TuyChonDonHang, (tcdh) => tcdh.tuyChon)
   tuyChonDonHangs!: TuyChonDonHang[];
 }

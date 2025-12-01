@@ -24,6 +24,9 @@ export class ChiTietDonHang {
 
   @OneToMany(() => TuyChonDonHang, (tcdh) => tcdh.chiTietDonHang)
   tuyChonDonHangs!: TuyChonDonHang[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 
 // Export alias for backward compatibility

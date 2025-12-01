@@ -367,7 +367,7 @@ const ShiftClosingPage = () => {
             <tbody>
               <tr>
                 <td><strong>I.</strong></td>
-                <td><strong>Doanh thu (1+2)</strong></td>
+                <td><strong>Doanh thu </strong></td>
                 <td></td>
               </tr>
               <tr>

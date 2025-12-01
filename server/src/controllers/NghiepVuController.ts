@@ -8,7 +8,7 @@ export class NghiepVuController {
   async getAll(req: Request, res: Response) {
     try {
       const { loaiGiaoDich } = req.query;
-      let where: any = {};
+      let where: any = { isDelete: false };
       
       if (loaiGiaoDich) {
         where.LoaiGiaoDich = loaiGiaoDich;
@@ -24,7 +24,7 @@ export class NghiepVuController {
   async getOne(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const item = await this.repository.findOne({ where: { MaNghiepVu: id } as any });
+      const item = await this.repository.findOne({ where: { MaNghiepVu: id, isDelete: false } as any });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
       return res.json(item);
     } catch (e: any) {
@@ -45,7 +45,7 @@ export class NghiepVuController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaNghiepVu: id } as any });
+      const existed = await this.repository.findOne({ where: { MaNghiepVu: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
       Object.assign(existed, req.body);
       const saved = await this.repository.save(existed);
@@ -58,9 +58,10 @@ export class NghiepVuController {
   async remove(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaNghiepVu: id } as any });
+      const existed = await this.repository.findOne({ where: { MaNghiepVu: id, isDelete: false } as any });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-      await this.repository.remove(existed);
+      existed.isDelete = true;
+      await this.repository.save(existed);
       return res.json({ message: "Đã xóa" });
     } catch (e: any) {
       return res.status(400).json({ message: "Xóa thất bại", error: e.message });

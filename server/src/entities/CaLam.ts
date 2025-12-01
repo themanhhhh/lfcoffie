@@ -21,5 +21,8 @@ export class CaLam {
 
   @OneToMany(() => PhienLamViec, (plv) => plv.caLam)
   phienLamViecs!: PhienLamViec[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
 

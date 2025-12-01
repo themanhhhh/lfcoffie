@@ -37,4 +37,7 @@ export class Mon {
 
   @OneToMany(() => GiamMon, (gm) => gm.mon)
   giamMons!: GiamMon[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }

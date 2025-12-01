@@ -37,4 +37,7 @@ export class NhanVien {
 
   @OneToMany(() => PhienLamViec, (plv) => plv.nhanVien)
   phienLamViecs!: PhienLamViec[];
+
+  @Column({ type: "boolean", default: false })
+  isDelete!: boolean;
 }
