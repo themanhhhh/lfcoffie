@@ -188,7 +188,7 @@ const ShiftClosingPage = () => {
       ]
 
       // Doanh thu
-      wsData.push(['I.', 'Doanh thu (1+2)', ''])
+      wsData.push(['I.', 'Doanh thu ', ''])
       wsData.push(['', '1. Doanh thu bán hàng', businessReport.doanhThu.banHang])
       wsData.push(['', '2. Doanh thu khác (dịch vụ, bán đồ lưu niệm, phụ thu,...)', businessReport.doanhThu.khac])
       wsData.push(['', 'Tổng doanh thu', businessReport.doanhThu.tong])
@@ -201,7 +201,7 @@ const ShiftClosingPage = () => {
       const chiPhiCount = sortedChiPhi.length
       const chiPhiLabel = chiPhiCount > 0 
         ? `Chi phí (${Array.from({ length: Math.min(chiPhiCount, 5) }, (_, i) => i + 1).join('+')}${chiPhiCount > 5 ? '+' : ''})`
-        : 'Chi phí (1+2+3+4+5)'
+        : 'Chi phí '
       wsData.push(['II.', chiPhiLabel, ''])
       
       // Map các loại chi phí theo tên nghiệp vụ
@@ -241,55 +241,199 @@ const ShiftClosingPage = () => {
     }
 
     try {
-      // Tìm phần tử báo cáo để chụp
-      const reportElement = document.querySelector(`.${styles.reportTable}`) as HTMLElement
-      if (!reportElement) {
-        toast.error('Không tìm thấy phần tử báo cáo')
-        return
-      }
-
       // Hiển thị loading
       toast.loading('Đang tạo PDF...', { id: 'pdf-export' })
 
-      // Chụp phần tử HTML thành canvas
-      const canvas = await html2canvas(reportElement, {
+      // Tạo iframe ẩn với nội dung báo cáo
+      const iframe = document.createElement('iframe')
+      iframe.style.position = 'absolute'
+      iframe.style.left = '-9999px'
+      iframe.style.top = '0'
+      iframe.style.width = '210mm'
+      iframe.style.height = '297mm'
+      iframe.style.border = 'none'
+      
+      document.body.appendChild(iframe)
+
+      // Tạo HTML cho báo cáo
+      const chiPhiCategories = Object.entries(businessReport.chiPhi.byCategory)
+      const sortedChiPhi = sortChiPhiCategories(chiPhiCategories)
+      const chiPhiCount = sortedChiPhi.length
+      const chiPhiLabel = chiPhiCount > 0 
+        ? `Chi phí (${Array.from({ length: Math.min(chiPhiCount, 5) }, (_, i) => i + 1).join('+')}${chiPhiCount > 5 ? '+' : ''})`
+        : 'Chi phí (1+2+3+4+5)'
+
+      const caLam = selectedPhienLamViec 
+        ? availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)?.caLam?.TenCaLam || ''
+        : ''
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Roboto', 'Arial', 'DejaVu Sans', sans-serif;
+              font-size: 12px;
+              color: #000;
+              padding: 20mm;
+              background: #fff;
+            }
+            h1 {
+              text-align: center;
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .info {
+              margin-bottom: 20px;
+            }
+            .info p {
+              margin: 5px 0;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f5f5f5;
+              font-weight: bold;
+            }
+            td:last-child {
+              text-align: right;
+            }
+            strong {
+              font-weight: bold;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>BÁO CÁO KẾT QUẢ KINH DOANH</h1>
+          <div class="info">
+            <p><strong>Từ ngày:</strong> ${startDate}</p>
+            <p><strong>Đến ngày:</strong> ${endDate}</p>
+            ${caLam ? `<p><strong>Ca làm:</strong> ${caLam}</p>` : ''}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px;">STT</th>
+                <th>Khoản mục</th>
+                <th style="width: 150px; text-align: right;">Giá trị (VND)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>I.</strong></td>
+                <td><strong>Doanh thu (1+2)</strong></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>1. Doanh thu bán hàng</td>
+                <td>${formatPrice(businessReport.doanhThu.banHang)}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>2. Doanh thu khác (dịch vụ, bán đồ lưu niệm, phụ thu,...)</td>
+                <td>${formatPrice(businessReport.doanhThu.khac)}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td><strong>Tổng doanh thu</strong></td>
+                <td><strong>${formatPrice(businessReport.doanhThu.tong)}</strong></td>
+              </tr>
+              <tr>
+                <td><strong>II.</strong></td>
+                <td><strong>${chiPhiLabel}</strong></td>
+                <td></td>
+              </tr>
+              ${sortedChiPhi.map(([category, value]: [string, number], index: number) => {
+                const label = getChiPhiLabel(category, index + 1)
+                return `
+                  <tr>
+                    <td></td>
+                    <td>${label}</td>
+                    <td>${formatPrice(value)}</td>
+                  </tr>
+                `
+              }).join('')}
+              <tr>
+                <td></td>
+                <td><strong>Tổng chi phí</strong></td>
+                <td><strong>${formatPrice(businessReport.chiPhi.tong)}</strong></td>
+              </tr>
+              <tr>
+                <td><strong>III.</strong></td>
+                <td><strong>Lợi nhuận</strong></td>
+                <td><strong>${formatPrice(businessReport.loiNhuan)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `
+
+      // Đợi iframe load xong
+      await new Promise<void>((resolve) => {
+        iframe.onload = () => {
+          resolve()
+        }
+        iframe.srcdoc = htmlContent
+      })
+
+      // Đợi font load (Google Fonts)
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Lấy body của iframe
+      const iframeBody = iframe.contentDocument?.body
+      if (!iframeBody) {
+        throw new Error('Không thể truy cập iframe content')
+      }
+
+      // Chụp iframe body thành canvas
+      const canvas = await html2canvas(iframeBody, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: 794, // A4 width in pixels at 96 DPI
+        windowHeight: iframeBody.scrollHeight
       })
+
+      // Xóa iframe
+      document.body.removeChild(iframe)
 
       // Tính toán kích thước PDF
       const imgWidth = 210 // A4 width in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width
       const pdf = new jsPDF('p', 'mm', 'a4')
-      
-      // Thêm thông tin header vào PDF
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('BÁO CÁO KẾT QUẢ KINH DOANH', 105, 15, { align: 'center' })
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Từ ngày: ${startDate}`, 20, 25)
-      pdf.text(`Đến ngày: ${endDate}`, 20, 30)
-      if (selectedPhienLamViec) {
-        const caLam = availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)?.caLam?.TenCaLam || ''
-        pdf.text(`Ca làm: ${caLam}`, 20, 35)
-      }
 
       // Thêm hình ảnh từ canvas vào PDF
-      const imgData = canvas.toDataURL('image/png')
+      const imgData = canvas.toDataURL('image/png', 1.0)
       let heightLeft = imgHeight
-      let position = 45 // Start position after header
+      let position = 0
 
-      // Thêm trang đầu với header
+      // Thêm trang đầu
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
       heightLeft -= 297 // A4 height in mm
 
       // Thêm các trang tiếp theo nếu cần
       while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 45
+        position = heightLeft - imgHeight
         pdf.addPage()
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
         heightLeft -= 297
