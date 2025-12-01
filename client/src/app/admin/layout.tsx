@@ -3,6 +3,7 @@
 import React from 'react'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import AdminLayout from '../components/adminlayout/adminlayout'
+import { ExportProvider } from '../../contexts/ExportContext'
 
 export default function AdminRootLayout({
   children,
@@ -11,9 +12,11 @@ export default function AdminRootLayout({
 }) {
   return (
     <ProtectedRoute requiredRole="Quản lý">
-      <AdminLayout>
-        {children}
-      </AdminLayout>
+      <ExportProvider>
+        <AdminLayout>
+          {children}
+        </AdminLayout>
+      </ExportProvider>
     </ProtectedRoute>
   )
 }

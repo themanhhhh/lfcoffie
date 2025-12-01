@@ -311,6 +311,8 @@ const ShiftClosingPage = () => {
             body {
               font-family: 'Roboto', 'Arial', 'DejaVu Sans', sans-serif;
               font-size: 12px;
+              line-height: 1.6;
+              letter-spacing: 0.02em;
               color: #000;
               padding: 20mm;
               background: #fff;
@@ -319,33 +321,44 @@ const ShiftClosingPage = () => {
               text-align: center;
               font-size: 18px;
               font-weight: bold;
+              line-height: 1.4;
               margin-bottom: 20px;
+              letter-spacing: 0.05em;
             }
             .info {
               margin-bottom: 20px;
             }
             .info p {
-              margin: 5px 0;
+              margin: 8px 0;
+              line-height: 1.6;
             }
             table {
               width: 100%;
-              border-collapse: collapse;
+              border-collapse: separate;
+              border-spacing: 0;
               margin-top: 20px;
             }
             th, td {
               border: 1px solid #ddd;
-              padding: 8px;
+              padding: 10px 8px;
               text-align: left;
+              line-height: 1.5;
+              letter-spacing: 0.01em;
             }
             th {
               background-color: #f5f5f5;
               font-weight: bold;
+              line-height: 1.6;
             }
             td:last-child {
               text-align: right;
             }
+            tr {
+              line-height: 1.5;
+            }
             strong {
               font-weight: bold;
+              letter-spacing: 0.02em;
             }
           </style>
         </head>
@@ -440,7 +453,10 @@ const ShiftClosingPage = () => {
         logging: false,
         backgroundColor: '#ffffff',
         windowWidth: 794, // A4 width in pixels at 96 DPI
-        windowHeight: iframeBody.scrollHeight
+        windowHeight: iframeBody.scrollHeight,
+        allowTaint: false,
+        removeContainer: false,
+        imageTimeout: 15000
       })
 
       // Xóa iframe

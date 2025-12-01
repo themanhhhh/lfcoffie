@@ -14,21 +14,30 @@ import styles from './orders.module.css'
 import { donHangApi, chiTietDonHangApi, ApiError, DonHang, ChiTietDonHang } from '../../../lib/api'
 import { toast } from 'react-hot-toast'
 
+// Helper function để lấy ngày hôm nay theo format YYYY-MM-DD
+const getTodayDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const OrdersPage = () => {
   const [orders, setOrders] = useState<DonHang[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentFilter, setPaymentFilter] = useState('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState(getTodayDate())
+  const [dateTo, setDateTo] = useState(getTodayDate())
   const [selectedOrder, setSelectedOrder] = useState<DonHang | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [orderDetails, setOrderDetails] = useState<ChiTietDonHang[]>([])
 
   useEffect(() => {
     loadOrders()
-  }, [])
+  }, [dateFrom, dateTo])
 
   const loadOrders = async () => {
     setLoading(true)
@@ -45,7 +54,7 @@ const OrdersPage = () => {
         ...order,
         chiTietDonHangs: detailsData.filter(detail => {
           const maDhFromRelation = detail.donHang?.MaDonHang
-          const maDhScalar = (detail as any).MaDH // fallback nếu sau này backend trả thêm MaDH
+          const maDhScalar = detail.MaDH // MaDH đã có trong interface ChiTietDonHang
           return maDhFromRelation === order.MaDonHang || maDhScalar === order.MaDonHang
         })
       }))
@@ -67,7 +76,7 @@ const OrdersPage = () => {
       const allDetails = await chiTietDonHangApi.getAll()
       const details = allDetails.filter(d => {
         const maDhFromRelation = d.donHang?.MaDonHang
-        const maDhScalar = (d as any).MaDH
+        const maDhScalar = d.MaDH // MaDH đã có trong interface ChiTietDonHang
         return maDhFromRelation === maDonHang || maDhScalar === maDonHang
       })
       setOrderDetails(details)
@@ -199,11 +208,11 @@ const OrdersPage = () => {
           </div>
           <div className={styles.stats}>
             <div className={styles.statItem}>
-              <span>Tổng đơn:</span>
+              <span>Tổng đơn hôm nay:</span>
               <strong>{filteredOrders.length}</strong>
             </div>
             <div className={styles.statItem}>
-              <span>Doanh thu:</span>
+              <span>Doanh thu hôm nay:</span>
               <strong>{totalRevenue.toLocaleString('vi-VN')} đ</strong>
             </div>
           </div>

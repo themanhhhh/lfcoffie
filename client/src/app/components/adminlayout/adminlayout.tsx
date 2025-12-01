@@ -2,12 +2,14 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { FaChartBar, FaList, FaTicketAlt, FaUsers, FaUtensils, FaReceipt, FaMoneyBillWave, FaFileAlt } from 'react-icons/fa'
+import { usePathname, useRouter } from 'next/navigation'
+import { FaChartBar, FaList, FaTicketAlt, FaUsers, FaUtensils, FaReceipt, FaMoneyBillWave, FaFileAlt, FaFilePdf } from 'react-icons/fa'
 import { IconType } from 'react-icons'
 
 import AdminHeader from '../adminheader/adminheader'
 import Style from '../../style/admin.module.css'
+import { useExport } from '../../../contexts/ExportContext'
+import { toast } from 'react-hot-toast'
 
 interface SidebarItem {
   id: string
@@ -34,6 +36,23 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const pathname = usePathname()
+  const router = useRouter()
+  const { exportDailyRevenuePDF } = useExport()
+
+  const handleExportPDF = async () => {
+    if (!exportDailyRevenuePDF) {
+      // Nếu chưa có function, navigate đến trang statistic trước
+      router.push('/admin/statistic')
+      toast.error('Vui lòng đợi trang tải xong rồi thử lại')
+      return
+    }
+    
+    try {
+      await exportDailyRevenuePDF()
+    } catch (err) {
+      toast.error('Lỗi khi xuất PDF: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
 
   return (
     <div className={Style.adminContainer}>
@@ -55,6 +74,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
             )
           })}
+          <button
+            onClick={handleExportPDF}
+            className={Style.sidebarItem}
+            style={{ border: 'none', width: '100%' }}
+          >
+            <FaFilePdf className={Style.sidebarIcon} />
+            Xuất PDF - Doanh thu theo ngày
+          </button>
         </nav>
         <div className={Style.content}>{children}</div>
       </div>

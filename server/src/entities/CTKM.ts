@@ -26,6 +26,9 @@ export class CTKM {
   @OneToMany(() => GiamMon, (gm) => gm.ctkm)
   giamMons!: GiamMon[];
 
+  @OneToMany("Combo", "ctkm")
+  combos!: any[];
+
   @Column({ type: "boolean", default: false })
   isDelete!: boolean;
 }

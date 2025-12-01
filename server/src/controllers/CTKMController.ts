@@ -17,7 +17,7 @@ export class CTKMController {
     try {
       const list = await this.repository.find({
         where: { isDelete: false },
-        relations: ['giamHoaDons', 'giamMons']
+        relations: ['giamHoaDons', 'giamMons', 'combos', 'combos.dsMonTrongCombos', 'combos.dsMonTrongCombos.mon']
       });
       return res.json(list);
     } catch (e: any) {
@@ -28,9 +28,9 @@ export class CTKMController {
   async getOne(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const item = await this.repository.findOne({ 
+      const item = await this.repository.findOne({
         where: { MaCTKM: id, isDelete: false } as any,
-        relations: ['giamHoaDons', 'giamMons', 'donHangs']
+        relations: ['giamHoaDons', 'giamMons', 'donHangs', 'combos', 'combos.dsMonTrongCombos', 'combos.dsMonTrongCombos.mon']
       });
       if (!item) return res.status(404).json({ message: "Không tìm thấy" });
       return res.json(item);
@@ -42,7 +42,7 @@ export class CTKMController {
   async create(req: Request, res: Response) {
     try {
       const body = req.body as any;
-      
+
       // Tạo CTKM
       const ctkmData: any = {
         MaCTKM: body.MaCTKM,
@@ -66,11 +66,11 @@ export class CTKMController {
           NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           TrangThai: 'hoạt động'
         };
-        
+
         if (body.soTienToiThieu) {
           giamHoaDonData.GiaTriTu = body.soTienToiThieu;
         }
-        
+
         const giamHoaDon = this.giamHoaDonRepo.create(giamHoaDonData);
         await this.giamHoaDonRepo.save(giamHoaDon);
       } else if (saved.LoaiCTKM === 'giammon') {
@@ -87,7 +87,7 @@ export class CTKMController {
             NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             TrangThai: 'hoạt động'
           };
-          
+
           const giamMon = this.giamMonRepo.create(giamMonData);
           await this.giamMonRepo.save(giamMon);
         }
@@ -95,23 +95,24 @@ export class CTKMController {
         // Tạo Combo: có thể có nhiều món
         // Body cần có: comboItems (mảng các món với MaMon và SoLuong)
         const comboItems = body.comboItems || [];
-        
+
         if (comboItems.length > 0) {
           // 1. Tạo 1 Combo duy nhất
           const maCombo = `CB${Date.now().toString().slice(-6)}`;
           const comboData: any = {
             MaCombo: maCombo,
+            MaCTKM: saved.MaCTKM, // Link to CTKM
             TenCombo: saved.TenCTKM,
             GiaCombo: body.giaTriGiam || 0,
             NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
             NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             TrangThai: 'hoạt động'
           };
-          
+
           const combo = this.comboRepo.create(comboData);
           const savedComboResult = await this.comboRepo.save(combo);
           const savedCombo = Array.isArray(savedComboResult) ? savedComboResult[0] : savedComboResult;
-          
+
           // 2. Tạo nhiều DSMonTrongCombo, mỗi cái cho 1 món, liên kết với Combo
           for (let i = 0; i < comboItems.length; i++) {
             const item = comboItems[i];
@@ -123,7 +124,7 @@ export class CTKMController {
                 SoLuong: item.SoLuong,
                 MaCombo: savedCombo.MaCombo
               };
-              
+
               const dsMonTrongCombo = this.dsMonTrongComboRepo.create(dsMonTrongComboData);
               await this.dsMonTrongComboRepo.save(dsMonTrongCombo);
             }
@@ -134,7 +135,7 @@ export class CTKMController {
       // Load lại với relations để trả về đầy đủ
       const result = await this.repository.findOne({
         where: { MaCTKM: saved.MaCTKM } as any,
-        relations: ['giamHoaDons', 'giamMons']
+        relations: ['giamHoaDons', 'giamMons', 'combos', 'combos.dsMonTrongCombos']
       });
 
       return res.status(201).json(result);
@@ -173,16 +174,16 @@ export class CTKMController {
     try {
       const { id } = req.params;
       const { TrangThai } = req.body;
-      
+
       if (!TrangThai) {
         return res.status(400).json({ message: "TrangThai là bắt buộc" });
       }
 
-      const existed = await this.repository.findOne({ 
+      const existed = await this.repository.findOne({
         where: { MaCTKM: id, isDelete: false } as any,
         relations: ['giamHoaDons', 'giamMons']
       });
-      
+
       if (!existed) {
         return res.status(404).json({ message: "Không tìm thấy" });
       }

@@ -18,6 +18,15 @@ import { thuChiApi, nghiepVuApi, ApiError, ThuChi, NghiepVu } from '../../../lib
 import { toast } from 'react-hot-toast'
 import { exportCashflowReport } from '../../../utils/excelExport'
 
+// Helper function để lấy ngày hôm nay theo format YYYY-MM-DD
+const getTodayDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const RevenueExpensePage = () => {
   const [transactions, setTransactions] = useState<ThuChi[]>([])
   const [categories, setCategories] = useState<NghiepVu[]>([])
@@ -25,8 +34,8 @@ const RevenueExpensePage = () => {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [startDate, setStartDate] = useState(getTodayDate())
+  const [endDate, setEndDate] = useState(getTodayDate())
   const [dateError, setDateError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<ThuChi | null>(null)
@@ -113,17 +122,23 @@ const RevenueExpensePage = () => {
     }
   }, [startDate, endDate, typeFilter])
 
+  // Load categories khi component mount
   useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  useEffect(() => {
-    if (startDate || endDate || typeFilter !== 'all') {
-      loadFilteredTransactions()
-    } else {
-      loadData()
+    const loadCategories = async () => {
+      try {
+        const catData = await nghiepVuApi.getAll()
+        setCategories(catData)
+      } catch (err) {
+        console.error('Lỗi khi tải danh mục:', err)
+      }
     }
-  }, [startDate, endDate, typeFilter, loadFilteredTransactions, loadData])
+    loadCategories()
+  }, [])
+
+  // Tự động load dữ liệu ngày hôm nay khi component mount hoặc khi filter thay đổi
+  useEffect(() => {
+    loadFilteredTransactions()
+  }, [startDate, endDate, typeFilter, loadFilteredTransactions])
 
   const handleAddTransaction = () => {
     setEditingTransaction(null)
@@ -172,7 +187,7 @@ const RevenueExpensePage = () => {
       }
 
       setShowModal(false)
-      await loadData()
+      await loadFilteredTransactions()
     } catch (err) {
       toast.error('Lỗi: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
     }
@@ -185,7 +200,7 @@ const RevenueExpensePage = () => {
 
     try {
       await thuChiApi.delete(maGiaoDich)
-      await loadData()
+      await loadFilteredTransactions()
       toast.success('Xóa giao dịch thành công!')
     } catch (err) {
       toast.error('Lỗi khi xóa giao dịch: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
@@ -284,7 +299,7 @@ const RevenueExpensePage = () => {
               <FaArrowUp />
             </div>
             <div className={styles.statContent}>
-              <span>Tổng thu</span>
+              <span>Tổng thu hôm nay</span>
               <strong>{stats.revenue.toLocaleString('vi-VN')} đ</strong>
             </div>
           </div>
@@ -293,7 +308,7 @@ const RevenueExpensePage = () => {
               <FaArrowDown />
             </div>
             <div className={styles.statContent}>
-              <span>Tổng chi</span>
+              <span>Tổng chi hôm nay</span>
               <strong>{stats.expense.toLocaleString('vi-VN')} đ</strong>
             </div>
           </div>
