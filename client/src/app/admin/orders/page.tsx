@@ -38,11 +38,16 @@ const OrdersPage = () => {
         donHangApi.getAll(),
         chiTietDonHangApi.getAll()
       ])
-      
+
       // Attach order details to orders
+      // Backend hiện trả về "donHang.MaDonHang" trong chi tiết, nên ưu tiên dùng field này
       const ordersWithDetails = ordersData.map(order => ({
         ...order,
-        chiTietDonHangs: detailsData.filter(detail => detail.MaDH === order.MaDonHang)
+        chiTietDonHangs: detailsData.filter(detail => {
+          const maDhFromRelation = detail.donHang?.MaDonHang
+          const maDhScalar = (detail as any).MaDH // fallback nếu sau này backend trả thêm MaDH
+          return maDhFromRelation === order.MaDonHang || maDhScalar === order.MaDonHang
+        })
       }))
       
       setOrders(ordersWithDetails)
@@ -60,7 +65,11 @@ const OrdersPage = () => {
   const loadOrderDetails = async (maDonHang: string) => {
     try {
       const allDetails = await chiTietDonHangApi.getAll()
-      const details = allDetails.filter(d => d.MaDH === maDonHang)
+      const details = allDetails.filter(d => {
+        const maDhFromRelation = d.donHang?.MaDonHang
+        const maDhScalar = (d as any).MaDH
+        return maDhFromRelation === maDonHang || maDhScalar === maDonHang
+      })
       setOrderDetails(details)
     } catch (err) {
       console.error('Error loading order details:', err)

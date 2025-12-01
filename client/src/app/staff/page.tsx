@@ -555,6 +555,13 @@ const Staff = () => {
 
       // Tạo chi tiết đơn hàng
       const chiTietPromises = cart.map(async (item, index) => {
+        // Đơn giá lưu xuống DB = giá món + tổng phụ thu topping (theo 1 đơn vị)
+        const toppingExtraPerUnit = (item.topping || []).reduce(
+          (sum, t) => sum + t.GiaCongThem,
+          0
+        )
+        const finalUnitPrice = item.price + toppingExtraPerUnit
+
         // MaCTDH tối đa 10 ký tự (varchar(10)): CT + 6 số + 2 số thứ tự
         const detailTimestamp = Date.now().toString().slice(-6)
         const maCTDH = `CT${detailTimestamp}${String(index + 1).padStart(2, '0')}`
@@ -562,7 +569,7 @@ const Staff = () => {
           MaCTDH: maCTDH,
           MaDH: maDonHang,
           MaMon: item.id,
-          DonGia: item.price,
+          DonGia: finalUnitPrice,
           SoLuong: item.quantity
         })
       })
