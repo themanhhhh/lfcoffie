@@ -565,6 +565,19 @@ export interface CategoryStats {
   soDonHang: number;
 }
 
+export interface BusinessReport {
+  doanhThu: {
+    banHang: number;
+    khac: number;
+    tong: number;
+  };
+  chiPhi: {
+    byCategory: Record<string, number>;
+    tong: number;
+  };
+  loiNhuan: number;
+}
+
 export const thongKeApi = {
   getOverview: (params?: { startDate?: string; endDate?: string }): Promise<ThongKeOverview> => {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
@@ -611,5 +624,13 @@ export const thongKeApi = {
     if (params.endDate) queryParams.endDate = params.endDate;
     const queryString = '?' + new URLSearchParams(queryParams).toString();
     return apiFetch<CategoryStats>(`/api/thongke/category-stats${queryString}`);
+  },
+  getBusinessReport: (params?: { startDate?: string; endDate?: string; maPhienLamViec?: string }): Promise<BusinessReport> => {
+    const queryParams: Record<string, string> = {};
+    if (params?.startDate) queryParams.startDate = params.startDate;
+    if (params?.endDate) queryParams.endDate = params.endDate;
+    if (params?.maPhienLamViec) queryParams.maPhienLamViec = params.maPhienLamViec;
+    const queryString = Object.keys(queryParams).length > 0 ? '?' + new URLSearchParams(queryParams).toString() : '';
+    return apiFetch<BusinessReport>(`/api/thongke/business-report${queryString}`);
   },
 };

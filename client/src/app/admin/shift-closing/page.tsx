@@ -8,12 +8,14 @@ import {
   FaTags,
   FaBox,
   FaReceipt,
-  FaFileExcel
+  FaFileExcel,
+  FaCalendarAlt
 } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
-import { phienLamViecApi, thongKeApi, ShiftClosingReport, ApiError } from '../../../lib/api'
+import { phienLamViecApi, thongKeApi, ShiftClosingReport, BusinessReport, ApiError } from '../../../lib/api'
 import { exportShiftClosingReport } from '../../../utils/excelExport'
 import styles from './shiftClosing.module.css'
+import * as XLSX from 'xlsx'
 
 const formatPrice = (price: number) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' đ'
@@ -33,7 +35,11 @@ const ShiftClosingPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [report, setReport] = useState<ShiftClosingReport | null>(null)
+  const [businessReport, setBusinessReport] = useState<BusinessReport | null>(null)
   const [selectedPhienLamViec, setSelectedPhienLamViec] = useState<string>('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [loadingBusinessReport, setLoadingBusinessReport] = useState(false)
   const [availablePhienLamViec, setAvailablePhienLamViec] = useState<Array<{
     MaPhienLamViec: string
     Ngay: string
@@ -42,6 +48,9 @@ const ShiftClosingPage = () => {
     TrangThai: string
     nhanVien?: {
       TenNhanVien: string
+    }
+    caLam?: {
+      TenCaLam: string
     }
   }>>([])
 
@@ -53,8 +62,15 @@ const ShiftClosingPage = () => {
   useEffect(() => {
     if (selectedPhienLamViec) {
       loadReport(selectedPhienLamViec)
+      // Set dates from phien lam viec
+      const plv = availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)
+      if (plv) {
+        const ngay = new Date(plv.Ngay)
+        setStartDate(ngay.toISOString().split('T')[0])
+        setEndDate(ngay.toISOString().split('T')[0])
+      }
     }
-  }, [selectedPhienLamViec])
+  }, [selectedPhienLamViec, availablePhienLamViec])
 
   const loadAvailablePhienLamViec = async () => {
     try {
@@ -106,6 +122,32 @@ const ShiftClosingPage = () => {
     window.print()
   }
 
+  const handleGenerateBusinessReport = async () => {
+    if (!startDate || !endDate) {
+      toast.error('Vui lòng chọn từ ngày và đến ngày')
+      return
+    }
+
+    setLoadingBusinessReport(true)
+    try {
+      const params: { startDate: string; endDate: string; maPhienLamViec?: string } = {
+        startDate,
+        endDate
+      }
+      if (selectedPhienLamViec) {
+        params.maPhienLamViec = selectedPhienLamViec
+      }
+      const data = await thongKeApi.getBusinessReport(params)
+      setBusinessReport(data)
+      toast.success('Tạo báo cáo thành công!')
+    } catch (err) {
+      const errorMessage = err instanceof ApiError ? err.message : 'Không thể tải báo cáo'
+      toast.error(errorMessage)
+    } finally {
+      setLoadingBusinessReport(false)
+    }
+  }
+
   const handleExportExcel = () => {
     if (!report) {
       toast.error('Không có dữ liệu để xuất Excel')
@@ -118,6 +160,86 @@ const ShiftClosingPage = () => {
     } catch (err) {
       toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
+  }
+
+  const handleExportBusinessReportExcel = () => {
+    if (!businessReport) {
+      toast.error('Vui lòng tạo báo cáo trước')
+      return
+    }
+
+    try {
+      const wsData: any[][] = [
+        ['BÁO CÁO KẾT QUẢ KINH DOANH'],
+        [],
+        ['Từ ngày:', startDate],
+        ['Đến ngày:', endDate],
+        selectedPhienLamViec ? ['Ca làm:', availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)?.caLam?.TenCaLam || ''] : [],
+        [],
+        ['STT', 'Khoản mục', 'Giá trị (VND)'],
+      ]
+
+      // Doanh thu
+      wsData.push(['I.', 'Doanh thu (1+2)', ''])
+      wsData.push(['', '1. Doanh thu bán hàng', businessReport.doanhThu.banHang])
+      wsData.push(['', '2. Doanh thu khác (dịch vụ, bán đồ lưu niệm, phụ thu,...)', businessReport.doanhThu.khac])
+      wsData.push(['', 'Tổng doanh thu', businessReport.doanhThu.tong])
+
+      wsData.push([])
+
+      // Chi phí
+      const chiPhiCategories = Object.entries(businessReport.chiPhi.byCategory)
+      wsData.push(['II.', `Chi phí (1+2+3+4+5)`, ''])
+      
+      // Map các loại chi phí theo tên nghiệp vụ
+      const categoryMap: Record<string, string> = {
+        'Chi phí nguyên vật liệu': '1. Chi phí nguyên vật liệu',
+        'Chi phí nhân sự': '2. Chi phí nhân sự',
+        'Chi phí cố định': '3. Chi phí cố định (mặt bằng, điện nước, khấu hao máy móc,...)',
+        'Chi phí marketing': '4. Chi phí marketing',
+        'Chi phí khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)'
+      }
+
+      let index = 1
+      chiPhiCategories.forEach(([category, value]) => {
+        const label = categoryMap[category] || `${index}. ${category}`
+        wsData.push(['', label, value])
+        index++
+      })
+      wsData.push(['', 'Tổng chi phí', businessReport.chiPhi.tong])
+
+      wsData.push([])
+
+      // Lợi nhuận
+      wsData.push(['III.', 'Lợi nhuận', businessReport.loiNhuan])
+
+      const wb = XLSX.utils.book_new()
+      const ws = XLSX.utils.aoa_to_sheet(wsData)
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 5 },
+        { wch: 60 },
+        { wch: 20 }
+      ]
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Báo cáo')
+      XLSX.writeFile(wb, `BaoCaoKetQuaKinhDoanh_${startDate}_${endDate}.xlsx`)
+      toast.success('Xuất Excel thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
+
+  const getChiPhiLabel = (categoryName: string, index: number): string => {
+    const categoryMap: Record<string, string> = {
+      'Chi phí nguyên vật liệu': '1. Chi phí nguyên vật liệu',
+      'Chi phí nhân sự': '2. Chi phí nhân sự',
+      'Chi phí cố định': '3. Chi phí cố định (mặt bằng, điện nước, khấu hao máy móc,...)',
+      'Chi phí marketing': '4. Chi phí marketing',
+      'Chi phí khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)'
+    }
+    return categoryMap[categoryName] || `${index}. ${categoryName}`
   }
 
   if (loading && !report) {
@@ -146,36 +268,155 @@ const ShiftClosingPage = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerMain}>
-          <h1>
-            <FaFileAlt /> Báo cáo chốt ca
-          </h1>
-          <p>Xem báo cáo chi tiết của các phiên làm việc</p>
+      <div className={styles.breadcrumb}>
+        <span>Báo cáo</span>
+        <span> &gt; </span>
+        <span>Kinh doanh</span>
+      </div>
+
+      <h1 className={styles.title}>BÁO CÁO KẾT QUẢ KINH DOANH</h1>
+
+      <div className={styles.filters}>
+        <div className={styles.filterGroup}>
+          <label>
+            <FaCalendarAlt /> Từ ngày:
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </label>
+          <label>
+            <FaCalendarAlt /> Đến ngày:
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </label>
+          <label>
+            Ca làm:
+            <select
+              value={selectedPhienLamViec}
+              onChange={(e) => setSelectedPhienLamViec(e.target.value)}
+            >
+              <option value="">-- Tất cả ca --</option>
+              {availablePhienLamViec.map((plv) => (
+                <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
+                  {plv.caLam?.TenCaLam || 'N/A'} - {new Date(plv.Ngay).toLocaleDateString('vi-VN')}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-        <div className={styles.headerActions}>
-          <select
-            className={styles.selector}
-            value={selectedPhienLamViec}
-            onChange={(e) => setSelectedPhienLamViec(e.target.value)}
+        <div className={styles.actionButtons}>
+          <button
+            className={styles.generateButton}
+            onClick={handleGenerateBusinessReport}
+            disabled={loadingBusinessReport || !startDate || !endDate}
           >
-            <option value="">-- Chọn phiên làm việc --</option>
-            {availablePhienLamViec.map((plv) => (
-              <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
-                {plv.MaPhienLamViec} - {formatDateTime(plv.Ngay)} 
-                {plv.nhanVien ? ` - ${plv.nhanVien.TenNhanVien}` : ''}
-                {plv.TrangThai === 'mở' ? ' (Đang mở)' : ' (Đã đóng)'}
-              </option>
-            ))}
-          </select>
-          <button className={styles.printBtn} onClick={handlePrint} disabled={!report}>
-            <FaPrint /> In báo cáo
+            {loadingBusinessReport ? 'Đang tạo...' : 'Tạo'}
           </button>
-          <button className={styles.excelBtn} onClick={handleExportExcel} disabled={!report}>
-            <FaFileExcel /> Xuất Excel
+          <button
+            className={styles.exportButton}
+            onClick={handleExportBusinessReportExcel}
+            disabled={!businessReport}
+          >
+            <FaFileExcel /> Xuất file
           </button>
         </div>
       </div>
+
+      {businessReport && (
+        <div className={styles.reportTable}>
+          <table>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Khoản mục</th>
+                <th>Giá trị (VND)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* Doanh thu */}
+              <tr className={styles.sectionHeader}>
+                <td>I.</td>
+                <td colSpan={2}><strong>Doanh thu (1+2)</strong></td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>1. Doanh thu bán hàng</td>
+                <td>{formatPrice(businessReport.doanhThu.banHang)}</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>2. Doanh thu khác (dịch vụ, bán đồ lưu niệm, phụ thu,...)</td>
+                <td>{formatPrice(businessReport.doanhThu.khac)}</td>
+              </tr>
+              <tr className={styles.totalRow}>
+                <td></td>
+                <td><strong>Tổng doanh thu</strong></td>
+                <td><strong>{formatPrice(businessReport.doanhThu.tong)}</strong></td>
+              </tr>
+
+              {/* Chi phí */}
+              <tr className={styles.sectionHeader}>
+                <td>II.</td>
+                <td colSpan={2}><strong>Chi phí (1+2+3+4+5)</strong></td>
+              </tr>
+              {Object.entries(businessReport.chiPhi.byCategory).map(([category, value], index) => (
+                <tr key={category}>
+                  <td></td>
+                  <td>{getChiPhiLabel(category, index + 1)}</td>
+                  <td>{formatPrice(value)}</td>
+                </tr>
+              ))}
+              <tr className={styles.totalRow}>
+                <td></td>
+                <td><strong>Tổng chi phí</strong></td>
+                <td><strong>{formatPrice(businessReport.chiPhi.tong)}</strong></td>
+              </tr>
+
+              {/* Lợi nhuận */}
+              <tr className={styles.sectionHeader}>
+                <td>III.</td>
+                <td colSpan={2}><strong>Lợi nhuận</strong></td>
+              </tr>
+              <tr className={styles.totalRow}>
+                <td></td>
+                <td><strong>Lợi nhuận</strong></td>
+                <td><strong>{formatPrice(businessReport.loiNhuan)}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {!businessReport && !loadingBusinessReport && (
+        <div className={styles.emptyState}>
+          <p>Vui lòng chọn khoảng thời gian và nhấn "Tạo" để xem báo cáo</p>
+        </div>
+      )}
+
+      {/* Phần báo cáo chốt ca cũ - có thể ẩn hoặc giữ lại */}
+      {report && (
+        <div style={{ marginTop: '3rem' }}>
+          <div className={styles.header}>
+            <div className={styles.headerMain}>
+              <h1>
+                <FaFileAlt /> Báo cáo chốt ca
+              </h1>
+              <p>Xem báo cáo chi tiết của các phiên làm việc</p>
+            </div>
+            <div className={styles.headerActions}>
+              <button className={styles.printBtn} onClick={handlePrint} disabled={!report}>
+                <FaPrint /> In báo cáo
+              </button>
+              <button className={styles.excelBtn} onClick={handleExportExcel} disabled={!report}>
+                <FaFileExcel /> Xuất Excel
+              </button>
+            </div>
+          </div>
 
       <div id="shift-closing-report" className={styles.reportContent}>
         {/* Thông tin phiên làm việc */}
@@ -354,6 +595,8 @@ const ShiftClosingPage = () => {
           </div>
         )}
       </div>
+        </div>
+      )}
     </div>
   )
 }

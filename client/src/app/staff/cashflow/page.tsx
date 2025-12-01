@@ -258,10 +258,24 @@ const CashflowPage = () => {
       // Use reason as GhiChu
       const ghiChu = form.reason
 
-      // Tạo ThoiGian với local timezone để đảm bảo match với filter date
+      // Tạo ThoiGian với local timezone đúng
+      // Format: YYYY-MM-DDTHH:mm:ss+HH:mm (với timezone offset)
       const now = new Date()
-      const localDate = new Date(now.getTime() - (now.getTimezoneOffset() * 60000))
-      const thoiGian = localDate.toISOString()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      const seconds = String(now.getSeconds()).padStart(2, '0')
+      
+      // Tính timezone offset (ví dụ: +07:00 cho GMT+7)
+      const offsetMinutes = now.getTimezoneOffset()
+      const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60)
+      const offsetMins = Math.abs(offsetMinutes) % 60
+      const offsetSign = offsetMinutes <= 0 ? '+' : '-'
+      const timezoneOffset = `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`
+      
+      const thoiGian = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${timezoneOffset}`
 
       interface CreateThuChiPayload {
         MaGiaoDich: string

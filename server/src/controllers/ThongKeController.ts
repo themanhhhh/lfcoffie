@@ -687,5 +687,90 @@ export class ThongKeController {
       return res.status(500).json({ message: "Lỗi thống kê danh mục", error: e.message });
     }
   }
+
+  // Báo cáo kết quả kinh doanh
+  async getBusinessReport(req: Request, res: Response) {
+    try {
+      const { startDate, endDate, maPhienLamViec } = req.query;
+      
+      const start = startDate ? new Date(startDate as string) : new Date();
+      const end = endDate ? new Date(endDate as string) : new Date();
+      
+      // Tính doanh thu bán hàng từ DonHang
+      let donHangQuery = this.donHangRepo.createQueryBuilder('dh')
+        .leftJoinAndSelect('dh.chiTietDonHangs', 'ctdh')
+        .where('dh.Ngay BETWEEN :start AND :end', { start, end });
+      
+      if (maPhienLamViec) {
+        donHangQuery = donHangQuery.andWhere('dh.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
+      }
+      
+      const donHangs = await donHangQuery.getMany();
+      
+      let doanhThuBanHang = 0;
+      for (const donHang of donHangs) {
+        if (donHang.chiTietDonHangs) {
+          const donHangTotal = donHang.chiTietDonHangs.reduce((sum, ctdh) => {
+            return sum + (ctdh.DonGia * ctdh.SoLuong);
+          }, 0);
+          doanhThuBanHang += donHangTotal;
+        }
+      }
+      
+      // Tính doanh thu khác từ ThuChi với LoaiGiaoDich = 'thu'
+      let thuChiQuery = this.thuChiRepo.createQueryBuilder('tc')
+        .leftJoinAndSelect('tc.nghiepVu', 'nv')
+        .where('tc.ThoiGian BETWEEN :start AND :end', { start, end })
+        .andWhere('nv.LoaiGiaoDich = :loai', { loai: 'thu' });
+      
+      if (maPhienLamViec) {
+        thuChiQuery = thuChiQuery.andWhere('tc.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
+      }
+      
+      const thuChis = await thuChiQuery.getMany();
+      const doanhThuKhac = thuChis.reduce((sum, tc) => sum + tc.SoTien, 0);
+      
+      // Tính chi phí từ ThuChi với LoaiGiaoDich = 'chi', nhóm theo NghiepVu
+      let chiPhiQuery = this.thuChiRepo.createQueryBuilder('tc')
+        .leftJoinAndSelect('tc.nghiepVu', 'nv')
+        .where('tc.ThoiGian BETWEEN :start AND :end', { start, end })
+        .andWhere('nv.LoaiGiaoDich = :loai', { loai: 'chi' });
+      
+      if (maPhienLamViec) {
+        chiPhiQuery = chiPhiQuery.andWhere('tc.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
+      }
+      
+      const chiPhis = await chiPhiQuery.getMany();
+      
+      // Nhóm chi phí theo NghiepVu
+      const chiPhiByCategory: Record<string, number> = {};
+      chiPhis.forEach(cp => {
+        const tenNghiepVu = cp.nghiepVu?.TenNghiepVu || 'Khác';
+        chiPhiByCategory[tenNghiepVu] = (chiPhiByCategory[tenNghiepVu] || 0) + cp.SoTien;
+      });
+      
+      // Tính tổng chi phí
+      const tongChiPhi = chiPhis.reduce((sum, cp) => sum + cp.SoTien, 0);
+      
+      // Tính lợi nhuận
+      const tongDoanhThu = doanhThuBanHang + doanhThuKhac;
+      const loiNhuan = tongDoanhThu - tongChiPhi;
+      
+      return res.json({
+        doanhThu: {
+          banHang: doanhThuBanHang,
+          khac: doanhThuKhac,
+          tong: tongDoanhThu
+        },
+        chiPhi: {
+          byCategory: chiPhiByCategory,
+          tong: tongChiPhi
+        },
+        loiNhuan
+      });
+    } catch (e: any) {
+      return res.status(500).json({ message: "Lỗi báo cáo kết quả kinh doanh", error: e.message });
+    }
+  }
 }
 

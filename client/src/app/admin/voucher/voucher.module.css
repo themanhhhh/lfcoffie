@@ -439,6 +439,29 @@
   max-width: 100%;
 }
 
+.statusSelect {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.statusSelect:hover {
+  border-color: #8B4513;
+}
+
+.statusSelect:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+
 .codeValue {
   font-family: 'Courier New', monospace;
   font-weight: 700;

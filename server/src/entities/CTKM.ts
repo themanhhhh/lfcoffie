@@ -14,6 +14,9 @@ export class CTKM {
   @Column({ type: "varchar", length: 20 })
   LoaiCTKM!: string; // 'giammon', 'giamhoadon', 'combo'
 
+  @Column({ type: "varchar", length: 20, default: "hoạt động" })
+  TrangThai!: string; // 'hoạt động', 'tạm dừng', 'hết hạn'
+
   @OneToMany(() => DonHang, (dh) => dh.ctkm)
   donHangs!: DonHang[];
 

@@ -1,7 +1,25 @@
 .container {
   padding: 2rem;
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
+}
+
+.breadcrumb {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.breadcrumb span {
+  margin: 0 0.25rem;
+}
+
+.title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #000;
 }
 
 .header {
@@ -107,10 +125,146 @@
 .filters {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 2rem;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterGroup label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #000;
+}
+
+.filterGroup label svg {
+  margin-right: 0.25rem;
+}
+
+.filterGroup input[type="date"],
+.filterGroup select {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #000;
+  min-width: 180px;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+}
+
+.generateButton,
+.exportButton {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.generateButton {
+  background-color: #8B4513;
+  color: white;
+}
+
+.generateButton:hover:not(:disabled) {
+  background-color: #6d3410;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(139, 69, 19, 0.2);
+}
+
+.generateButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.exportButton {
+  background-color: #28a745;
+  color: white;
+}
+
+.exportButton:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+.exportButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.reportTable {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.reportTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reportTable thead {
+  background: #f8f9fa;
+}
+
+.reportTable th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #000;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.reportTable td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f3f4;
+  color: #000;
+}
+
+.reportTable tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.sectionHeader {
+  background: #f0f0f0;
+  font-weight: 600;
+}
+
+.sectionHeader td {
+  padding: 1rem;
+  font-weight: 600;
+}
+
+.totalRow {
+  background: #f8f9fa;
+}
+
+.totalRow td {
+  font-weight: 600;
+  padding: 1rem;
 }
 
 .searchBox {
@@ -268,7 +422,15 @@
 .emptyState {
   padding: 4rem 2rem;
   text-align: center;
-  color: #000000;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+  margin-top: 2rem;
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: 1.1rem;
 }
 
 .emptyState svg {

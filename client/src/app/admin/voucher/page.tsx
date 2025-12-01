@@ -43,6 +43,7 @@ interface KhuyenMaiDto {
   MaCTKM: string
   TenCTKM: string
   LoaiCTKM?: string
+  TrangThai?: string
   giaTriGiam?: number
   soTienToiThieu?: number
   giamToiDa?: number
@@ -438,6 +439,33 @@ const VoucherPage = () => {
     }
   }
 
+  const handleUpdateStatus = async (voucherId: string, newStatus: VoucherStatus) => {
+    try {
+      // Map VoucherStatus sang TrangThai trong database
+      const trangThaiMap: Record<VoucherStatus, string> = {
+        'active': 'hoạt động',
+        'inactive': 'tạm dừng',
+        'expired': 'hết hạn'
+      }
+
+      await apiFetch(`/api/ctkm/${voucherId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ TrangThai: trangThaiMap[newStatus] })
+      })
+
+      await loadVouchersData()
+      
+      // Cập nhật selectedVoucher nếu đang được chọn
+      if (selectedVoucher?.id === voucherId) {
+        setSelectedVoucher({ ...selectedVoucher, status: newStatus })
+      }
+      
+      toast.success('Cập nhật trạng thái thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi cập nhật trạng thái: ' + (err instanceof ApiError ? err.message : 'Unknown error'))
+    }
+  }
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -668,6 +696,18 @@ const VoucherPage = () => {
                       <div className={styles.detailItem}>
                         <span>Mô tả:</span>
                         <span>{selectedVoucher.description}</span>
+                      </div>
+                      <div className={styles.detailItem}>
+                        <span>Trạng thái:</span>
+                        <select
+                          value={selectedVoucher.status}
+                          onChange={(e) => handleUpdateStatus(selectedVoucher.id, e.target.value as VoucherStatus)}
+                          className={styles.statusSelect}
+                        >
+                          <option value="active">Đang hoạt động</option>
+                          <option value="inactive">Tạm dừng</option>
+                          <option value="expired">Hết hạn</option>
+                        </select>
                       </div>
                     </div>
                     <div className={styles.detailsActions}>

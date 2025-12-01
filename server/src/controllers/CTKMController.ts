@@ -166,5 +166,59 @@ export class CTKMController {
       return res.status(400).json({ message: "Xóa thất bại", error: e.message });
     }
   }
+
+  async updateStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { TrangThai } = req.body;
+      
+      if (!TrangThai) {
+        return res.status(400).json({ message: "TrangThai là bắt buộc" });
+      }
+
+      const existed = await this.repository.findOne({ 
+        where: { MaCTKM: id } as any,
+        relations: ['giamHoaDons', 'giamMons']
+      });
+      
+      if (!existed) {
+        return res.status(404).json({ message: "Không tìm thấy" });
+      }
+
+      // Cập nhật trạng thái của CTKM
+      existed.TrangThai = TrangThai;
+      await this.repository.save(existed);
+
+      // Cập nhật trạng thái của các entity con
+      if (existed.giamHoaDons && existed.giamHoaDons.length > 0) {
+        for (const ghd of existed.giamHoaDons) {
+          ghd.TrangThai = TrangThai;
+          await this.giamHoaDonRepo.save(ghd);
+        }
+      }
+
+      if (existed.giamMons && existed.giamMons.length > 0) {
+        for (const gm of existed.giamMons) {
+          gm.TrangThai = TrangThai;
+          await this.giamMonRepo.save(gm);
+        }
+      }
+
+      // Nếu là combo, cập nhật trạng thái combo
+      if (existed.LoaiCTKM === 'combo') {
+        const combos = await this.comboRepo.find({
+          where: { MaCTKM: id } as any
+        });
+        for (const combo of combos) {
+          combo.TrangThai = TrangThai;
+          await this.comboRepo.save(combo);
+        }
+      }
+
+      return res.json({ message: "Cập nhật trạng thái thành công", TrangThai });
+    } catch (e: any) {
+      return res.status(400).json({ message: "Cập nhật trạng thái thất bại", error: e.message });
+    }
+  }
 }
 

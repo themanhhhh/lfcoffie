@@ -14,6 +14,7 @@ router.get("/7days-report", controller.get7DaysReport.bind(controller));
 router.get("/top-10-products", controller.getTop10Products.bind(controller));
 router.get("/top-5-categories", controller.getTop5Categories.bind(controller));
 router.get("/category-stats", controller.getCategoryStats.bind(controller));
+router.get("/business-report", controller.getBusinessReport.bind(controller));
 
 export default router;
 

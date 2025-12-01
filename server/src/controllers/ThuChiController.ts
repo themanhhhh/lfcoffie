@@ -53,10 +53,14 @@ export class ThuChiController {
 
   async create(req: Request, res: Response) {
     try {
+      // Parse ThoiGian từ string thành Date object để đảm bảo timezone đúng
+      // TypeORM sẽ tự động xử lý timezone khi lưu vào database
+      const thoiGian = req.body.ThoiGian ? new Date(req.body.ThoiGian) : new Date();
+      
       // Tạo object với các field cần thiết
       const data: any = {
         MaGiaoDich: req.body.MaGiaoDich,
-        ThoiGian: req.body.ThoiGian,
+        ThoiGian: thoiGian,
         PhuongThucThanhToan: req.body.PhuongThucThanhToan,
         GhiChu: req.body.GhiChu || null,
         SoTien: req.body.SoTien,
@@ -65,7 +69,8 @@ export class ThuChiController {
       };
 
       console.log('Creating ThuChi with data:', data);
-      console.log('Request body:', req.body);
+      console.log('ThoiGian string:', req.body.ThoiGian);
+      console.log('ThoiGian Date:', thoiGian);
 
       const obj = this.repository.create(data);
       const saved = await this.repository.save(obj);
