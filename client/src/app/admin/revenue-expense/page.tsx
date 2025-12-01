@@ -27,6 +27,7 @@ const RevenueExpensePage = () => {
   const [typeFilter, setTypeFilter] = useState('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [dateError, setDateError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<ThuChi | null>(null)
   const [formData, setFormData] = useState({
@@ -63,9 +64,40 @@ const RevenueExpensePage = () => {
   const loadFilteredTransactions = useCallback(async () => {
     setLoading(true)
     try {
+      const hasFrom = !!startDate
+      const hasTo = !!endDate
+
+      // Chỉ chọn 1 trong 2 ngày -> lỗi, không gọi API
+      if ((hasFrom && !hasTo) || (!hasFrom && hasTo)) {
+        setDateError('Vui lòng chọn đầy đủ cả Từ ngày và Đến ngày')
+        setTransactions([])
+        setLoading(false)
+        return
+      }
+
+      // Chọn đủ 2 ngày nhưng from > to -> lỗi
+      if (hasFrom && hasTo) {
+        const from = new Date(startDate)
+        const to = new Date(endDate)
+        from.setHours(0, 0, 0, 0)
+        to.setHours(0, 0, 0, 0)
+
+        if (from > to) {
+          setDateError('Ngày bắt đầu không được lớn hơn ngày kết thúc')
+          setTransactions([])
+          setLoading(false)
+          return
+        }
+      }
+
+      // Hợp lệ: hoặc không chọn gì, hoặc chọn đủ 2 ngày đúng
+      setDateError(null)
+
       const params: { startDate?: string; endDate?: string; loaiGiaoDich?: string } = {}
-      if (startDate) params.startDate = startDate
-      if (endDate) params.endDate = endDate
+      if (hasFrom && hasTo) {
+        params.startDate = startDate
+        params.endDate = endDate
+      }
       if (typeFilter !== 'all') params.loaiGiaoDich = typeFilter
       
       const data = await thuChiApi.getAll(params)
@@ -293,15 +325,23 @@ const RevenueExpensePage = () => {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               placeholder="Từ ngày"
+              max={endDate || undefined}
             />
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               placeholder="Đến ngày"
+              min={startDate || undefined}
             />
           </div>
         </div>
+
+        {dateError && (
+          <div style={{ padding: '0 2rem 0.5rem', color: 'red', fontSize: '0.9rem' }}>
+            {dateError}
+          </div>
+        )}
 
         <div className={styles.tableContainer}>
           <table className={styles.transactionsTable}>

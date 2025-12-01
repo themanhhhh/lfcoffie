@@ -78,6 +78,7 @@ const ShiftClosingPage = () => {
   const [selectedPhienLamViec, setSelectedPhienLamViec] = useState<string>('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [dateError, setDateError] = useState<string | null>(null)
   const [loadingBusinessReport, setLoadingBusinessReport] = useState(false)
   const [availablePhienLamViec, setAvailablePhienLamViec] = useState<Array<{
     MaPhienLamViec: string
@@ -144,10 +145,38 @@ const ShiftClosingPage = () => {
 
 
   const handleGenerateBusinessReport = async () => {
-    if (!startDate || !endDate) {
-      toast.error('Vui lòng chọn từ ngày và đến ngày')
+    const hasFrom = !!startDate
+    const hasTo = !!endDate
+
+    // Chỉ chọn 1 trong 2 ngày -> lỗi
+    if ((hasFrom && !hasTo) || (!hasFrom && hasTo)) {
+      setDateError('Vui lòng chọn đầy đủ cả Từ ngày và Đến ngày')
+      toast.error('Vui lòng chọn đầy đủ cả Từ ngày và Đến ngày')
       return
     }
+
+    // Chọn đủ 2 ngày nhưng from > to -> lỗi
+    if (hasFrom && hasTo) {
+      const from = new Date(startDate)
+      const to = new Date(endDate)
+      from.setHours(0, 0, 0, 0)
+      to.setHours(0, 0, 0, 0)
+
+      if (from > to) {
+        setDateError('Ngày bắt đầu không được lớn hơn ngày kết thúc')
+        toast.error('Ngày bắt đầu không được lớn hơn ngày kết thúc')
+        return
+      }
+    }
+
+    // Hợp lệ: bắt buộc phải có cả 2 ngày
+    if (!hasFrom || !hasTo) {
+      setDateError('Vui lòng chọn Từ ngày và Đến ngày')
+      toast.error('Vui lòng chọn Từ ngày và Đến ngày')
+      return
+    }
+
+    setDateError(null)
 
     setLoadingBusinessReport(true)
     try {
@@ -468,6 +497,7 @@ const ShiftClosingPage = () => {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              max={endDate || undefined}
             />
           </label>
           <label>
@@ -476,6 +506,7 @@ const ShiftClosingPage = () => {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              min={startDate || undefined}
             />
           </label>
           <label>
@@ -493,6 +524,11 @@ const ShiftClosingPage = () => {
             </select>
           </label>
         </div>
+        {dateError && (
+          <div className={styles.dateError}>
+            {dateError}
+          </div>
+        )}
         <div className={styles.actionButtons}>
           <button
             className={styles.generateButton}
