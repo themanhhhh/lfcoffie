@@ -38,6 +38,7 @@ const StatisticPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [dateError, setDateError] = useState<string | null>(null)
 
   useEffect(() => {
     let ignore = false
@@ -45,10 +46,49 @@ const StatisticPage = () => {
       setLoading(true)
       setError(null)
       try {
-        // Prepare date params
-        const dateParams = dateFrom || dateTo ? {
-          startDate: dateFrom || undefined,
-          endDate: dateTo || undefined
+        // Validate date range trước khi gọi API
+        // Trường hợp 1: chỉ chọn 1 trong 2 ngày -> lỗi
+        const hasFrom = !!dateFrom
+        const hasTo = !!dateTo
+        if ((hasFrom && !hasTo) || (!hasFrom && hasTo)) {
+          setDateError('Vui lòng chọn đầy đủ cả Từ ngày và Đến ngày')
+          setOverview(null)
+          setRevenueComparison(null)
+          setSevenDaysReport(null)
+          setTop10Products([])
+          setTop5Categories([])
+          setRevenueChannels([])
+          setLoading(false)
+          return
+        }
+
+        // Trường hợp 2: chọn đủ 2 ngày nhưng from > to -> lỗi
+        if (hasFrom && hasTo) {
+          const from = new Date(dateFrom)
+          const to = new Date(dateTo)
+          from.setHours(0, 0, 0, 0)
+          to.setHours(0, 0, 0, 0)
+
+          if (from > to) {
+            setDateError('Ngày bắt đầu không được lớn hơn ngày kết thúc')
+            setOverview(null)
+            setRevenueComparison(null)
+            setSevenDaysReport(null)
+            setTop10Products([])
+            setTop5Categories([])
+            setRevenueChannels([])
+            setLoading(false)
+            return
+          }
+        }
+
+        // Hợp lệ: hoặc không chọn gì (lấy mặc định backend), hoặc đã chọn đủ khoảng hợp lệ
+        setDateError(null)
+
+        // Prepare date params: chỉ gửi khi đã chọn đủ 2 ngày hợp lệ
+        const dateParams = hasFrom && hasTo ? {
+          startDate: dateFrom,
+          endDate: dateTo
         } : undefined
 
         const [
@@ -102,6 +142,7 @@ const StatisticPage = () => {
     if (type === 'clear') {
       setDateFrom('')
       setDateTo('')
+      setDateError(null)
       return
     }
     
@@ -224,7 +265,7 @@ const StatisticPage = () => {
 
         {/* Date Filter */}
         <div className={styles.dateFilterSection}>
-          <div className={styles.dateFilterGroup}>
+            <div className={styles.dateFilterGroup}>
             <FaCalendarAlt />
             <div className={styles.dateInputs}>
               <input
@@ -233,6 +274,7 @@ const StatisticPage = () => {
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 placeholder="Từ ngày"
+                max={dateTo || undefined}
               />
               <span className={styles.dateSeparator}>-</span>
               <input
@@ -241,6 +283,7 @@ const StatisticPage = () => {
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 placeholder="Đến ngày"
+                min={dateFrom || undefined}
               />
             </div>
             <div className={styles.quickDateButtons}>
@@ -280,14 +323,18 @@ const StatisticPage = () => {
               )}
             </div>
           </div>
-          {(dateFrom || dateTo) && (
+          {(dateError || dateFrom || dateTo) && (
             <div className={styles.dateFilterInfo}>
-              <span>
-                Đang lọc: {dateFrom ? `Từ ${new Date(dateFrom).toLocaleDateString('vi-VN')}` : ''} 
-                {dateFrom && dateTo ? ' - ' : ''}
-                {dateTo ? `Đến ${new Date(dateTo).toLocaleDateString('vi-VN')}` : ''}
-                {!dateFrom && !dateTo ? 'Tất cả thời gian' : ''}
-              </span>
+              {dateError ? (
+                <span style={{ color: 'red' }}>{dateError}</span>
+              ) : (
+                <span>
+                  Đang lọc: {dateFrom ? `Từ ${new Date(dateFrom).toLocaleDateString('vi-VN')}` : ''} 
+                  {dateFrom && dateTo ? ' - ' : ''}
+                  {dateTo ? `Đến ${new Date(dateTo).toLocaleDateString('vi-VN')}` : ''}
+                  {!dateFrom && !dateTo ? 'Tất cả thời gian' : ''}
+                </span>
+              )}
             </div>
           )}
         </div>
