@@ -368,7 +368,7 @@ const CashflowPage = () => {
       } catch (reloadErr) {
         console.error('Error reloading transactions:', reloadErr)
         // Fallback: gọi loadData nếu reload thủ công thất bại
-        await loadData()
+      await loadData()
       }
 
       toast.success('Ghi nhận giao dịch thành công!')
@@ -476,9 +476,9 @@ const CashflowPage = () => {
                 <option value="">Chưa có nghiệp vụ thu</option>
               ) : (
                 nghiepVuThuList.map((nv) => (
-                  <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
-                    {nv.TenNghiepVu}
-                  </option>
+                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                  {nv.TenNghiepVu}
+                </option>
                 ))
               )}
             </select>
@@ -538,9 +538,9 @@ const CashflowPage = () => {
                 <option value="">Chưa có nghiệp vụ chi</option>
               ) : (
                 nghiepVuChiList.map((nv) => (
-                  <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
-                    {nv.TenNghiepVu}
-                  </option>
+                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                  {nv.TenNghiepVu}
+                </option>
                 ))
               )}
             </select>

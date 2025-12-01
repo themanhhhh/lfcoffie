@@ -413,7 +413,7 @@ const Staff = () => {
       toast.success(`Đã thêm ${product.name} vào giỏ hàng`)
     } else {
       // Món thường, mở modal customize
-      openCustomizeModal(product)
+    openCustomizeModal(product)
     }
   }
 
@@ -928,9 +928,9 @@ const Staff = () => {
             <div className={Style.paymentModalBody}>
               {/* Size Selection - Optional */}
               {sizes.length > 0 && (
-                <div className={Style.paymentSection}>
+              <div className={Style.paymentSection}>
                   <label>Size (tùy chọn)</label>
-                  <div className={Style.orderTypeButtons}>
+                <div className={Style.orderTypeButtons}>
                     <button
                       type="button"
                       className={`${Style.orderTypeBtn} ${!customizeOptions.size ? Style.active : ''}`}
@@ -944,19 +944,19 @@ const Staff = () => {
                         type="button"
                         className={`${Style.orderTypeBtn} ${customizeOptions.size === size.TenTuyChon ? Style.active : ''}`}
                         onClick={() => setCustomizeOptions({ ...customizeOptions, size: size.TenTuyChon })}
-                      >
+                    >
                         {size.TenTuyChon}
-                      </button>
-                    ))}
-                  </div>
+                    </button>
+                  ))}
                 </div>
+              </div>
               )}
 
               {/* Sugar Selection - Optional */}
               {sugars.length > 0 && (
-                <div className={Style.paymentSection}>
+              <div className={Style.paymentSection}>
                   <label>Đường (tùy chọn)</label>
-                  <div className={Style.orderTypeButtons}>
+                <div className={Style.orderTypeButtons}>
                     <button
                       type="button"
                       className={`${Style.orderTypeBtn} ${!customizeOptions.sugar ? Style.active : ''}`}
@@ -970,19 +970,19 @@ const Staff = () => {
                         type="button"
                         className={`${Style.orderTypeBtn} ${customizeOptions.sugar === sugar.TenTuyChon ? Style.active : ''}`}
                         onClick={() => setCustomizeOptions({ ...customizeOptions, sugar: sugar.TenTuyChon })}
-                      >
+                    >
                         {sugar.TenTuyChon}
-                      </button>
-                    ))}
-                  </div>
+                    </button>
+                  ))}
                 </div>
+              </div>
               )}
 
               {/* Ice Selection - Optional */}
               {ices.length > 0 && (
-                <div className={Style.paymentSection}>
+              <div className={Style.paymentSection}>
                   <label>Đá (tùy chọn)</label>
-                  <div className={Style.orderTypeButtons}>
+                <div className={Style.orderTypeButtons}>
                     <button
                       type="button"
                       className={`${Style.orderTypeBtn} ${!customizeOptions.ice ? Style.active : ''}`}
@@ -996,12 +996,12 @@ const Staff = () => {
                         type="button"
                         className={`${Style.orderTypeBtn} ${customizeOptions.ice === ice.TenTuyChon ? Style.active : ''}`}
                         onClick={() => setCustomizeOptions({ ...customizeOptions, ice: ice.TenTuyChon })}
-                      >
+                    >
                         {ice.TenTuyChon}
-                      </button>
-                    ))}
-                  </div>
+                    </button>
+                  ))}
                 </div>
+              </div>
               )}
 
               {/* Topping Selection */}

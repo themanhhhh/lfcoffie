@@ -1,17 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ComboController = void 0;
+exports.DSMonTrongComboController = void 0;
 const data_source_1 = require("../database/data-source");
-const Combo_1 = require("../entities/Combo");
-const typeorm_1 = require("typeorm");
-class ComboController {
+const DSMonTrongCombo_1 = require("../entities/DSMonTrongCombo");
+class DSMonTrongComboController {
     constructor() {
-        this.repository = data_source_1.AppDataSource.getRepository(Combo_1.Combo);
+        this.repository = data_source_1.AppDataSource.getRepository(DSMonTrongCombo_1.DSMonTrongCombo);
     }
     async getAll(req, res) {
         try {
             const list = await this.repository.find({
-                relations: ['dsMonTrongCombos', 'dsMonTrongCombos.mon']
+                relations: ['mon']
             });
             return res.json(list);
         }
@@ -23,8 +22,8 @@ class ComboController {
         try {
             const { id } = req.params;
             const item = await this.repository.findOne({
-                where: { MaCombo: id },
-                relations: ['dsMonTrongCombos', 'dsMonTrongCombos.mon']
+                where: { MaDSMonCombo: id },
+                relations: ['mon']
             });
             if (!item)
                 return res.status(404).json({ message: "Không tìm thấy" });
@@ -47,7 +46,7 @@ class ComboController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const existed = await this.repository.findOne({ where: { MaCombo: id } });
+            const existed = await this.repository.findOne({ where: { MaDSMonCombo: id } });
             if (!existed)
                 return res.status(404).json({ message: "Không tìm thấy" });
             Object.assign(existed, req.body);
@@ -61,7 +60,7 @@ class ComboController {
     async remove(req, res) {
         try {
             const { id } = req.params;
-            const existed = await this.repository.findOne({ where: { MaCombo: id } });
+            const existed = await this.repository.findOne({ where: { MaDSMonCombo: id } });
             if (!existed)
                 return res.status(404).json({ message: "Không tìm thấy" });
             await this.repository.remove(existed);
@@ -71,34 +70,5 @@ class ComboController {
             return res.status(400).json({ message: "Xóa thất bại", error: e.message });
         }
     }
-    // Lấy các combo đang áp dụng
-    async getActiveCombos(req, res) {
-        try {
-            const now = new Date();
-            const currentDay = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][now.getDay()];
-            const currentTime = now.toTimeString().slice(0, 8);
-            const combos = await this.repository.find({
-                where: {
-                    TrangThai: 'hoạt động',
-                    NgayBatDau: (0, typeorm_1.Between)(new Date(0), now),
-                    NgayKetThuc: (0, typeorm_1.Between)(now, new Date(9999, 11, 31))
-                },
-                relations: ['dsMonTrongCombos', 'dsMonTrongCombos.mon']
-            });
-            const activeCombos = combos.filter(combo => {
-                if (combo.Thu && combo.Thu !== currentDay)
-                    return false;
-                if (combo.GioBatDau && combo.GioKetThuc) {
-                    if (currentTime < combo.GioBatDau || currentTime > combo.GioKetThuc)
-                        return false;
-                }
-                return true;
-            });
-            return res.json(activeCombos);
-        }
-        catch (e) {
-            return res.status(500).json({ message: "Lỗi lấy combo", error: e.message });
-        }
-    }
 }
-exports.ComboController = ComboController;
+exports.DSMonTrongComboController = DSMonTrongComboController;

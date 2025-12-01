@@ -5,6 +5,7 @@ const ThuChiController_1 = require("../controllers/ThuChiController");
 const router = (0, express_1.Router)();
 const controller = new ThuChiController_1.ThuChiController();
 router.get("/", controller.getAll.bind(controller));
+router.get("/payment-methods", controller.getPaymentMethods.bind(controller));
 router.get("/:id", controller.getOne.bind(controller));
 router.post("/", controller.create.bind(controller));
 router.put("/:id", controller.update.bind(controller));

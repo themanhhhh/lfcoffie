@@ -60,18 +60,45 @@ class NhanVienController {
         }
     }
     async update(req, res) {
-        const { id } = req.params;
-        const existed = await this.repository.findOne({ where: { MaNhanVien: id } });
-        if (!existed)
-            return res.status(404).json({ message: "Không tìm thấy" });
-        // Hash password if provided in update
-        if (req.body.MatKhau) {
-            const saltRounds = 10;
-            req.body.MatKhau = await bcryptjs_1.default.hash(req.body.MatKhau, saltRounds);
+        try {
+            const { id } = req.params;
+            const { MaCaLam, ...nhanVienData } = req.body;
+            const existed = await this.repository.findOne({
+                where: { MaNhanVien: id },
+                relations: ['caLam']
+            });
+            if (!existed)
+                return res.status(404).json({ message: "Không tìm thấy" });
+            // Load CaLam if MaCaLam is provided
+            if (MaCaLam !== undefined) {
+                if (MaCaLam) {
+                    const caLam = await this.caLamRepository.findOne({ where: { MaCaLam } });
+                    if (!caLam) {
+                        return res.status(400).json({ message: `Không tìm thấy ca làm với mã: ${MaCaLam}` });
+                    }
+                    existed.caLam = caLam;
+                }
+                else {
+                    existed.caLam = null;
+                }
+            }
+            // Hash password if provided in update
+            if (nhanVienData.MatKhau) {
+                const saltRounds = 10;
+                nhanVienData.MatKhau = await bcryptjs_1.default.hash(nhanVienData.MatKhau, saltRounds);
+            }
+            Object.assign(existed, nhanVienData);
+            const saved = await this.repository.save(existed);
+            // Reload with relations
+            const savedWithRelations = await this.repository.findOne({
+                where: { MaNhanVien: saved.MaNhanVien },
+                relations: ['caLam']
+            });
+            return res.json(savedWithRelations);
         }
-        Object.assign(existed, req.body);
-        const saved = await this.repository.save(existed);
-        return res.json(saved);
+        catch (e) {
+            return res.status(400).json({ message: "Cập nhật thất bại", error: e.message });
+        }
     }
     async remove(req, res) {
         const { id } = req.params;

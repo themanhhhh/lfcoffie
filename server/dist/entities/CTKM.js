@@ -30,6 +30,10 @@ __decorate([
     __metadata("design:type", String)
 ], CTKM.prototype, "LoaiCTKM", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: "varchar", length: 20, default: "hoạt động" }),
+    __metadata("design:type", String)
+], CTKM.prototype, "TrangThai", void 0);
+__decorate([
     (0, typeorm_1.OneToMany)(() => HoaDon_1.DonHang, (dh) => dh.ctkm),
     __metadata("design:type", Array)
 ], CTKM.prototype, "donHangs", void 0);

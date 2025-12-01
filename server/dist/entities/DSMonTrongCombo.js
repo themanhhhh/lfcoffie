@@ -30,9 +30,14 @@ __decorate([
     __metadata("design:type", Number)
 ], DSMonTrongCombo.prototype, "SoLuong", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => Combo_1.Combo, (c) => c.dsMonTrongCombo),
-    __metadata("design:type", Array)
-], DSMonTrongCombo.prototype, "combos", void 0);
+    (0, typeorm_1.Column)({ type: "varchar", length: 10, nullable: true }),
+    __metadata("design:type", Object)
+], DSMonTrongCombo.prototype, "MaCombo", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => Combo_1.Combo, (c) => c.dsMonTrongCombos, { nullable: true }),
+    (0, typeorm_1.JoinColumn)({ name: "MaCombo" }),
+    __metadata("design:type", Object)
+], DSMonTrongCombo.prototype, "combo", void 0);
 exports.DSMonTrongCombo = DSMonTrongCombo = __decorate([
     (0, typeorm_1.Entity)({ name: "dsmontrongcombo" })
 ], DSMonTrongCombo);

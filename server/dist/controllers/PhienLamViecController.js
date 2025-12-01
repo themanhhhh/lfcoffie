@@ -3,10 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PhienLamViecController = void 0;
 const data_source_1 = require("../database/data-source");
 const PhienLamViec_1 = require("../entities/PhienLamViec");
+const CaLam_1 = require("../entities/CaLam");
+const NhanVien_1 = require("../entities/NhanVien");
 const typeorm_1 = require("typeorm");
 class PhienLamViecController {
     constructor() {
         this.repository = data_source_1.AppDataSource.getRepository(PhienLamViec_1.PhienLamViec);
+        this.caLamRepo = data_source_1.AppDataSource.getRepository(CaLam_1.CaLam);
+        this.nhanVienRepo = data_source_1.AppDataSource.getRepository(NhanVien_1.NhanVien);
     }
     async getAll(req, res) {
         try {
@@ -42,12 +46,71 @@ class PhienLamViecController {
     }
     async create(req, res) {
         try {
-            const obj = this.repository.create(req.body);
+            const { MaPhienLamViec, MaCaLam, MaNhanVien, Ngay, TrangThai } = req.body;
+            // Validate required fields
+            if (!MaPhienLamViec || !MaCaLam || !MaNhanVien || !Ngay) {
+                return res.status(400).json({
+                    message: "Thiếu thông tin bắt buộc",
+                    error: "Vui lòng cung cấp đầy đủ: MaPhienLamViec, MaCaLam, MaNhanVien, Ngay"
+                });
+            }
+            // Check if MaPhienLamViec already exists
+            const existing = await this.repository.findOne({
+                where: { MaPhienLamViec }
+            });
+            if (existing) {
+                return res.status(400).json({
+                    message: "Mã phiên làm việc đã tồn tại",
+                    error: `Phiên làm việc ${MaPhienLamViec} đã được tạo trước đó`
+                });
+            }
+            // Validate MaCaLam exists
+            const caLam = await this.caLamRepo.findOne({
+                where: { MaCaLam }
+            });
+            if (!caLam) {
+                return res.status(400).json({
+                    message: "Ca làm việc không tồn tại",
+                    error: `Không tìm thấy ca làm việc với mã: ${MaCaLam}`
+                });
+            }
+            // Validate MaNhanVien exists
+            const nhanVien = await this.nhanVienRepo.findOne({
+                where: { MaNhanVien }
+            });
+            if (!nhanVien) {
+                return res.status(400).json({
+                    message: "Nhân viên không tồn tại",
+                    error: `Không tìm thấy nhân viên với mã: ${MaNhanVien}`
+                });
+            }
+            // Convert Ngay from string to Date if needed
+            const ngayDate = Ngay instanceof Date ? Ngay : new Date(Ngay);
+            if (isNaN(ngayDate.getTime())) {
+                return res.status(400).json({
+                    message: "Ngày không hợp lệ",
+                    error: `Không thể chuyển đổi ngày: ${Ngay}`
+                });
+            }
+            // Create the entity with proper foreign key references
+            // TypeORM will handle the foreign keys when we set the relation objects
+            const obj = this.repository.create({
+                MaPhienLamViec,
+                caLam: caLam,
+                nhanVien: nhanVien,
+                Ngay: ngayDate,
+                TrangThai: TrangThai || "mở"
+            });
             const saved = await this.repository.save(obj);
             return res.status(201).json(saved);
         }
         catch (e) {
-            return res.status(400).json({ message: "Tạo mới thất bại", error: e.message });
+            console.error("Error creating PhienLamViec:", e);
+            return res.status(400).json({
+                message: "Tạo mới thất bại",
+                error: e.message,
+                details: e.detail || e.code
+            });
         }
     }
     async update(req, res) {

@@ -12,7 +12,7 @@ export class DonHang {
   @JoinColumn({ name: "MaPhienLamViec" })
   phienLamViec!: PhienLamViec;
 
-  @ManyToOne(() => CTKM, (ctkm) => ctkm.donHangs, { nullable: true, eager: true })
+  @ManyToOne(() => CTKM, (ctkm) => ctkm.donHangs, { nullable: true, eager: false })
   @JoinColumn({ name: "MaCTKM" })
   ctkm?: CTKM | null;
 

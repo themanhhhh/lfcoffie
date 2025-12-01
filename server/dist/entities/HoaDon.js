@@ -28,7 +28,7 @@ __decorate([
     __metadata("design:type", PhienLamViec_1.PhienLamViec)
 ], DonHang.prototype, "phienLamViec", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => CTKM_1.CTKM, (ctkm) => ctkm.donHangs, { nullable: true, eager: true }),
+    (0, typeorm_1.ManyToOne)(() => CTKM_1.CTKM, (ctkm) => ctkm.donHangs, { nullable: true, eager: false }),
     (0, typeorm_1.JoinColumn)({ name: "MaCTKM" }),
     __metadata("design:type", Object)
 ], DonHang.prototype, "ctkm", void 0);

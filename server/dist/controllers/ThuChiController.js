@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ThuChiController = void 0;
 const data_source_1 = require("../database/data-source");
 const ThuChi_1 = require("../entities/ThuChi");
+const HoaDon_1 = require("../entities/HoaDon");
 const typeorm_1 = require("typeorm");
 class ThuChiController {
     constructor() {
@@ -51,11 +52,29 @@ class ThuChiController {
     }
     async create(req, res) {
         try {
-            const obj = this.repository.create(req.body);
+            // Parse ThoiGian từ string thành Date object để đảm bảo timezone đúng
+            // TypeORM sẽ tự động xử lý timezone khi lưu vào database
+            const thoiGian = req.body.ThoiGian ? new Date(req.body.ThoiGian) : new Date();
+            // Tạo object với các field cần thiết
+            const data = {
+                MaGiaoDich: req.body.MaGiaoDich,
+                ThoiGian: thoiGian,
+                PhuongThucThanhToan: req.body.PhuongThucThanhToan,
+                GhiChu: req.body.GhiChu || null,
+                SoTien: req.body.SoTien,
+                MaPhienLamViec: req.body.MaPhienLamViec || null,
+                MaNghiepVu: req.body.MaNghiepVu || null
+            };
+            console.log('Creating ThuChi with data:', data);
+            console.log('ThoiGian string:', req.body.ThoiGian);
+            console.log('ThoiGian Date:', thoiGian);
+            const obj = this.repository.create(data);
             const saved = await this.repository.save(obj);
+            console.log('Saved ThuChi:', saved);
             return res.status(201).json(saved);
         }
         catch (e) {
+            console.error('Error creating ThuChi:', e);
             return res.status(400).json({ message: "Tạo mới thất bại", error: e.message });
         }
     }
@@ -84,6 +103,43 @@ class ThuChiController {
         }
         catch (e) {
             return res.status(400).json({ message: "Xóa thất bại", error: e.message });
+        }
+    }
+    // Lấy danh sách các phương thức thanh toán unique
+    async getPaymentMethods(req, res) {
+        try {
+            const donHangRepo = data_source_1.AppDataSource.getRepository(HoaDon_1.DonHang);
+            const thuChiRepo = data_source_1.AppDataSource.getRepository(ThuChi_1.ThuChi);
+            // Lấy từ ThuChi
+            const thuChiMethods = await thuChiRepo
+                .createQueryBuilder('thuchi')
+                .select('DISTINCT thuchi.PhuongThucThanhToan', 'PhuongThucThanhToan')
+                .where('thuchi.PhuongThucThanhToan IS NOT NULL')
+                .getRawMany();
+            // Lấy từ DonHang
+            const donHangMethods = await donHangRepo
+                .createQueryBuilder('donhang')
+                .select('DISTINCT donhang.PhuongThucThanhToan', 'PhuongThucThanhToan')
+                .where('donhang.PhuongThucThanhToan IS NOT NULL')
+                .getRawMany();
+            // Kết hợp và loại bỏ trùng lặp
+            const allMethods = new Set();
+            thuChiMethods.forEach((item) => {
+                if (item.PhuongThucThanhToan) {
+                    allMethods.add(item.PhuongThucThanhToan);
+                }
+            });
+            donHangMethods.forEach((item) => {
+                if (item.PhuongThucThanhToan) {
+                    allMethods.add(item.PhuongThucThanhToan);
+                }
+            });
+            // Chuyển thành array và sắp xếp
+            const methodsArray = Array.from(allMethods).sort();
+            return res.json(methodsArray);
+        }
+        catch (e) {
+            return res.status(500).json({ message: "Lỗi lấy danh sách phương thức thanh toán", error: e.message });
         }
     }
 }

@@ -84,21 +84,21 @@ const OpenShiftPage = () => {
   )
 
   // Fetch ca làm việc từ API
-  const fetchCaLam = async () => {
-    try {
-      const list = await caLamApi.getAll()
+    const fetchCaLam = async () => {
+      try {
+        const list = await caLamApi.getAll()
       setCaLamList(list)
       
       // Tự động chọn ca đầu tiên nếu có và chưa chọn ca nào
       if (list.length > 0 && !selectedMaCaLam) {
         setSelectedMaCaLam(list[0].MaCaLam)
       }
-    } catch (err) {
-      console.error('Error fetching ca lam:', err)
-      toast.error('Không thể tải danh sách ca làm việc')
+      } catch (err) {
+        console.error('Error fetching ca lam:', err)
+        toast.error('Không thể tải danh sách ca làm việc')
+      }
     }
-  }
-
+    
   useEffect(() => {
     fetchCaLam()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -221,17 +221,17 @@ const OpenShiftPage = () => {
             <label className={styles.field}>
               <span>Chọn ca</span>
               <div className={styles.selectWithRefresh}>
-                <select
+              <select
                   value={selectedMaCaLam}
                   onChange={event => setSelectedMaCaLam(event.target.value)}
-                >
+              >
                   <option value="">-- Chọn ca làm việc --</option>
                   {caLamList.map((caLam) => (
                     <option key={caLam.MaCaLam} value={caLam.MaCaLam}>
                       {caLam.TenCaLam} ({caLam.ThoiGianBatDau} - {caLam.ThoiGianKetThuc})
                     </option>
                   ))}
-                </select>
+              </select>
                 <button
                   type="button"
                   onClick={fetchCaLam}

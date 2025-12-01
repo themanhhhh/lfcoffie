@@ -21,14 +21,22 @@ __decorate([
     __metadata("design:type", String)
 ], ThuChi.prototype, "MaGiaoDich", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => PhienLamViec_1.PhienLamViec, (plv) => plv.thuChis, { eager: true }),
+    (0, typeorm_1.Column)({ type: "varchar", length: 10, nullable: true }),
+    __metadata("design:type", Object)
+], ThuChi.prototype, "MaPhienLamViec", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => PhienLamViec_1.PhienLamViec, (plv) => plv.thuChis, { eager: true, nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: "MaPhienLamViec" }),
-    __metadata("design:type", PhienLamViec_1.PhienLamViec)
+    __metadata("design:type", Object)
 ], ThuChi.prototype, "phienLamViec", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => NghiepVu_1.NghiepVu, (nv) => nv.thuChis, { eager: true }),
+    (0, typeorm_1.Column)({ type: "varchar", length: 10, nullable: true }),
+    __metadata("design:type", Object)
+], ThuChi.prototype, "MaNghiepVu", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => NghiepVu_1.NghiepVu, (nv) => nv.thuChis, { eager: true, nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: "MaNghiepVu" }),
-    __metadata("design:type", NghiepVu_1.NghiepVu)
+    __metadata("design:type", Object)
 ], ThuChi.prototype, "nghiepVu", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "timestamp" }),

@@ -693,8 +693,11 @@ export class ThongKeController {
     try {
       const { startDate, endDate, maPhienLamViec } = req.query;
       
+      // Đảm bảo set đúng giờ cho start và end
       const start = startDate ? new Date(startDate as string) : new Date();
+      start.setHours(0, 0, 0, 0);
       const end = endDate ? new Date(endDate as string) : new Date();
+      end.setHours(23, 59, 59, 999);
       
       // Tính doanh thu bán hàng từ DonHang
       let donHangQuery = this.donHangRepo.createQueryBuilder('dh')
@@ -731,26 +734,36 @@ export class ThongKeController {
       const doanhThuKhac = thuChis.reduce((sum, tc) => sum + tc.SoTien, 0);
       
       // Tính chi phí từ ThuChi với LoaiGiaoDich = 'chi', nhóm theo NghiepVu
+      // Lấy tất cả ThuChi trong khoảng thời gian, sau đó filter theo nghiepVu
       let chiPhiQuery = this.thuChiRepo.createQueryBuilder('tc')
         .leftJoinAndSelect('tc.nghiepVu', 'nv')
-        .where('tc.ThoiGian BETWEEN :start AND :end', { start, end })
-        .andWhere('nv.LoaiGiaoDich = :loai', { loai: 'chi' });
+        .where('tc.ThoiGian BETWEEN :start AND :end', { start, end });
       
       if (maPhienLamViec) {
         chiPhiQuery = chiPhiQuery.andWhere('tc.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
       }
       
-      const chiPhis = await chiPhiQuery.getMany();
+      const allThuChi = await chiPhiQuery.getMany();
+      
+      // Debug log
+      console.log('getBusinessReport - All ThuChi found:', allThuChi.length);
+      console.log('getBusinessReport - Date range:', start, 'to', end);
+      console.log('getBusinessReport - maPhienLamViec:', maPhienLamViec);
+      
+      // Lọc lại để chỉ lấy những cái có nghiepVu với LoaiGiaoDich = 'chi'
+      const chiPhisFiltered = allThuChi.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi');
+      
+      console.log('getBusinessReport - ChiPhi filtered:', chiPhisFiltered.length);
       
       // Nhóm chi phí theo NghiepVu
       const chiPhiByCategory: Record<string, number> = {};
-      chiPhis.forEach(cp => {
+      chiPhisFiltered.forEach(cp => {
         const tenNghiepVu = cp.nghiepVu?.TenNghiepVu || 'Khác';
         chiPhiByCategory[tenNghiepVu] = (chiPhiByCategory[tenNghiepVu] || 0) + cp.SoTien;
       });
       
       // Tính tổng chi phí
-      const tongChiPhi = chiPhis.reduce((sum, cp) => sum + cp.SoTien, 0);
+      const tongChiPhi = chiPhisFiltered.reduce((sum, cp) => sum + cp.SoTien, 0);
       
       // Tính lợi nhuận
       const tongDoanhThu = doanhThuBanHang + doanhThuKhac;

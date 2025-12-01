@@ -1,40 +1,79 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 import {
-  FaPrint,
-  FaFileAlt,
-  FaMoneyBillWave,
-  FaChartLine,
-  FaTags,
-  FaBox,
-  FaReceipt,
   FaFileExcel,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaFilePdf
 } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
-import { phienLamViecApi, thongKeApi, ShiftClosingReport, BusinessReport, ApiError } from '../../../lib/api'
-import { exportShiftClosingReport } from '../../../utils/excelExport'
+import { phienLamViecApi, thongKeApi, BusinessReport, ApiError } from '../../../lib/api'
 import styles from './shiftClosing.module.css'
 import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 const formatPrice = (price: number) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' đ'
 }
 
-const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+// Sắp xếp các khoản mục chi phí theo thứ tự ưu tiên
+const sortChiPhiCategories = (categories: [string, number][]): [string, number][] => {
+  const priorityOrder = [
+    'Chi phí nguyên vật liệu',
+    'Nguyên vật liệu',
+    'Chi phí nhân sự',
+    'Nhân sự',
+    'Chi phí cố định',
+    'Cố định',
+    'Chi phí marketing',
+    'Marketing',
+    'Chi phí khác',
+    'Khác'
+  ]
+  
+  return categories.sort((a, b) => {
+    const indexA = priorityOrder.indexOf(a[0])
+    const indexB = priorityOrder.indexOf(b[0])
+    
+    // Nếu cả hai đều có trong priorityOrder, sắp xếp theo thứ tự
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB
+    }
+    // Nếu chỉ một trong hai có trong priorityOrder, ưu tiên nó
+    if (indexA !== -1) return -1
+    if (indexB !== -1) return 1
+    // Nếu cả hai đều không có, sắp xếp theo tên
+    return a[0].localeCompare(b[0], 'vi')
   })
 }
 
+// Map các loại chi phí theo tên nghiệp vụ - tự động từ API
+const getChiPhiLabel = (categoryName: string, index: number): string => {
+  // Map các tên nghiệp vụ phổ biến sang format chuẩn
+  const categoryMap: Record<string, string> = {
+    'Chi phí nguyên vật liệu': '1. Chi phí nguyên vật liệu',
+    'Chi phí nhân sự': '2. Chi phí nhân sự',
+    'Chi phí cố định': '3. Chi phí cố định (mặt bằng, điện nước, khấu hao máy móc,...)',
+    'Chi phí marketing': '4. Chi phí marketing',
+    'Chi phí khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)',
+    // Thêm các mapping khác nếu cần
+    'Nguyên vật liệu': '1. Chi phí nguyên vật liệu',
+    'Nhân sự': '2. Chi phí nhân sự',
+    'Cố định': '3. Chi phí cố định (mặt bằng, điện nước, khấu hao máy móc,...)',
+    'Marketing': '4. Chi phí marketing',
+    'Khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)'
+  }
+  
+  // Nếu có mapping, dùng mapping, nếu không thì dùng tên gốc với số thứ tự
+  if (categoryMap[categoryName]) {
+    return categoryMap[categoryName]
+  }
+  
+  // Tự động đánh số cho các khoản mục khác
+  return `${index}. ${categoryName}`
+}
+
 const ShiftClosingPage = () => {
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [report, setReport] = useState<ShiftClosingReport | null>(null)
   const [businessReport, setBusinessReport] = useState<BusinessReport | null>(null)
   const [selectedPhienLamViec, setSelectedPhienLamViec] = useState<string>('')
   const [startDate, setStartDate] = useState('')
@@ -60,9 +99,8 @@ const ShiftClosingPage = () => {
   }, [])
 
   useEffect(() => {
+    // Set dates from phien lam viec
     if (selectedPhienLamViec) {
-      loadReport(selectedPhienLamViec)
-      // Set dates from phien lam viec
       const plv = availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)
       if (plv) {
         const ngay = new Date(plv.Ngay)
@@ -89,7 +127,8 @@ const ShiftClosingPage = () => {
           ThoiGianMo: plv.ThoiGianMo,
           ThoiGianDong: plv.ThoiGianDong,
           TrangThai: plv.TrangThai,
-          nhanVien: plv.nhanVien ? { TenNhanVien: plv.nhanVien.TenNhanVien } : undefined
+          nhanVien: plv.nhanVien ? { TenNhanVien: plv.nhanVien.TenNhanVien } : undefined,
+          caLam: plv.caLam ? { TenCaLam: plv.caLam.TenCaLam } : undefined
         }))
       setAvailablePhienLamViec(filtered)
       
@@ -103,24 +142,6 @@ const ShiftClosingPage = () => {
     }
   }
 
-  const loadReport = async (maPhienLamViec: string) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await thongKeApi.getShiftClosingReport(maPhienLamViec)
-      setReport(data)
-    } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Không thể tải báo cáo'
-      setError(errorMessage)
-      toast.error(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handlePrint = () => {
-    window.print()
-  }
 
   const handleGenerateBusinessReport = async () => {
     if (!startDate || !endDate) {
@@ -148,19 +169,6 @@ const ShiftClosingPage = () => {
     }
   }
 
-  const handleExportExcel = () => {
-    if (!report) {
-      toast.error('Không có dữ liệu để xuất Excel')
-      return
-    }
-    try {
-      const fileName = `Bao_cao_chot_ca_${report.phienLamViec.MaPhienLamViec}_${new Date().toISOString().split('T')[0]}.xlsx`
-      exportShiftClosingReport(report, fileName)
-      toast.success('Xuất Excel thành công!')
-    } catch (err) {
-      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
-    }
-  }
 
   const handleExportBusinessReportExcel = () => {
     if (!businessReport) {
@@ -187,24 +195,19 @@ const ShiftClosingPage = () => {
 
       wsData.push([])
 
-      // Chi phí
+      // Chi phí - sắp xếp và map
       const chiPhiCategories = Object.entries(businessReport.chiPhi.byCategory)
-      wsData.push(['II.', `Chi phí (1+2+3+4+5)`, ''])
+      const sortedChiPhi = sortChiPhiCategories(chiPhiCategories)
+      const chiPhiCount = sortedChiPhi.length
+      const chiPhiLabel = chiPhiCount > 0 
+        ? `Chi phí (${Array.from({ length: Math.min(chiPhiCount, 5) }, (_, i) => i + 1).join('+')}${chiPhiCount > 5 ? '+' : ''})`
+        : 'Chi phí (1+2+3+4+5)'
+      wsData.push(['II.', chiPhiLabel, ''])
       
       // Map các loại chi phí theo tên nghiệp vụ
-      const categoryMap: Record<string, string> = {
-        'Chi phí nguyên vật liệu': '1. Chi phí nguyên vật liệu',
-        'Chi phí nhân sự': '2. Chi phí nhân sự',
-        'Chi phí cố định': '3. Chi phí cố định (mặt bằng, điện nước, khấu hao máy móc,...)',
-        'Chi phí marketing': '4. Chi phí marketing',
-        'Chi phí khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)'
-      }
-
-      let index = 1
-      chiPhiCategories.forEach(([category, value]) => {
-        const label = categoryMap[category] || `${index}. ${category}`
+      sortedChiPhi.forEach(([category, value]: [string, number], index: number) => {
+        const label = getChiPhiLabel(category, index + 1)
         wsData.push(['', label, value])
-        index++
       })
       wsData.push(['', 'Tổng chi phí', businessReport.chiPhi.tong])
 
@@ -231,40 +234,77 @@ const ShiftClosingPage = () => {
     }
   }
 
-  const getChiPhiLabel = (categoryName: string, index: number): string => {
-    const categoryMap: Record<string, string> = {
-      'Chi phí nguyên vật liệu': '1. Chi phí nguyên vật liệu',
-      'Chi phí nhân sự': '2. Chi phí nhân sự',
-      'Chi phí cố định': '3. Chi phí cố định (mặt bằng, điện nước, khấu hao máy móc,...)',
-      'Chi phí marketing': '4. Chi phí marketing',
-      'Chi phí khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)'
+  const handleExportBusinessReportPDF = async () => {
+    if (!businessReport) {
+      toast.error('Vui lòng tạo báo cáo trước')
+      return
     }
-    return categoryMap[categoryName] || `${index}. ${categoryName}`
+
+    try {
+      // Tìm phần tử báo cáo để chụp
+      const reportElement = document.querySelector(`.${styles.reportTable}`) as HTMLElement
+      if (!reportElement) {
+        toast.error('Không tìm thấy phần tử báo cáo')
+        return
+      }
+
+      // Hiển thị loading
+      toast.loading('Đang tạo PDF...', { id: 'pdf-export' })
+
+      // Chụp phần tử HTML thành canvas
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      })
+
+      // Tính toán kích thước PDF
+      const imgWidth = 210 // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const pdf = new jsPDF('p', 'mm', 'a4')
+      
+      // Thêm thông tin header vào PDF
+      pdf.setFontSize(16)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('BÁO CÁO KẾT QUẢ KINH DOANH', 105, 15, { align: 'center' })
+      
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`Từ ngày: ${startDate}`, 20, 25)
+      pdf.text(`Đến ngày: ${endDate}`, 20, 30)
+      if (selectedPhienLamViec) {
+        const caLam = availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)?.caLam?.TenCaLam || ''
+        pdf.text(`Ca làm: ${caLam}`, 20, 35)
+      }
+
+      // Thêm hình ảnh từ canvas vào PDF
+      const imgData = canvas.toDataURL('image/png')
+      let heightLeft = imgHeight
+      let position = 45 // Start position after header
+
+      // Thêm trang đầu với header
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= 297 // A4 height in mm
+
+      // Thêm các trang tiếp theo nếu cần
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 45
+        pdf.addPage()
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= 297
+      }
+
+      // Lưu file
+      const fileName = `BaoCaoKetQuaKinhDoanh_${startDate}_${endDate}.pdf`
+      pdf.save(fileName)
+      
+      toast.success('Xuất PDF thành công!', { id: 'pdf-export' })
+    } catch (err) {
+      toast.error('Lỗi khi xuất PDF: ' + (err instanceof Error ? err.message : 'Unknown error'), { id: 'pdf-export' })
+    }
   }
 
-  if (loading && !report) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loading}>Đang tải báo cáo...</div>
-      </div>
-    )
-  }
-
-  if (error && !report) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.error}>{error}</div>
-      </div>
-    )
-  }
-
-  if (!report) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.error}>Không có dữ liệu báo cáo</div>
-      </div>
-    )
-  }
 
   return (
     <div className={styles.container}>
@@ -322,7 +362,14 @@ const ShiftClosingPage = () => {
             onClick={handleExportBusinessReportExcel}
             disabled={!businessReport}
           >
-            <FaFileExcel /> Xuất file
+            <FaFileExcel /> Xuất Excel
+          </button>
+          <button
+            className={styles.exportButton}
+            onClick={handleExportBusinessReportPDF}
+            disabled={!businessReport}
+          >
+            <FaFilePdf /> Xuất PDF
           </button>
         </div>
       </div>
@@ -362,15 +409,21 @@ const ShiftClosingPage = () => {
               {/* Chi phí */}
               <tr className={styles.sectionHeader}>
                 <td>II.</td>
-                <td colSpan={2}><strong>Chi phí (1+2+3+4+5)</strong></td>
+                <td colSpan={2}><strong>Chi phí ({Object.keys(businessReport.chiPhi.byCategory).length > 0 ? `1+${Object.keys(businessReport.chiPhi.byCategory).length > 1 ? `2${Object.keys(businessReport.chiPhi.byCategory).length > 2 ? `+3${Object.keys(businessReport.chiPhi.byCategory).length > 3 ? `+4${Object.keys(businessReport.chiPhi.byCategory).length > 4 ? '+5' : ''}` : ''}` : ''}` : ''}` : '1+2+3+4+5'})</strong></td>
               </tr>
-              {Object.entries(businessReport.chiPhi.byCategory).map(([category, value], index) => (
+              {sortChiPhiCategories(Object.entries(businessReport.chiPhi.byCategory)).map(([category, value]: [string, number], index: number) => (
                 <tr key={category}>
                   <td></td>
                   <td>{getChiPhiLabel(category, index + 1)}</td>
                   <td>{formatPrice(value)}</td>
                 </tr>
               ))}
+              {Object.keys(businessReport.chiPhi.byCategory).length === 0 && (
+                <tr>
+                  <td></td>
+                  <td colSpan={2} style={{ color: '#999', fontStyle: 'italic' }}>Chưa có chi phí trong khoảng thời gian này</td>
+                </tr>
+              )}
               <tr className={styles.totalRow}>
                 <td></td>
                 <td><strong>Tổng chi phí</strong></td>
@@ -395,206 +448,6 @@ const ShiftClosingPage = () => {
       {!businessReport && !loadingBusinessReport && (
         <div className={styles.emptyState}>
           <p>Vui lòng chọn khoảng thời gian và nhấn &quot;Tạo&quot; để xem báo cáo</p>
-        </div>
-      )}
-
-      {/* Phần báo cáo chốt ca cũ - có thể ẩn hoặc giữ lại */}
-      {report && (
-        <div style={{ marginTop: '3rem' }}>
-          <div className={styles.header}>
-            <div className={styles.headerMain}>
-              <h1>
-                <FaFileAlt /> Báo cáo chốt ca
-              </h1>
-              <p>Xem báo cáo chi tiết của các phiên làm việc</p>
-            </div>
-            <div className={styles.headerActions}>
-              <button className={styles.printBtn} onClick={handlePrint} disabled={!report}>
-                <FaPrint /> In báo cáo
-              </button>
-              <button className={styles.excelBtn} onClick={handleExportExcel} disabled={!report}>
-                <FaFileExcel /> Xuất Excel
-              </button>
-            </div>
-          </div>
-
-      <div id="shift-closing-report" className={styles.reportContent}>
-        {/* Thông tin phiên làm việc */}
-        <div className={styles.section}>
-          <h2>Thông tin phiên làm việc</h2>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoItem}>
-              <span>Mã PLV:</span>
-              <strong>{report.phienLamViec.MaPhienLamViec}</strong>
-            </div>
-            <div className={styles.infoItem}>
-              <span>Mở ca:</span>
-              <strong>
-                {report.phienLamViec.ThoiGianMo 
-                  ? formatDateTime(report.phienLamViec.ThoiGianMo)
-                  : 'Chưa có'}
-              </strong>
-            </div>
-            <div className={styles.infoItem}>
-              <span>Đóng ca:</span>
-              <strong>
-                {report.phienLamViec.ThoiGianDong 
-                  ? formatDateTime(report.phienLamViec.ThoiGianDong)
-                  : 'Chưa đóng'}
-              </strong>
-            </div>
-            <div className={styles.infoItem}>
-              <span>Giờ in:</span>
-              <strong>{report.tongKet.gioIn ? formatDateTime(report.tongKet.gioIn) : formatDateTime(new Date().toISOString())}</strong>
-            </div>
-            <div className={styles.infoItem}>
-              <span>Thu ngân:</span>
-              <strong>{report.phienLamViec.nhanVien?.TenNhanVien || 'Chưa xác định'}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Tổng kết */}
-        <div className={styles.summaryGrid}>
-          <div className={styles.summaryCard}>
-            <FaMoneyBillWave />
-            <div>
-              <span>Số dư đầu</span>
-              <strong>{formatPrice(report.tongKet.soDuDau || 0)}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaChartLine />
-            <div>
-              <span>Doanh thu</span>
-              <strong>{formatPrice(report.tongKet.totalRevenue)}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaTags />
-            <div>
-              <span>Tổng giảm giá món</span>
-              <strong>{formatPrice(report.tongKet.totalGiamGiaMon || 0)}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaTags />
-            <div>
-              <span>Tổng chiết khấu</span>
-              <strong>{formatPrice(report.tongKet.totalChietKhau || 0)}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaBox />
-            <div>
-              <span>Tổng thu/chi</span>
-              <strong>{formatPrice((report.tongKet.totalThu || 0) + (report.tongKet.totalChi || 0))}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaMoneyBillWave />
-            <div>
-              <span>Tiền trong két</span>
-              <strong>{formatPrice(report.tongKet.tienTrongKet || 0)}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaReceipt />
-            <div>
-              <span>Số hóa đơn</span>
-              <strong>{report.tongKet.orderCount}</strong>
-            </div>
-          </div>
-          <div className={styles.summaryCard}>
-            <FaChartLine />
-            <div>
-              <span>Trung bình hóa đơn</span>
-              <strong>{formatPrice(report.tongKet.averageOrder || 0)}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Món và nhóm món */}
-        {report.monByNhom && Object.keys(report.monByNhom).length > 0 && (
-          <div className={styles.section}>
-            <h2>Món và nhóm món</h2>
-            <div className={styles.tableWrapper}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nhóm món</th>
-                    <th>Số lượng</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(report.monByNhom).map(([nhom, data]) => (
-                    <tr key={nhom}>
-                      <td>{data.ten}</td>
-                      <td>{data.soLuong}</td>
-                      <td>{formatPrice(data.doanhThu)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* CTKM */}
-        {report.ctkmStats && Object.keys(report.ctkmStats).length > 0 && (
-          <div className={styles.section}>
-            <h2>Chương trình khuyến mãi</h2>
-            <div className={styles.tableWrapper}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Tên CTKM</th>
-                    <th>Số hóa đơn</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(report.ctkmStats).map(([maCTKM, data]) => (
-                    <tr key={maCTKM}>
-                      <td>{data.ten}</td>
-                      <td>{data.soHoaDon}</td>
-                      <td>{formatPrice(data.doanhThu)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Phương thức thanh toán */}
-        {report.paymentMethods && Object.keys(report.paymentMethods).length > 0 && (
-          <div className={styles.section}>
-            <h2>Phương thức thanh toán</h2>
-            <div className={styles.tableWrapper}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Phương thức</th>
-                    <th>Số hóa đơn</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(report.paymentMethods).map(([method, data]) => (
-                    <tr key={method}>
-                      <td>{method}</td>
-                      <td>{data.soHoaDon}</td>
-                      <td>{formatPrice(data.doanhThu)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
         </div>
       )}
     </div>

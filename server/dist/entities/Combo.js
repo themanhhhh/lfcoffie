@@ -20,10 +20,9 @@ __decorate([
     __metadata("design:type", String)
 ], Combo.prototype, "MaCombo", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => DSMonTrongCombo_1.DSMonTrongCombo, (ds) => ds.combos, { eager: true }),
-    (0, typeorm_1.JoinColumn)({ name: "MaDSMonCombo" }),
-    __metadata("design:type", DSMonTrongCombo_1.DSMonTrongCombo)
-], Combo.prototype, "dsMonTrongCombo", void 0);
+    (0, typeorm_1.OneToMany)(() => DSMonTrongCombo_1.DSMonTrongCombo, (ds) => ds.combo),
+    __metadata("design:type", Array)
+], Combo.prototype, "dsMonTrongCombos", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: "varchar", length: 100 }),
     __metadata("design:type", String)
