@@ -290,7 +290,7 @@ const ShiftClosingPage = () => {
       const chiPhiCount = sortedChiPhi.length
       const chiPhiLabel = chiPhiCount > 0 
         ? `Chi phí (${Array.from({ length: Math.min(chiPhiCount, 5) }, (_, i) => i + 1).join('+')}${chiPhiCount > 5 ? '+' : ''})`
-        : 'Chi phí (1+2+3+4+5)'
+        : 'Chi phí '
 
       const caLam = selectedPhienLamViec 
         ? availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)?.caLam?.TenCaLam || ''
