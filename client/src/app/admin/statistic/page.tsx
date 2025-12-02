@@ -25,9 +25,9 @@ import {
 } from '../../../lib/api'
 import { exportBusinessActivity } from '../../../utils/excelExport'
 import { toast } from 'react-hot-toast'
-import jsPDF from 'jspdf'
+import { buildDailyRevenuePrintableHtml } from './DailyRevenuePrintable'
 import html2canvas from 'html2canvas'
-import { useExport } from '../../../contexts/ExportContext'
+import { jsPDF } from 'jspdf'
 
 // Helper function để lấy ngày hôm nay theo format YYYY-MM-DD
 const getTodayDate = () => {
@@ -47,6 +47,7 @@ const StatisticPage = () => {
   const [overview, setOverview] = useState<ThongKeOverview | null>(null)
   const [revenueComparison, setRevenueComparison] = useState<RevenueComparison | null>(null)
   const [sevenDaysReport, setSevenDaysReport] = useState<SevenDaysReport | null>(null)
+  const [revenueByDayReport, setRevenueByDayReport] = useState<SevenDaysReport | null>(null)
   const [top10Products, setTop10Products] = useState<Top10Product[]>([])
   const [top5Categories, setTop5Categories] = useState<Top5Category[]>([])
   const [revenueChannels, setRevenueChannels] = useState<RevenueByChannel[]>([])
@@ -55,7 +56,6 @@ const StatisticPage = () => {
   const [dateFrom, setDateFrom] = useState(getTodayDate())
   const [dateTo, setDateTo] = useState(getTodayDate())
   const [dateError, setDateError] = useState<string | null>(null)
-  const { setExportDailyRevenuePDF } = useExport()
 
   useEffect(() => {
     let ignore = false
@@ -112,6 +112,7 @@ const StatisticPage = () => {
           overviewData,
           comparisonData,
           sevenDaysData,
+          revenueByDayData,
           top10Data,
           top5Data,
           channelsData
@@ -119,6 +120,7 @@ const StatisticPage = () => {
           thongKeApi.getOverview(dateParams),
           thongKeApi.compareRevenueWithYesterday(),
           thongKeApi.get7DaysReport(),
+          dateParams ? thongKeApi.getRevenueByDay(dateParams) : thongKeApi.get7DaysReport(),
           thongKeApi.getTop10Products(dateParams),
           thongKeApi.getTop5Categories(dateParams),
           thongKeApi.getRevenueByChannel(dateParams)
@@ -129,6 +131,7 @@ const StatisticPage = () => {
         setOverview(overviewData)
         setRevenueComparison(comparisonData)
         setSevenDaysReport(sevenDaysData)
+        setRevenueByDayReport(revenueByDayData)
         setTop10Products(top10Data)
         setTop5Categories(top5Data)
         setRevenueChannels(channelsData)
@@ -182,220 +185,92 @@ const StatisticPage = () => {
     }
   }
 
-  const handleExportDailyRevenuePDF = useCallback(async () => {
-    if (!sevenDaysReport || !sevenDaysReport.dailyData) {
-      toast.error('Chưa có dữ liệu để xuất PDF')
+  const handleExportBusinessActivity = () => {
+    if (!overview || !revenueComparison) {
+      toast.error('Chưa có dữ liệu để xuất Excel')
+      return
+    }
+    try {
+      exportBusinessActivity(overview, revenueComparison)
+      toast.success('Xuất Excel thành công!')
+    } catch (err) {
+      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
+  }
+
+  const handleExportDailyRevenuePDF = async () => {
+    console.log('📄 Export PDF clicked')
+    console.log('revenueByDayReport:', revenueByDayReport)
+    console.log('sevenDaysReport:', sevenDaysReport)
+    
+    const reportToUse = revenueByDayReport || sevenDaysReport
+    if (!reportToUse || !reportToUse.dailyData) {
+      console.error('❌ No report data:', { reportToUse })
+      toast.error('Chưa có dữ liệu để in')
       return
     }
 
     try {
-      toast.loading('Đang tạo PDF...', { id: 'pdf-export' })
+      console.log('✅ Building HTML...')
+      toast.loading('Đang tạo PDF...')
+      const html = buildDailyRevenuePrintableHtml(reportToUse, dateFrom, dateTo)
+      
+      // Create a temporary div to render HTML
+      const tempContainer = document.createElement('div')
+      tempContainer.innerHTML = html
+      tempContainer.style.position = 'fixed'
+      tempContainer.style.left = '-9999px'
+      tempContainer.style.top = '-9999px'
+      tempContainer.style.width = '900px'
+      document.body.appendChild(tempContainer)
 
-      const startDate = dateFrom || sevenDaysReport.period.startDate
-      const endDate = dateTo || sevenDaysReport.period.endDate
-      const dailyData = sevenDaysReport.dailyData.map(d => ({
-        date: d.date,
-        revenue: d.revenue,
-        orderCount: d.orderCount || 0
-      }))
-
-      // Tạo iframe ẩn với nội dung báo cáo
-      const iframe = document.createElement('iframe')
-      iframe.style.position = 'absolute'
-      iframe.style.left = '-9999px'
-      iframe.style.top = '0'
-      iframe.style.width = '210mm'
-      iframe.style.height = '297mm'
-      iframe.style.border = 'none'
-
-      document.body.appendChild(iframe)
-
-      // Tính tổng doanh thu và số hóa đơn
-      const totalRevenue = dailyData.reduce((sum, d) => sum + d.revenue, 0)
-      const totalOrders = dailyData.reduce((sum, d) => sum + d.orderCount, 0)
-      const averageRevenue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-            * {
-              margin: 0;
-              padding: 0;
-              box-sizing: border-box;
-            }
-            body {
-              font-family: 'Roboto', 'Arial', 'DejaVu Sans', sans-serif;
-              font-size: 12px;
-              line-height: 1.6;
-              letter-spacing: 0.02em;
-              color: #000;
-              padding: 20mm;
-              background: #fff;
-            }
-            h1 {
-              text-align: center;
-              font-size: 18px;
-              font-weight: bold;
-              line-height: 1.4;
-              margin-bottom: 20px;
-              letter-spacing: 0.05em;
-            }
-            .info {
-              margin-bottom: 20px;
-            }
-            .info p {
-              margin: 8px 0;
-              line-height: 1.6;
-            }
-            table {
-              width: 100%;
-              border-collapse: separate;
-              border-spacing: 0;
-              margin-top: 20px;
-            }
-            th, td {
-              border: 1px solid #ddd;
-              padding: 10px 8px;
-              text-align: left;
-              line-height: 1.5;
-              letter-spacing: 0.01em;
-            }
-            th {
-              background-color: #f5f5f5;
-              font-weight: bold;
-              line-height: 1.6;
-            }
-            td:last-child {
-              text-align: right;
-            }
-            tr {
-              line-height: 1.5;
-            }
-            .total-row {
-              background-color: #f8f9fa;
-              font-weight: bold;
-            }
-            strong {
-              font-weight: bold;
-              letter-spacing: 0.02em;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>BÁO CÁO DOANH THU BÁN HÀNG THEO NGÀY</h1>
-          <div class="info">
-            <p><strong>Từ ngày:</strong> ${new Date(startDate).toLocaleDateString('vi-VN')}</p>
-            <p><strong>Đến ngày:</strong> ${new Date(endDate).toLocaleDateString('vi-VN')}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 100px;">Ngày</th>
-                <th style="text-align: right;">Doanh thu (VND)</th>
-                <th style="text-align: right; width: 100px;">Số hóa đơn</th>
-                <th style="text-align: right;">Trung bình hóa đơn (VND)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${dailyData.map((item) => {
-        const avgPerOrder = item.orderCount > 0 ? item.revenue / item.orderCount : 0
-        return `
-                  <tr>
-                    <td>${new Date(item.date).toLocaleDateString('vi-VN')}</td>
-                    <td style="text-align: right;">${formatNumber(item.revenue)}</td>
-                    <td style="text-align: right;">${item.orderCount}</td>
-                    <td style="text-align: right;">${formatNumber(avgPerOrder)}</td>
-                  </tr>
-                `
-      }).join('')}
-              <tr class="total-row">
-                <td><strong>Tổng cộng</strong></td>
-                <td style="text-align: right;"><strong>${formatNumber(totalRevenue)}</strong></td>
-                <td style="text-align: right;"><strong>${totalOrders}</strong></td>
-                <td style="text-align: right;"><strong>${formatNumber(averageRevenue)}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        </body>
-        </html>
-      `
-
-      // Đợi iframe load xong
-      await new Promise<void>((resolve) => {
-        iframe.onload = () => {
-          resolve()
-        }
-        iframe.srcdoc = htmlContent
-      })
-
-      // Đợi font load (Google Fonts)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Lấy body của iframe
-      const iframeBody = iframe.contentDocument?.body
-      if (!iframeBody) {
-        throw new Error('Không thể truy cập iframe content')
-      }
-
-      // Chụp iframe body thành canvas
-      const canvas = await html2canvas(iframeBody, {
-        scale: 2,
+      // Convert HTML to canvas
+      console.log('✅ Converting to canvas...')
+      const canvas = await html2canvas(tempContainer, {
         useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 794, // A4 width in pixels at 96 DPI
-        windowHeight: iframeBody.scrollHeight,
-        allowTaint: false,
-        removeContainer: false,
-        imageTimeout: 15000
+        allowTaint: true,
+        scale: 2
       })
 
-      // Xóa iframe
-      document.body.removeChild(iframe)
-
-      // Tính toán kích thước PDF
+      console.log('✅ Creating PDF...')
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      
       const imgWidth = 210 // A4 width in mm
+      const pageHeight = 297 // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width
-      const pdf = new jsPDF('p', 'mm', 'a4')
-
-      // Thêm hình ảnh từ canvas vào PDF
-      const imgData = canvas.toDataURL('image/png', 1.0)
       let heightLeft = imgHeight
       let position = 0
 
-      // Thêm trang đầu
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= 297 // A4 height in mm
+      heightLeft -= pageHeight
 
-      // Thêm các trang tiếp theo nếu cần
-      while (heightLeft > 0) {
+      while (heightLeft >= 0) {
         position = heightLeft - imgHeight
         pdf.addPage()
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= 297
+        heightLeft -= pageHeight
       }
 
-      // Lưu file
-      const fileName = `BaoCaoDoanhThuTheoNgay_${startDate}_${endDate}.pdf`
-      pdf.save(fileName)
-
-      toast.success('Xuất PDF thành công!', { id: 'pdf-export' })
+      // Generate filename with date range
+      const dateStr = dateFrom && dateTo ? `${dateFrom}_${dateTo}` : 'daily_revenue'
+      const filename = `doanh_thu_${dateStr}.pdf`
+      
+      console.log('✅ Downloading PDF as', filename)
+      pdf.save(filename)
+      toast.success('Tải PDF thành công!')
+      
+      // Clean up
+      document.body.removeChild(tempContainer)
     } catch (err) {
-      toast.error('Lỗi khi xuất PDF: ' + (err instanceof Error ? err.message : 'Unknown error'), { id: 'pdf-export' })
+      console.error('❌ Error:', err)
+      toast.error('Lỗi khi xuất PDF: ' + (err instanceof Error ? err.message : 'Unknown error'))
     }
-  }, [sevenDaysReport, dateFrom, dateTo])
-
-  // Register export function to context (must be before early returns)
-  useEffect(() => {
-    setExportDailyRevenuePDF(() => handleExportDailyRevenuePDF)
-    return () => {
-      setExportDailyRevenuePDF(null)
-    }
-  }, [handleExportDailyRevenuePDF, setExportDailyRevenuePDF])
+  }
 
   if (loading) {
     return (
@@ -445,19 +320,6 @@ const StatisticPage = () => {
     .filter(channel => !channel.label.toLowerCase().includes('giao hàng') && !channel.label.toLowerCase().includes('delivery'))
     .reduce((sum, item) => sum + item.value, 0)
 
-  const handleExportBusinessActivity = () => {
-    if (!overview || !revenueComparison) {
-      toast.error('Chưa có dữ liệu để xuất Excel')
-      return
-    }
-    try {
-      exportBusinessActivity(overview, revenueComparison)
-      toast.success('Xuất Excel thành công!')
-    } catch (err) {
-      toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
-    }
-  }
-
   return (
     <div className={styles.container}>
       {/* Header */}
@@ -465,6 +327,21 @@ const StatisticPage = () => {
         <h1 className={styles.pageTitle}>
           <FaChartLine /> Thống kê
         </h1>
+        <button
+          onClick={handleExportDailyRevenuePDF}
+          style={{
+            padding: '0.6rem 1.2rem',
+            backgroundColor: '#8b6f47',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            fontWeight: 500
+          }}
+        >
+          Xuất báo cáo PDF
+        </button>
       </div>
 
       {/* Date Filter */}

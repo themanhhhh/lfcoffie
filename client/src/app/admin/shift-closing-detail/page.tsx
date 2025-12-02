@@ -15,6 +15,7 @@ import {
 import { toast } from 'react-hot-toast'
 import { phienLamViecApi, thongKeApi, ShiftClosingReport, ApiError } from '../../../lib/api'
 import { exportShiftClosingReport } from '../../../utils/excelExport'
+import { buildPrintableHtml } from './PrintableReport'
 import styles from '../shift-closing/shiftClosing.module.css'
 
 const formatPrice = (price: number) => {
@@ -94,8 +95,44 @@ const ShiftClosingDetailPage = () => {
   }
 
   const handlePrint = () => {
-    window.print()
+    if (!report) {
+      toast.error('Không có dữ liệu để in')
+      return
+    }
+
+    try {
+      const html = buildPrintableHtml(report)
+      const printWindow = window.open('', '_blank', 'width=900,height=800')
+      if (!printWindow) {
+        toast.error('Không thể mở cửa sổ in')
+        return
+      }
+      printWindow.document.open()
+      printWindow.document.write(html)
+      printWindow.document.close()
+      printWindow.focus()
+      // Try to print after load; fallback to a small timeout
+      printWindow.onload = () => {
+        try { printWindow.print() } catch (e) { /* ignore */ }
+      }
+      // Auto-close after printing (use onafterprint when available)
+      try {
+        // Some browsers support onafterprint on the window
+        (printWindow as any).onafterprint = () => {
+          try { printWindow.close() } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Fallback: close after a short delay to ensure print dialog had time
+      setTimeout(() => {
+        try { printWindow.close() } catch (e) { /* ignore */ }
+      }, 3000)
+    } catch (err) {
+      toast.error('Lỗi khi mở trang in: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
   }
+
+
 
   const handleExportExcel = () => {
     if (!report) {
@@ -169,7 +206,8 @@ const ShiftClosingDetailPage = () => {
       )}
 
       {report && (
-      <div className={styles.reportContent}>
+      <div id="invoice-print" className={styles.reportContent}>
+        
         {/* Thông tin phiên làm việc */}
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>

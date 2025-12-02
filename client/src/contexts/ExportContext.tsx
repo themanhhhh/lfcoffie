@@ -2,8 +2,8 @@
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react'
 
 interface ExportContextType {
-  exportDailyRevenuePDF: (() => Promise<void>) | null
-  setExportDailyRevenuePDF: Dispatch<SetStateAction<(() => Promise<void>) | null>>
+  exportDailyRevenuePDF: (() => void) | null
+  setExportDailyRevenuePDF: Dispatch<SetStateAction<(() => void) | null>>
 }
 
 const ExportContext = createContext<ExportContextType | undefined>(undefined)
@@ -21,7 +21,7 @@ interface ExportProviderProps {
 }
 
 export const ExportProvider: React.FC<ExportProviderProps> = ({ children }) => {
-  const [exportDailyRevenuePDF, setExportDailyRevenuePDF] = useState<(() => Promise<void>) | null>(null)
+  const [exportDailyRevenuePDF, setExportDailyRevenuePDF] = useState<(() => void) | null>(null)
 
   return (
     <ExportContext.Provider value={{ exportDailyRevenuePDF, setExportDailyRevenuePDF }}>

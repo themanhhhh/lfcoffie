@@ -456,6 +456,51 @@
   .summaryCard {
     page-break-inside: avoid;
   }
+
+  /* Print-specific compact layout for invoice-print */
+  #invoice-print {
+    width: 190mm;
+    margin: 0 auto;
+    color: #000;
+    background: white;
+    font-size: 12px;
+    font-family: "Helvetica Neue", Arial, "Segoe UI", Roboto, -apple-system, sans-serif;
+    line-height: 1.2;
+  }
+
+  /* Hide icons and non-essential decorative styles on print */
+  #invoice-print svg { display: none; }
+  #invoice-print .summaryCard { box-shadow: none; background: transparent; padding: 0.4rem; }
+  #invoice-print .section { box-shadow: none; border: none; padding: 0.5rem 0; }
+
+  /* Print-only header and summary */
+  .printOnly { display: none; }
+  #invoice-print .printHeader { display: block; text-align: left; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+  #invoice-print .printLogo { font-weight: 800; color: #3f2c1f; font-size: 14px; letter-spacing: 0.6px; }
+  #invoice-print .printHeader h1 { font-size: 18px; margin: 6px 0 8px 0; color: #111; }
+  #invoice-print .printMeta { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; margin-bottom: 8px; color: #222; }
+  #invoice-print .printMeta div { min-width: 120px; }
+
+  /* Summary cards laid out compactly */
+  #invoice-print .printSummaryTable { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  #invoice-print .printSummaryTable div { background: #f7f7f7; padding: 8px; border-radius: 4px; text-align: left; }
+  #invoice-print .printSummaryTable div strong { display: block; font-size: 11px; color: #555; margin-bottom: 4px; }
+  #invoice-print .printSummaryTable div div { font-weight: 700; font-size: 13px; color: #111; }
+
+  /* Make tables compact and black/white with subtle borders */
+  #invoice-print table { width: 100%; border-collapse: collapse; font-size: 11px; color: #111; }
+  #invoice-print th, #invoice-print td { border: 1px solid #ddd; padding: 8px; }
+  #invoice-print thead th { background: #f0f0f0; font-weight: 700; }
+  #invoice-print tbody tr:nth-child(even) { background: #fafafa; }
+
+  /* Ensure one-page layout: avoid page breaks inside main sections */
+  #invoice-print .section, #invoice-print .summaryGrid, #invoice-print .tableWrapper { page-break-inside: avoid; }
+
+  /* Show print-only elements, hide screen-only */
+  .printOnly { display: block; }
+  .no-print { display: none !important; }
+
+  @page { size: A4; margin: 10mm; }
 }
 
 @media (max-width: 768px) {

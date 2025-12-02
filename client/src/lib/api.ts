@@ -607,8 +607,13 @@ export const thongKeApi = {
   compareRevenueWithYesterday: (): Promise<RevenueComparison> => {
     return apiFetch<RevenueComparison>('/api/thongke/compare-yesterday');
   },
-  get7DaysReport: (): Promise<SevenDaysReport> => {
-    return apiFetch<SevenDaysReport>('/api/thongke/7days-report');
+  get7DaysReport: (params?: { startDate?: string; endDate?: string }): Promise<SevenDaysReport> => {
+    const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch<SevenDaysReport>(`/api/thongke/7days-report${queryString}`);
+  },
+  getRevenueByDay: (params?: { startDate?: string; endDate?: string }): Promise<SevenDaysReport> => {
+    const queryString = params ? '?' + new URLSearchParams(params).toString() : '';
+    return apiFetch<SevenDaysReport>(`/api/thongke/revenue-by-day${queryString}`);
   },
   getTop10Products: (params?: { startDate?: string; endDate?: string }): Promise<Top10Product[]> => {
     const queryString = params ? '?' + new URLSearchParams(params).toString() : '';

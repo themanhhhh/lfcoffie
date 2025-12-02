@@ -26,6 +26,93 @@ export class ThongKeController {
     return `${year}-${month}-${day}`;
   }
 
+  // Lấy báo cáo doanh thu theo ngày với filter
+  async getRevenueByDay(req: Request, res: Response) {
+    try {
+      const { startDate, endDate } = req.query;
+
+      // Nếu không có ngày, trả về 7 ngày gần nhất
+      let start: Date;
+      let end: Date;
+
+      if (startDate && endDate) {
+        start = new Date(startDate as string);
+        end = new Date(endDate as string);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+      } else {
+        // Mặc định: 7 ngày gần nhất
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+        start = new Date(end);
+        start.setDate(start.getDate() - 6);
+        start.setHours(0, 0, 0, 0);
+      }
+
+      // Lấy tất cả đơn hàng trong khoảng thời gian
+      const orders = await this.donHangRepo.find({
+        where: {
+          Ngay: Between(start, end)
+        },
+        relations: ['chiTietDonHangs']
+      });
+
+      // Nhóm theo ngày
+      const dailyStats: Record<string, { revenue: number; orderCount: number; date: string }> = {};
+
+      // Khởi tạo tất cả ngày trong khoảng
+      const currentDate = new Date(start);
+      while (currentDate <= end) {
+        const dateStr = this.formatDateLocal(currentDate);
+        dailyStats[dateStr] = {
+          revenue: 0,
+          orderCount: 0,
+          date: dateStr
+        };
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      // Tính toán cho từng đơn hàng
+      orders.forEach(dh => {
+        const orderDate = dh.Ngay instanceof Date ? dh.Ngay : new Date(dh.Ngay);
+        const dateStr = this.formatDateLocal(orderDate);
+        if (dailyStats[dateStr]) {
+          const dhTotal = dh.chiTietDonHangs?.reduce((s, ct) => s + (ct.SoLuong * ct.DonGia), 0) || 0;
+          dailyStats[dateStr].revenue += dhTotal;
+          dailyStats[dateStr].orderCount += 1;
+        }
+      });
+
+      // Chuyển đổi thành array và sắp xếp theo ngày
+      const dailyData = Object.values(dailyStats).sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      // Tính tổng
+      const totalRevenue = dailyData.reduce((sum, day) => sum + day.revenue, 0);
+      const totalOrders = dailyData.reduce((sum, day) => sum + day.orderCount, 0);
+      const daysCount = dailyData.length;
+      const averageRevenue = daysCount > 0 ? totalRevenue / daysCount : 0;
+
+      return res.json({
+        period: {
+          startDate: this.formatDateLocal(start),
+          endDate: this.formatDateLocal(end),
+          days: daysCount
+        },
+        summary: {
+          totalRevenue,
+          totalOrders,
+          averageRevenue: Math.round(averageRevenue),
+          averageOrdersPerDay: daysCount > 0 ? Math.round(totalOrders / daysCount) : 0
+        },
+        dailyData
+      });
+    } catch (e: any) {
+      return res.status(500).json({ message: "Lỗi báo cáo doanh thu theo ngày", error: e.message });
+    }
+  }
+
   // Lấy tổng quan thống kê
   async getOverview(req: Request, res: Response) {
     try {
