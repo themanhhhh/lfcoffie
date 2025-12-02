@@ -24,10 +24,10 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { id: 'categories', href: '/admin/category', label: 'Danh mục', icon: FaList },
   { id: 'orders', href: '/admin/orders', label: 'Đơn hàng', icon: FaReceipt },
   { id: 'revenue-expense', href: '/admin/revenue-expense', label: 'Thu Chi', icon: FaMoneyBillWave },
+  { id: 'staff', href: '/admin/staff', label: 'Nhân viên', icon: FaUsers },
+  { id: 'vouchers', href: '/admin/voucher', label: 'Voucher', icon: FaTicketAlt },
   { id: 'shift-closing', href: '/admin/shift-closing', label: 'Báo cáo kết quả kinh doanh', icon: FaFileAlt },
   { id: 'shift-closing-detail', href: '/admin/shift-closing-detail', label: 'Báo cáo chốt ca', icon: FaFileAlt },
-  { id: 'staff', href: '/admin/staff', label: 'Nhân viên', icon: FaUsers },
-  { id: 'vouchers', href: '/admin/voucher', label: 'Voucher', icon: FaTicketAlt }
 ]
 
 interface AdminLayoutProps {
