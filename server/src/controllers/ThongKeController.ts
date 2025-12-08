@@ -235,10 +235,11 @@ export class ThongKeController {
       donHangs.forEach(dh => {
         const total = dh.chiTietDonHangs?.reduce((s, ct) => s + (ct.SoLuong * ct.DonGia), 0) || 0;
         
-        // Phân loại theo phương thức thanh toán hoặc có thể thêm logic khác
-        if (dh.PhuongThucThanhToan.includes('tại quán') || dh.PhuongThucThanhToan.includes('tại chỗ')) {
+        // Phân loại theo LoaiDonHang
+        const loaiDonHang = dh.LoaiDonHang || 'tại quán';
+        if (loaiDonHang.includes('tại quán') || loaiDonHang.includes('tại chỗ')) {
           taiQuan += total;
-        } else if (dh.PhuongThucThanhToan.includes('giao hàng')) {
+        } else if (loaiDonHang.includes('giao hàng')) {
           giaoHang += total;
         } else {
           mangDi += total;
@@ -410,6 +411,14 @@ export class ThongKeController {
         }
         paymentMethods[paymentMethod].soHoaDon += 1;
         paymentMethods[paymentMethod].doanhThu += dhSubtotal;
+
+        // Thống kê loại đơn hàng (tại quán, mang đi, giao hàng)
+        const loaiDonHang = dh.LoaiDonHang || 'tại quán';
+        if (!orderSources[loaiDonHang]) {
+          orderSources[loaiDonHang] = { ten: loaiDonHang, soHoaDon: 0, doanhThu: 0 };
+        }
+        orderSources[loaiDonHang].soHoaDon += 1;
+        orderSources[loaiDonHang].doanhThu += dhSubtotal;
       });
 
       // Tính tổng thu từ ThuChi

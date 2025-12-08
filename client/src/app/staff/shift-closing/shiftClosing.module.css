@@ -69,6 +69,16 @@
   border-color: #8B4513;
 }
 
+.currentPhienInfo {
+  padding: 0.6rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: white;
+  color: #333;
+  min-width: 260px;
+}
+
 .printBtn,
 .excelBtn {
   display: flex;

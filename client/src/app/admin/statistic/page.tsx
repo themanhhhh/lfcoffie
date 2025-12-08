@@ -44,7 +44,8 @@ const formatNumber = (num: number): string => {
 }
 
 const StatisticPage = () => {
-  const [overview, setOverview] = useState<ThongKeOverview | null>(null)
+  const [todayOverview, setTodayOverview] = useState<ThongKeOverview | null>(null) // For KPI cards
+  const [filteredOverview, setFilteredOverview] = useState<ThongKeOverview | null>(null) // For bottom section
   const [revenueComparison, setRevenueComparison] = useState<RevenueComparison | null>(null)
   const [sevenDaysReport, setSevenDaysReport] = useState<SevenDaysReport | null>(null)
   const [revenueByDayReport, setRevenueByDayReport] = useState<SevenDaysReport | null>(null)
@@ -53,8 +54,8 @@ const StatisticPage = () => {
   const [revenueChannels, setRevenueChannels] = useState<RevenueByChannel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [dateFrom, setDateFrom] = useState(getTodayDate())
-  const [dateTo, setDateTo] = useState(getTodayDate())
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [dateError, setDateError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -69,9 +70,7 @@ const StatisticPage = () => {
         const hasTo = !!dateTo
         if ((hasFrom && !hasTo) || (!hasFrom && hasTo)) {
           setDateError('Vui lòng chọn đầy đủ cả Từ ngày và Đến ngày')
-          setOverview(null)
-          setRevenueComparison(null)
-          setSevenDaysReport(null)
+          setFilteredOverview(null)
           setTop10Products([])
           setTop5Categories([])
           setRevenueChannels([])
@@ -88,9 +87,7 @@ const StatisticPage = () => {
 
           if (from > to) {
             setDateError('Ngày bắt đầu không được lớn hơn ngày kết thúc')
-            setOverview(null)
-            setRevenueComparison(null)
-            setSevenDaysReport(null)
+            setFilteredOverview(null)
             setTop10Products([])
             setTop5Categories([])
             setRevenueChannels([])
@@ -108,8 +105,16 @@ const StatisticPage = () => {
           endDate: dateTo
         } : undefined
 
+        // Today params for KPI cards
+        const today = getTodayDate()
+        const todayParams = {
+          startDate: today,
+          endDate: today
+        }
+
         const [
-          overviewData,
+          todayOverviewData,
+          filteredOverviewData,
           comparisonData,
           sevenDaysData,
           revenueByDayData,
@@ -117,18 +122,20 @@ const StatisticPage = () => {
           top5Data,
           channelsData
         ] = await Promise.all([
-          thongKeApi.getOverview(dateParams),
+          thongKeApi.getOverview(todayParams), // Always fetch today for KPI cards
+          dateParams ? thongKeApi.getOverview(dateParams) : thongKeApi.getOverview(), // Filtered or default
           thongKeApi.compareRevenueWithYesterday(),
           thongKeApi.get7DaysReport(),
           dateParams ? thongKeApi.getRevenueByDay(dateParams) : thongKeApi.get7DaysReport(),
-          thongKeApi.getTop10Products(dateParams),
-          thongKeApi.getTop5Categories(dateParams),
-          thongKeApi.getRevenueByChannel(dateParams)
+          dateParams ? thongKeApi.getTop10Products(dateParams) : thongKeApi.getTop10Products(),
+          dateParams ? thongKeApi.getTop5Categories(dateParams) : thongKeApi.getTop5Categories(),
+          dateParams ? thongKeApi.getRevenueByChannel(dateParams) : thongKeApi.getRevenueByChannel()
         ])
 
         if (ignore) return
 
-        setOverview(overviewData)
+        setTodayOverview(todayOverviewData)
+        setFilteredOverview(filteredOverviewData)
         setRevenueComparison(comparisonData)
         setSevenDaysReport(sevenDaysData)
         setRevenueByDayReport(revenueByDayData)
@@ -155,6 +162,14 @@ const StatisticPage = () => {
     }
   }, [dateFrom, dateTo])
 
+// Helper function để format ngày thành YYYY-MM-DD trong múi giờ local
+const formatDateLocal = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
   const handleQuickDateFilter = (type: 'today' | 'week' | 'month' | 'clear') => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -167,31 +182,36 @@ const StatisticPage = () => {
     }
 
     if (type === 'today') {
-      const dateStr = today.toISOString().split('T')[0]
+      // Hôm nay: format đúng múi giờ local
+      const dateStr = formatDateLocal(today)
       setDateFrom(dateStr)
       setDateTo(dateStr)
     } else if (type === 'week') {
+      // Tuần này: từ thứ 2 (Monday) đến hôm nay
+      const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Số ngày từ Monday đến hôm nay
       const weekStart = new Date(today)
-      weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
-      const weekEnd = new Date(weekStart)
-      weekEnd.setDate(weekStart.getDate() + 6)
-      setDateFrom(weekStart.toISOString().split('T')[0])
-      setDateTo(weekEnd.toISOString().split('T')[0])
+      weekStart.setDate(today.getDate() - daysToMonday)
+      
+      setDateFrom(formatDateLocal(weekStart))
+      setDateTo(formatDateLocal(today))
     } else if (type === 'month') {
+      // Tháng này: từ ngày 1 đến ngày cuối tháng
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-      setDateFrom(monthStart.toISOString().split('T')[0])
-      setDateTo(monthEnd.toISOString().split('T')[0])
+      
+      setDateFrom(formatDateLocal(monthStart))
+      setDateTo(formatDateLocal(monthEnd))
     }
   }
 
   const handleExportBusinessActivity = () => {
-    if (!overview || !revenueComparison) {
+    if (!todayOverview || !revenueComparison) {
       toast.error('Chưa có dữ liệu để xuất Excel')
       return
     }
     try {
-      exportBusinessActivity(overview, revenueComparison)
+      exportBusinessActivity(todayOverview, revenueComparison)
       toast.success('Xuất Excel thành công!')
     } catch (err) {
       toast.error('Lỗi khi xuất Excel: ' + (err instanceof Error ? err.message : 'Unknown error'))
@@ -288,8 +308,8 @@ const StatisticPage = () => {
     )
   }
 
-  // Tính toán summary từ dữ liệu thực
-  const revenueSummary = overview && revenueComparison
+  // KPI cards - chỉ dùng data hôm nay
+  const revenueSummary = todayOverview && revenueComparison
     ? [
       {
         title: 'Doanh thu hôm nay',
@@ -299,15 +319,15 @@ const StatisticPage = () => {
         description: `So với hôm qua (${revenueComparison.yesterday.revenue.toLocaleString('vi-VN')} đ)`
       },
       {
-        title: 'Chi phí',
-        value: overview.totalExpense,
+        title: 'Chi phí hôm nay',
+        value: todayOverview.totalExpense,
         change: 0,
         positive: false,
-        description: 'Tổng chi phí trong kỳ'
+        description: 'Tổng chi phí hôm nay'
       },
       {
-        title: 'Số hóa đơn',
-        value: overview.invoiceCount,
+        title: 'Số hóa đơn hôm nay',
+        value: todayOverview.invoiceCount,
         change: revenueComparison.comparison.isIncrease ?
           ((revenueComparison.today.orderCount - revenueComparison.yesterday.orderCount) / Math.max(revenueComparison.yesterday.orderCount, 1)) * 100 : 0,
         positive: revenueComparison.today.orderCount >= revenueComparison.yesterday.orderCount,
@@ -340,87 +360,11 @@ const StatisticPage = () => {
             fontWeight: 500
           }}
         >
-          Xuất báo cáo PDF
+          Xuất báo cáo doanh thu bán hàng theo ngày
         </button>
       </div>
 
-      {/* Date Filter */}
-      <div className={styles.dateFilterSection}>
-        <div className={styles.dateFilterGroup}>
-          <FaCalendarAlt />
-          <div className={styles.dateInputs}>
-            <input
-              type="date"
-              className={styles.dateInput}
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              placeholder="Từ ngày"
-              max={dateTo || undefined}
-            />
-            <span className={styles.dateSeparator}>-</span>
-            <input
-              type="date"
-              className={styles.dateInput}
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              placeholder="Đến ngày"
-              min={dateFrom || undefined}
-            />
-          </div>
-          <div className={styles.quickDateButtons}>
-            <button
-              type="button"
-              className={styles.quickDateBtn}
-              onClick={() => handleQuickDateFilter('today')}
-              title="Hôm nay"
-            >
-              Hôm nay
-            </button>
-            <button
-              type="button"
-              className={styles.quickDateBtn}
-              onClick={() => handleQuickDateFilter('week')}
-              title="Tuần này"
-            >
-              Tuần này
-            </button>
-            <button
-              type="button"
-              className={styles.quickDateBtn}
-              onClick={() => handleQuickDateFilter('month')}
-              title="Tháng này"
-            >
-              Tháng này
-            </button>
-            {(dateFrom || dateTo) && (
-              <button
-                type="button"
-                className={styles.quickDateBtn}
-                onClick={() => handleQuickDateFilter('clear')}
-                title="Xóa bộ lọc"
-              >
-                <FaTimes />
-              </button>
-            )}
-          </div>
-        </div>
-        {(dateError || dateFrom || dateTo) && (
-          <div className={styles.dateFilterInfo}>
-            {dateError ? (
-              <span style={{ color: 'red' }}>{dateError}</span>
-            ) : (
-              <span>
-                Đang lọc: {dateFrom ? `Từ ${new Date(dateFrom).toLocaleDateString('vi-VN')}` : ''}
-                {dateFrom && dateTo ? ' - ' : ''}
-                {dateTo ? `Đến ${new Date(dateTo).toLocaleDateString('vi-VN')}` : ''}
-                {!dateFrom && !dateTo ? 'Tất cả thời gian' : ''}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Summary Cards */}
+      {/* Summary Cards - HÔM NAY */}
       <section className={styles.summaryGrid}>
         {revenueSummary.map(item => (
           <div key={item.title} className={styles.summaryCard}>
@@ -493,6 +437,82 @@ const StatisticPage = () => {
           </div>
         </section>
       )}
+
+      {/* Date Filter - áp dụng cho các phần bên dưới */}
+      <div className={styles.dateFilterSection}>
+        <div className={styles.dateFilterGroup}>
+          <FaCalendarAlt />
+          <div className={styles.dateInputs}>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              placeholder="Từ ngày"
+              max={dateTo || undefined}
+            />
+            <span className={styles.dateSeparator}>-</span>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              placeholder="Đến ngày"
+              min={dateFrom || undefined}
+            />
+          </div>
+          <div className={styles.quickDateButtons}>
+            <button
+              type="button"
+              className={styles.quickDateBtn}
+              onClick={() => handleQuickDateFilter('today')}
+              title="Hôm nay"
+            >
+              Hôm nay
+            </button>
+            <button
+              type="button"
+              className={styles.quickDateBtn}
+              onClick={() => handleQuickDateFilter('week')}
+              title="Tuần này"
+            >
+              Tuần này
+            </button>
+            <button
+              type="button"
+              className={styles.quickDateBtn}
+              onClick={() => handleQuickDateFilter('month')}
+              title="Tháng này"
+            >
+              Tháng này
+            </button>
+            {(dateFrom || dateTo) && (
+              <button
+                type="button"
+                className={styles.quickDateBtn}
+                onClick={() => handleQuickDateFilter('clear')}
+                title="Xóa bộ lọc"
+              >
+                <FaTimes />
+              </button>
+            )}
+          </div>
+        </div>
+        {(dateError || dateFrom || dateTo) && (
+          <div className={styles.dateFilterInfo}>
+            {dateError ? (
+              <span style={{ color: 'red' }}>{dateError}</span>
+            ) : (
+              <span>
+                Đang lọc: {dateFrom ? `Từ ${new Date(dateFrom).toLocaleDateString('vi-VN')}` : ''}
+                {dateFrom && dateTo ? ' - ' : ''}
+                {dateTo ? `Đến ${new Date(dateTo).toLocaleDateString('vi-VN')}` : ''}
+                {!dateFrom && !dateTo ? 'Không có bộ lọc' : ''}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       <section className={styles.gridTwo}>
         {/* Revenue Channels */}
@@ -661,11 +681,11 @@ const StatisticPage = () => {
         </div>
 
         {/* Overview Summary */}
-        {overview && (
+        {filteredOverview && (
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <h2>
-                <FaClipboardCheck /> Tổng quan {dateFrom || dateTo ? 'kỳ chọn' : 'tuần này'}
+                <FaClipboardCheck /> Tổng quan {dateFrom || dateTo ? 'kỳ chọn' : '7 ngày gần nhất'}
               </h2>
               <span>
                 {dateFrom || dateTo
@@ -677,16 +697,16 @@ const StatisticPage = () => {
             <div className={styles.overviewList}>
               <div className={styles.overviewItem}>
                 <span>Tổng doanh thu:</span>
-                <strong>{overview.totalRevenue.toLocaleString('vi-VN')} ₫</strong>
+                <strong>{filteredOverview.totalRevenue.toLocaleString('vi-VN')} ₫</strong>
               </div>
               <div className={styles.overviewItem}>
                 <span>Tổng chi phí:</span>
-                <strong>{overview.totalExpense.toLocaleString('vi-VN')} ₫</strong>
+                <strong>{filteredOverview.totalExpense.toLocaleString('vi-VN')} ₫</strong>
               </div>
 
               <div className={styles.overviewItem}>
                 <span>Số hóa đơn:</span>
-                <strong>{overview.invoiceCount}</strong>
+                <strong>{filteredOverview.invoiceCount}</strong>
               </div>
 
             </div>

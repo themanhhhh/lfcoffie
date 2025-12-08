@@ -40,7 +40,7 @@ const STATUS_OPTIONS: { value: 'all' | StaffStatus; label: string }[] = [
   { value: 'all', label: 'Trạng thái' },
   { value: 'active', label: 'Đang làm việc' },
   { value: 'probation', label: 'Thử việc' },
-  { value: 'leave', label: 'Tạm nghỉ' }
+  { value: 'leave', label: 'Thôi việc' }
 ]
 
 const statusClassName: Record<StaffStatus, string> = {
@@ -52,7 +52,7 @@ const statusClassName: Record<StaffStatus, string> = {
 const statusLabel: Record<StaffStatus, string> = {
   active: 'Đang làm việc',
   probation: 'Thử việc',
-  leave: 'Tạm nghỉ'
+  leave: 'Thôi việc'
 }
 
 const formatDate = (value?: string | null) => {
@@ -727,7 +727,7 @@ const StaffPage = () => {
                     >
                       <option value="active">Đang làm việc</option>
                       <option value="probation">Thử việc</option>
-                      <option value="leave">Tạm nghỉ</option>
+                      <option value="leave">Thôi việc</option>
                     </select>
                   </label>
                 </div>

@@ -16,11 +16,14 @@ export class DonHang {
   @JoinColumn({ name: "MaCTKM" })
   ctkm?: CTKM | null;
 
-  @Column({ type: "date" })
+  @Column({ type: "timestamp" })
   Ngay!: Date;
 
   @Column({ type: "varchar", length: 50 })
   PhuongThucThanhToan!: string;
+
+  @Column({ type: "varchar", length: 50, default: "tại quán" })
+  LoaiDonHang!: string; // "tại quán", "mang đi", "giao hàng"
 
   @OneToMany(() => ChiTietDonHang, (ctdh) => ctdh.donHang)
   chiTietDonHangs!: ChiTietDonHang[];

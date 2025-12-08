@@ -14,12 +14,13 @@ import styles from './orders.module.css'
 import { donHangApi, chiTietDonHangApi, ApiError, DonHang, ChiTietDonHang } from '../../../lib/api'
 import { toast } from 'react-hot-toast'
 
-// Helper function để lấy ngày hôm nay theo format YYYY-MM-DD
-const getTodayDate = () => {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
+// Helper: format Date to YYYY-MM-DD in local timezone
+const formatDateLocal = (date: Date) => {
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
@@ -29,8 +30,8 @@ const OrdersPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [paymentFilter, setPaymentFilter] = useState('all')
-  const [dateFrom, setDateFrom] = useState(getTodayDate())
-  const [dateTo, setDateTo] = useState(getTodayDate())
+  const [dateFrom, setDateFrom] = useState(() => formatDateLocal(new Date()))
+  const [dateTo, setDateTo] = useState(() => formatDateLocal(new Date()))
   const [selectedOrder, setSelectedOrder] = useState<DonHang | null>(null)
   const [showDetails, setShowDetails] = useState(false)
   const [orderDetails, setOrderDetails] = useState<ChiTietDonHang[]>([])
@@ -49,15 +50,25 @@ const OrdersPage = () => {
       ])
 
       // Attach order details to orders
-      // Backend hiện trả về "donHang.MaDonHang" trong chi tiết, nên ưu tiên dùng field này
-      const ordersWithDetails = ordersData.map(order => ({
-        ...order,
-        chiTietDonHangs: detailsData.filter(detail => {
-          const maDhFromRelation = detail.donHang?.MaDonHang
-          const maDhScalar = detail.MaDH // MaDH đã có trong interface ChiTietDonHang
-          return maDhFromRelation === order.MaDonHang || maDhScalar === order.MaDonHang
-        })
-      }))
+      // Backend đã trả về phienLamViec trong donHang (eager loading)
+      const ordersWithDetails = ordersData.map(order => {
+        // Lấy phienLamViec từ chi tiết đơn hàng (nếu có) hoặc từ order trực tiếp
+        const orderDetail = detailsData.find(d => 
+          d.donHang?.MaDonHang === order.MaDonHang || d.MaDH === order.MaDonHang
+        )
+        const phienFromDetail = orderDetail?.donHang?.phienLamViec
+        
+        return {
+          ...order,
+          // Ưu tiên phienLamViec từ order, nếu không có thì lấy từ chi tiết
+          phienLamViec: order.phienLamViec || phienFromDetail,
+          chiTietDonHangs: detailsData.filter(detail => {
+            const maDhFromRelation = detail.donHang?.MaDonHang
+            const maDhScalar = detail.MaDH
+            return maDhFromRelation === order.MaDonHang || maDhScalar === order.MaDonHang
+          })
+        }
+      })
       
       setOrders(ordersWithDetails)
     } catch (err) {
@@ -142,7 +153,6 @@ const OrdersPage = () => {
   const handleQuickDateFilter = (type: 'today' | 'week' | 'month' | 'clear') => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
     if (type === 'clear') {
       setDateFrom('')
       setDateTo('')
@@ -150,21 +160,22 @@ const OrdersPage = () => {
     }
     
     if (type === 'today') {
-      const dateStr = today.toISOString().split('T')[0]
+      const dateStr = formatDateLocal(today)
       setDateFrom(dateStr)
       setDateTo(dateStr)
     } else if (type === 'week') {
+      // Use Monday as start of week to today
+      const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday ...
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
       const weekStart = new Date(today)
-      weekStart.setDate(today.getDate() - today.getDay()) // Start of week (Sunday)
-      const weekEnd = new Date(weekStart)
-      weekEnd.setDate(weekStart.getDate() + 6)
-      setDateFrom(weekStart.toISOString().split('T')[0])
-      setDateTo(weekEnd.toISOString().split('T')[0])
+      weekStart.setDate(today.getDate() - daysToMonday)
+      setDateFrom(formatDateLocal(weekStart))
+      setDateTo(formatDateLocal(today))
     } else if (type === 'month') {
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
       const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-      setDateFrom(monthStart.toISOString().split('T')[0])
-      setDateTo(monthEnd.toISOString().split('T')[0])
+      setDateFrom(formatDateLocal(monthStart))
+      setDateTo(formatDateLocal(monthEnd))
     }
   }
 
@@ -322,9 +333,16 @@ const OrdersPage = () => {
                 return (
                   <tr key={order.MaDonHang}>
                     <td className={styles.orderCode}>{order.MaDonHang}</td>
-                    <td>{new Date(order.Ngay).toLocaleDateString('vi-VN')}</td>
+                    <td>{new Date(order.Ngay).toLocaleString('vi-VN')}</td>
                     <td>{order.PhuongThucThanhToan}</td>
-                    <td>{order.phienLamViec?.MaPhienLamViec || order.MaPhienLamViec}</td>
+                    <td>
+                      {order.phienLamViec ? (
+                        <span title={`NV: ${order.phienLamViec.nhanVien?.TenNhanVien || 'N/A'}`}>
+                          {order.phienLamViec.MaPhienLamViec}
+                          {order.phienLamViec.caLam && ` (${order.phienLamViec.caLam.TenCaLam})`}
+                        </span>
+                      ) : order.MaPhienLamViec || '-'}
+                    </td>
                     <td>{order.ctkm?.TenCTKM || '-'}</td>
                     <td className={styles.totalAmount}>
                       {orderTotal.toLocaleString('vi-VN')} đ
@@ -375,17 +393,34 @@ const OrdersPage = () => {
               <div className={styles.modalBody}>
                 <div className={styles.orderInfo}>
                   <div className={styles.infoRow}>
-                    <span>Ngày:</span>
-                    <span>{new Date(selectedOrder.Ngay).toLocaleDateString('vi-VN')}</span>
+                    <span>Ngày giờ:</span>
+                    <span>{new Date(selectedOrder.Ngay).toLocaleString('vi-VN')}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span>Phương thức thanh toán:</span>
                     <span>{selectedOrder.PhuongThucThanhToan}</span>
                   </div>
                   <div className={styles.infoRow}>
-                    <span>Phiên làm việc:</span>
-                    <span>{selectedOrder.phienLamViec?.MaPhienLamViec || selectedOrder.MaPhienLamViec}</span>
+                    <span>Loại đơn hàng:</span>
+                    <span>{selectedOrder.LoaiDonHang || 'Chưa xác định'}</span>
                   </div>
+                  <div className={styles.infoRow}>
+                    <span>Phiên làm việc:</span>
+                    <span>
+                      {selectedOrder.phienLamViec ? (
+                        <>
+                          {selectedOrder.phienLamViec.MaPhienLamViec}
+                          {selectedOrder.phienLamViec.caLam && ` - ${selectedOrder.phienLamViec.caLam.TenCaLam}`}
+                        </>
+                      ) : selectedOrder.MaPhienLamViec || 'N/A'}
+                    </span>
+                  </div>
+                  {selectedOrder.phienLamViec?.nhanVien && (
+                    <div className={styles.infoRow}>
+                      <span>Nhân viên:</span>
+                      <span>{selectedOrder.phienLamViec.nhanVien.TenNhanVien}</span>
+                    </div>
+                  )}
                   {selectedOrder.ctkm && (
                     <div className={styles.infoRow}>
                       <span>Khuyến mãi:</span>

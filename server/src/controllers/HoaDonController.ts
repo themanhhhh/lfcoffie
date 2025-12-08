@@ -6,7 +6,10 @@ export class HoaDonController {
   private repository = AppDataSource.getRepository(HoaDon);
 
   async getAll(req: Request, res: Response) {
-    const list = await this.repository.find({ where: { isDelete: false } });
+    const list = await this.repository.find({ 
+      where: { isDelete: false },
+      relations: ['phienLamViec', 'phienLamViec.caLam', 'phienLamViec.nhanVien']
+    });
     return res.json(list);
   }
 

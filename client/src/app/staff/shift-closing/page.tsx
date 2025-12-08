@@ -18,6 +18,7 @@ import {
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../../../contexts/AuthContext'
 import { phienLamViecApi, thongKeApi, ShiftClosingReport, ApiError } from '../../../lib/api'
+import { buildPrintableHtml } from '../../admin/shift-closing-detail/PrintableReport'
 import { exportShiftClosingReport } from '../../../utils/excelExport'
 import styles from './shiftClosing.module.css'
 
@@ -51,9 +52,11 @@ const ShiftClosingPage = () => {
     TrangThai: string
   }>>([])
 
+  const isManager = !!user?.ChucVu && /quản|admin|giám/i.test(user.ChucVu)
+
   useEffect(() => {
     loadAvailablePhienLamViec()
-  }, [])
+  }, [user])
 
   useEffect(() => {
     if (selectedPhienLamViec) {
@@ -72,11 +75,18 @@ const ShiftClosingPage = () => {
           const dateB = new Date(b.Ngay).getTime()
           return dateB - dateA
         })
-      setAvailablePhienLamViec(filtered)
+      // For non-manager roles, only allow viewing the current user's open shift (no filter)
+      let finalList = filtered
+      if (!isManager) {
+        finalList = filtered.filter(plv => (
+          (plv.nhanVien && plv.nhanVien.MaNhanVien === user?.MaNhanVien) && plv.TrangThai === 'mở'
+        ))
+      }
+      setAvailablePhienLamViec(finalList)
       
       // Tự động chọn phiên mới nhất nếu có
-      if (filtered.length > 0 && !selectedPhienLamViec) {
-        setSelectedPhienLamViec(filtered[0].MaPhienLamViec)
+      if (finalList.length > 0 && !selectedPhienLamViec) {
+        setSelectedPhienLamViec(finalList[0].MaPhienLamViec)
       }
     } catch (err) {
       console.error('Error loading phien lam viec:', err)
@@ -100,7 +110,35 @@ const ShiftClosingPage = () => {
   }
 
   const handlePrint = () => {
-    window.print()
+    if (!report) {
+      toast.error('Không có dữ liệu để in')
+      return
+    }
+    try {
+      const html = buildPrintableHtml(report)
+      const printWindow = window.open('', '_blank', 'width=900,height=800')
+      if (!printWindow) {
+        toast.error('Không thể mở cửa sổ in (có thể do popup blocker)')
+        return
+      }
+      printWindow.document.open()
+      printWindow.document.write(html)
+      printWindow.document.close()
+      printWindow.focus()
+      printWindow.onload = () => {
+        try { printWindow.print() } catch (e) { /* ignore */ }
+      }
+      try {
+        (printWindow as any).onafterprint = () => {
+          try { printWindow.close() } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
+      setTimeout(() => {
+        try { printWindow.close() } catch (e) { /* ignore */ }
+      }, 3000)
+    } catch (err) {
+      toast.error('Lỗi khi in báo cáo: ' + (err instanceof Error ? err.message : 'Unknown error'))
+    }
   }
 
   const handleExportExcel = () => {
@@ -159,18 +197,33 @@ const ShiftClosingPage = () => {
           </h1>
         </div>
         <div className={styles.headerActions}>
-          <select
-            className={styles.selectPhien}
-            value={selectedPhienLamViec}
-            onChange={(e) => setSelectedPhienLamViec(e.target.value)}
-          >
-            <option value="">-- Chọn phiên làm việc --</option>
-            {availablePhienLamViec.map((plv) => (
-              <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
-                {plv.MaPhienLamViec} - {formatDateTime(plv.ThoiGianMo)} ({plv.TrangThai})
-              </option>
-            ))}
-          </select>
+          {isManager ? (
+            <select
+              className={styles.selectPhien}
+              value={selectedPhienLamViec}
+              onChange={(e) => setSelectedPhienLamViec(e.target.value)}
+            >
+              <option value="">-- Chọn phiên làm việc --</option>
+              {availablePhienLamViec.map((plv) => (
+                <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
+                  {plv.MaPhienLamViec} - {formatDateTime(plv.ThoiGianMo)} ({plv.TrangThai})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div style={{ minWidth: '260px' }}>
+              {selectedPhienLamViec ? (
+                <div className={styles.currentPhienInfo}>
+                  <strong>Phiên hiện tại:</strong>&nbsp;{selectedPhienLamViec}
+                </div>
+              ) : (
+                <div className={styles.currentPhienInfo}>
+                  <strong>Phiên hiện tại:</strong>&nbsp;Không có phiên đang mở
+                </div>
+              )}
+            </div>
+          )}
+
           <button className={styles.printBtn} onClick={handlePrint}>
             <FaPrint /> In báo cáo
           </button>

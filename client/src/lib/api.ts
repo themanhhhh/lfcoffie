@@ -245,6 +245,7 @@ export interface DonHang {
   MaCTKM?: string;
   Ngay: string;
   PhuongThucThanhToan: string;
+  LoaiDonHang?: string; // "tại quán", "mang đi", "giao hàng"
   phienLamViec?: PhienLamViec;
   ctkm?: CTKM;
   chiTietDonHangs?: ChiTietDonHang[];

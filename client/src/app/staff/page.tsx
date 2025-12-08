@@ -189,18 +189,34 @@ const Staff = () => {
           tuyChonApi.getAll({ loaiTuyChon: 'sugar' }),
           tuyChonApi.getAll({ loaiTuyChon: 'ice' })
         ])
+        
+        // Sort sugars by percentage value (0, 25, 50, 75, 100%)
+        const sortedSugarData = sugarData.sort((a, b) => {
+          const aPercent = parseInt(a.TenTuyChon) || 0
+          const bPercent = parseInt(b.TenTuyChon) || 0
+          return aPercent - bPercent
+        })
+        
+        // Sort sizes: XS, S, M, L, XL
+        const sizeOrder = ['XS', 'S', 'M', 'L', 'XL']
+        const sortedSizeData = sizeData.sort((a, b) => {
+          const aIndex = sizeOrder.indexOf(a.TenTuyChon)
+          const bIndex = sizeOrder.indexOf(b.TenTuyChon)
+          return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex)
+        })
+        
         setToppings(toppingData)
-        setSizes(sizeData)
-        setSugars(sugarData)
+        setSizes(sortedSizeData)
+        setSugars(sortedSugarData)
         setIces(iceData)
         
         // Set default values if available
-        if (sizeData.length > 0 && !customizeOptions.size) {
-          const defaultSize = sizeData.find(s => s.TenTuyChon === 'M') || sizeData[0]
+        if (sortedSizeData.length > 0 && !customizeOptions.size) {
+          const defaultSize = sortedSizeData.find(s => s.TenTuyChon === 'M') || sortedSizeData[0]
           setCustomizeOptions(prev => ({ ...prev, size: defaultSize.TenTuyChon }))
         }
-        if (sugarData.length > 0 && !customizeOptions.sugar) {
-          const defaultSugar = sugarData.find(s => s.TenTuyChon.includes('100')) || sugarData[0]
+        if (sortedSugarData.length > 0 && !customizeOptions.sugar) {
+          const defaultSugar = sortedSugarData.find(s => s.TenTuyChon.includes('100')) || sortedSugarData[0]
           setCustomizeOptions(prev => ({ ...prev, sugar: defaultSugar.TenTuyChon }))
         }
         if (iceData.length > 0 && !customizeOptions.ice) {
@@ -544,12 +560,13 @@ const Staff = () => {
       const timestamp = Date.now().toString().slice(-8)
       const maDonHang = `DH${timestamp}`
       
-      // Tạo đơn hàng
+      // Tạo đơn hàng - gửi full datetime ISO string để lưu cả ngày và giờ
       await donHangApi.create({
         MaDonHang: maDonHang,
         MaPhienLamViec: currentPhienLamViec,
-        Ngay: now.toISOString().split('T')[0],
+        Ngay: now.toISOString(), // Gửi full datetime thay vì chỉ date
         PhuongThucThanhToan: paymentMethod === 'cash' ? 'Tiền mặt' : 'Chuyển khoản',
+        LoaiDonHang: orderType === 'dine-in' ? 'tại quán' : (orderType === 'takeaway' ? 'mang đi' : 'giao hàng'),
         ...(selectedPromotion?.MaCTKM && { MaCTKM: selectedPromotion.MaCTKM })
       })
 
@@ -843,11 +860,11 @@ const Staff = () => {
                     <div className={Style.cartItemInfo}>
                       <h4>{item.name}</h4>
                       <p>{formatPrice(item.price)}</p>
-                      {(item.size || item.sugar || item.ice || item.topping?.length || item.note) && (
+                      {(item.size || (item.sugar && String(item.sugar) !== '0') || (item.ice && String(item.ice) !== '0') || item.topping?.length || item.note) && (
                         <div className={Style.cartItemOptions}>
                           {item.size && <span>Size: {item.size}</span>}
-                          {item.sugar && <span>Đường: {item.sugar}</span>}
-                          {item.ice && <span>Đá: {item.ice}</span>}
+                          {item.sugar && String(item.sugar) !== '0' && <span>Đường: {item.sugar}%</span>}
+                          {item.ice && String(item.ice) !== '0' && <span>Đá: {item.ice}%</span>}
                           {item.topping && item.topping.length > 0 && (
                             <span>
                               Topping: {item.topping.map(t => t.TenTuyChon).join(', ')}
@@ -1486,11 +1503,11 @@ const Staff = () => {
                             + {item.topping.map(t => t.TenTuyChon).join(', ')}
                           </div>
                         )}
-                        {(item.sugar || item.ice || item.note) && (
+                        {((item.sugar && String(item.sugar) !== '0') || (item.ice && String(item.ice) !== '0') || item.note) && (
                           <div style={{ fontSize: '0.85rem', color: '#999', marginLeft: '1rem', marginTop: '0.25rem' }}>
-                            {item.sugar && `Đường: ${item.sugar} `}
-                            {item.ice && `Đá: ${item.ice} `}
-                            {item.note && `Ghi chú: ${item.note}`}
+                            {item.sugar && String(item.sugar) !== '0' ? `Đường: ${item.sugar}% ` : ''}
+                            {item.ice && String(item.ice) !== '0' ? `Đá: ${item.ice}% ` : ''}
+                            {item.note ? `Ghi chú: ${item.note}` : ''}
                           </div>
                         )}
                       </div>
