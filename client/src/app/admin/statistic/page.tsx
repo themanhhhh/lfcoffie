@@ -515,74 +515,6 @@ const formatDateLocal = (date: Date): string => {
       </div>
 
       <section className={styles.gridTwo}>
-        {/* Revenue Channels */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2>
-              <FaStore /> Cơ cấu doanh thu
-            </h2>
-            <span>Tổng cộng: {totalRevenue.toLocaleString('vi-VN')} ₫</span>
-          </div>
-          <div className={styles.channelList}>
-            {revenueChannels
-              .filter(channel => !channel.label.toLowerCase().includes('giao hàng') && !channel.label.toLowerCase().includes('delivery'))
-              .map(channel => {
-                const filteredChannels = revenueChannels.filter(c => !c.label.toLowerCase().includes('giao hàng') && !c.label.toLowerCase().includes('delivery'))
-                const filteredTotal = filteredChannels.reduce((sum, c) => sum + c.value, 0)
-                const width = filteredTotal > 0 ? Math.round((channel.value / filteredTotal) * 100) : 0
-                return (
-                  <div key={channel.label} className={styles.channelRow}>
-                    <div className={styles.channelLabel}>
-                      <MdOutlineAnalytics /> {channel.label}
-                    </div>
-                    <div className={styles.channelProgress}>
-                      <div style={{ width: `${width}%` }} />
-                    </div>
-                    <div className={styles.channelValue}>
-                      {channel.value.toLocaleString('vi-VN')} ₫
-                    </div>
-                  </div>
-                )
-              })}
-          </div>
-        </div>
-
-        {/* Top 10 Products */}
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <h2>
-              <FaTrophy /> Top {top10Products.length > 0 ? top10Products.length : 5} món bán chạy
-            </h2>
-            <span>Theo số lượng bán</span>
-          </div>
-          <div className={styles.productList}>
-            {top10Products.length > 0 ? (
-              top10Products.map(product => (
-                <div key={product.maMon} className={styles.productRow}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span className={styles.rankBadge}>#{product.rank}</span>
-                      <strong>{product.tenMon}</strong>
-                    </div>
-                    <span>
-                      {product.soLuong} lượt bán • {product.loaiMon}
-                    </span>
-                  </div>
-                  <span className={styles.productRevenue}>
-                    {product.doanhThu.toLocaleString('vi-VN')} ₫
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
-                Chưa có dữ liệu
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.gridTwo}>
         {/* Top 5 Categories */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
@@ -593,13 +525,13 @@ const formatDateLocal = (date: Date): string => {
           </div>
           {top5Categories.length > 0 ? (
             (() => {
-              const totalRevenue = top5Categories.reduce((sum, c) => sum + c.tongDoanhThu, 0)
+              const totalCategoryRevenue = top5Categories.reduce((sum, c) => sum + c.tongDoanhThu, 0)
               const colors = [
-                '#8CE4FF', // Brown
-                '#FEEE91', // Sienna
-                '#FFA239', // Peru
+                '#8CE4FF', // Light Blue
+                '#FEEE91', // Light Yellow
+                '#FFA239', // Orange
                 '#D2691E', // Chocolate
-                '#FF5656'  // Burlywood
+                '#FF5656'  // Red
               ]
               return (
                 <div className={styles.pieChartContainer}>
@@ -608,7 +540,7 @@ const formatDateLocal = (date: Date): string => {
                       {(() => {
                         let currentAngle = -90 // Start from top
                         return top5Categories.map((category, index) => {
-                          const percentage = (category.tongDoanhThu / totalRevenue) * 100
+                          const percentage = (category.tongDoanhThu / totalCategoryRevenue) * 100
                           const angle = (percentage / 100) * 360
                           const startAngle = currentAngle
                           const endAngle = currentAngle + angle
@@ -649,7 +581,7 @@ const formatDateLocal = (date: Date): string => {
                   </div>
                   <div className={styles.pieLegend}>
                     {top5Categories.map((category, index) => {
-                      const percentage = totalRevenue > 0 ? ((category.tongDoanhThu / totalRevenue) * 100).toFixed(1) : 0
+                      const percentage = totalCategoryRevenue > 0 ? ((category.tongDoanhThu / totalCategoryRevenue) * 100).toFixed(1) : 0
                       return (
                         <div key={category.loaiMon} className={styles.pieLegendItem}>
                           <div className={styles.pieLegendColor} style={{ backgroundColor: colors[index % colors.length] }} />
@@ -678,6 +610,74 @@ const formatDateLocal = (date: Date): string => {
               Chưa có dữ liệu
             </div>
           )}
+        </div>
+
+        {/* Top 10 Products */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2>
+              <FaTrophy /> Top {top10Products.length > 0 ? top10Products.length : 5} món bán chạy
+            </h2>
+            <span>Theo số lượng bán</span>
+          </div>
+          <div className={styles.productList}>
+            {top10Products.length > 0 ? (
+              top10Products.map(product => (
+                <div key={product.maMon} className={styles.productRow}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className={styles.rankBadge}>#{product.rank}</span>
+                      <strong>{product.tenMon}</strong>
+                    </div>
+                    <span>
+                      {product.soLuong} lượt bán • {product.loaiMon}
+                    </span>
+                  </div>
+                  <span className={styles.productRevenue}>
+                    {product.doanhThu.toLocaleString('vi-VN')} ₫
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
+                Chưa có dữ liệu
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.gridTwo}>
+        {/* Revenue Channels */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2>
+              <FaStore /> Cơ cấu doanh thu
+            </h2>
+            <span>Tổng cộng: {totalRevenue.toLocaleString('vi-VN')} ₫</span>
+          </div>
+          <div className={styles.channelList}>
+            {revenueChannels
+              .filter(channel => !channel.label.toLowerCase().includes('giao hàng') && !channel.label.toLowerCase().includes('delivery'))
+              .map(channel => {
+                const filteredChannels = revenueChannels.filter(c => !c.label.toLowerCase().includes('giao hàng') && !c.label.toLowerCase().includes('delivery'))
+                const filteredTotal = filteredChannels.reduce((sum, c) => sum + c.value, 0)
+                const width = filteredTotal > 0 ? Math.round((channel.value / filteredTotal) * 100) : 0
+                return (
+                  <div key={channel.label} className={styles.channelRow}>
+                    <div className={styles.channelLabel}>
+                      <MdOutlineAnalytics /> {channel.label}
+                    </div>
+                    <div className={styles.channelProgress}>
+                      <div style={{ width: `${width}%` }} />
+                    </div>
+                    <div className={styles.channelValue}>
+                      {channel.value.toLocaleString('vi-VN')} ₫
+                    </div>
+                  </div>
+                )
+              })}
+          </div>
         </div>
 
         {/* Overview Summary */}

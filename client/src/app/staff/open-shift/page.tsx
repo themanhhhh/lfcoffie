@@ -63,7 +63,15 @@ const currencyFormatter = new Intl.NumberFormat('vi-VN', {
 const OpenShiftPage = () => {
   const router = useRouter()
   const { user } = useAuth()
-  const today = useMemo(() => new Date().toISOString().split('T')[0], [])
+  
+  // Sử dụng local timezone thay vì UTC để tránh lệch ngày
+  const today = useMemo(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }, [])
 
   const [shiftInfo, setShiftInfo] = useState<ShiftInfo>({
     date: today,
@@ -277,7 +285,13 @@ const OpenShiftPage = () => {
           <div className={styles.shiftSummary}>
             <div>
               <h3><FaClock /> Thời gian ca</h3>
-              <p>{SHIFT_DETAILS[shiftInfo.shift].label} · {SHIFT_DETAILS[shiftInfo.shift].time}</p>
+              {(() => {
+                const selectedCaLam = caLamList.find(c => c.MaCaLam === selectedMaCaLam)
+                if (selectedCaLam) {
+                  return <p>{selectedCaLam.TenCaLam} · {selectedCaLam.ThoiGianBatDau} - {selectedCaLam.ThoiGianKetThuc}</p>
+                }
+                return <p style={{ color: '#999' }}>Vui lòng chọn ca làm việc</p>
+              })()}
             </div>
             <div className={styles.checklist}>
               <h4><FaUserClock /> Checklist đầu ca</h4>
