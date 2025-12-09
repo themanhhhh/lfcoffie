@@ -81,7 +81,25 @@ interface KhuyenMaiDto {
   }>
 }
 
-// ... (VoucherFormData interface remains same)
+interface ComboItem {
+  MaMon: string
+  SoLuong: number
+}
+
+interface VoucherFormData {
+  maKM: string
+  tenKM: string
+  loaiKM: string
+  trangThai: VoucherStatus
+  giaTriGiam: number
+  soTienToiThieu: number
+  giamToiDa: number
+  soLuongSuDung: number
+  moTa: string
+  ngayBatDau: string
+  ngayKetThuc: string
+  comboItems?: ComboItem[]
+}
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Tất cả loại' },
@@ -441,8 +459,26 @@ const VoucherPage = () => {
     setShowModal(true)
   }
 
-  const handleEditVoucher = (voucher: Voucher) => {
+  const handleEditVoucher = async (voucher: Voucher) => {
     setEditingVoucher(voucher)
+    
+    // Load combo items if it's a combo voucher
+    let comboItems: ComboItem[] = []
+    if (voucher.type === 'free_item') {
+      try {
+        // Fetch full CTKM data to get combo items with MaMon
+        const ctkmData = await apiFetch<KhuyenMaiDto>(`/api/ctkm/${voucher.id}`)
+        if (ctkmData.combos && ctkmData.combos.length > 0 && ctkmData.combos[0].dsMonTrongCombos) {
+          comboItems = ctkmData.combos[0].dsMonTrongCombos.map(ds => ({
+            MaMon: ds.MaMon,
+            SoLuong: ds.SoLuong
+          }))
+        }
+      } catch (err) {
+        console.error('Error loading combo items:', err)
+      }
+    }
+    
     setFormData({
       maKM: voucher.id,
       tenKM: voucher.name,
@@ -454,7 +490,8 @@ const VoucherPage = () => {
       soLuongSuDung: voucher.usageLimit,
       moTa: voucher.description,
       ngayBatDau: voucher.startDate,
-      ngayKetThuc: voucher.endDate
+      ngayKetThuc: voucher.endDate,
+      comboItems: comboItems
     })
     setShowModal(true)
   }
@@ -1069,7 +1106,7 @@ const VoucherPage = () => {
                 <div className={styles.formGroup}>
                   <label>Món trong combo *</label>
                   <div className={styles.comboItemsList}>
-                    {(formData.comboItems || []).map((item, index) => (
+                    {(formData.comboItems || []).map((item: ComboItem, index: number) => (
                       <div key={index} className={styles.comboItemRow}>
                         <select
                           value={item.MaMon}
@@ -1101,7 +1138,7 @@ const VoucherPage = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            const newItems = (formData.comboItems || []).filter((_, i) => i !== index)
+                            const newItems = (formData.comboItems || []).filter((_: ComboItem, i: number) => i !== index)
                             setFormData({ ...formData, comboItems: newItems })
                           }}
                           className={styles.removeBtn}

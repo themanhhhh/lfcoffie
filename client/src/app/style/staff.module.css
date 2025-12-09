@@ -659,6 +659,7 @@
 }
 
 .totalRow {
+  color : #000;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1377,24 +1378,48 @@
 
 /* Print Styles */
 @media print {
+  /* Hide main container and all modals when printing */
+  .staffContainer,
+  .paymentModalOverlay,
+  .header,
+  .mainContent {
+    display: none !important;
+  }
+
+  /* Only show invoice print overlay */
   .invoicePrintOverlay {
-    position: static;
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
     background: white;
     padding: 0;
+    margin: 0;
+    z-index: 9999;
   }
 
   .invoicePrintContent {
     max-width: 100%;
+    width: 100%;
     box-shadow: none;
     border: none;
+    margin: 0;
+    padding: 20px;
   }
 
   .invoicePrintActions {
-    display: none;
+    display: none !important;
   }
 
-  .paymentModalOverlay {
-    display: none;
+  /* Ensure invoice items print correctly */
+  .invoicePrintItems {
+    page-break-inside: avoid;
+  }
+
+  .invoicePrintRow {
+    page-break-inside: avoid;
   }
 }
 

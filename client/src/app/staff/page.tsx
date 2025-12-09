@@ -22,7 +22,8 @@ import {
   FaPrint,
   FaStore,
   FaHome,
-  FaUserCog
+  FaUserCog,
+  FaFileAlt
 } from 'react-icons/fa'
 import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
@@ -91,6 +92,12 @@ const quickActions = [
     icon: FaIdBadge,
     title: 'Checkin / Checkout',
     description: 'Điểm danh thời gian vào ca và kết ca'
+  },
+  {
+    href: '/staff/shift-closing',
+    icon: FaFileAlt,
+    title: 'Báo cáo chốt ca',
+    description: 'Xem và in báo cáo kết ca làm việc'
   }
 ]
 
@@ -1353,7 +1360,7 @@ const Staff = () => {
                       <span>Khách hàng:</span>
                       <span>Khách vãng lai</span>
                     </div>
-                    {orderType === 'dine-in' && tableNumber && (
+                    {orderType === 'dine-in' && tableNumber !== null && tableNumber !== undefined && (
                       <div className={Style.invoiceRow}>
                         <span>Số thẻ bàn:</span>
                         <span>{tableNumber}</span>
@@ -1446,8 +1453,9 @@ const Staff = () => {
           </div>
         </div>
       )}
+      </div>
 
-      {/* Invoice Print Modal */}
+      {/* Invoice Print Modal - placed outside staffContainer for printing */}
       {showInvoiceModal && invoiceData && (
         <div className={Style.invoicePrintOverlay} id="invoice-print">
           <div className={Style.invoicePrintContent}>
@@ -1468,7 +1476,7 @@ const Staff = () => {
                 <span>Nhân viên:</span>
                 <span>{user?.TenNhanVien || 'N/A'}</span>
               </div>
-              {invoiceData.orderType === 'dine-in' && invoiceData.tableNumber && (
+              {invoiceData.orderType === 'dine-in' && invoiceData.tableNumber !== null && invoiceData.tableNumber !== undefined && (
                 <div className={Style.invoicePrintRow}>
                   <span>Số thẻ bàn:</span>
                   <span>{invoiceData.tableNumber}</span>
@@ -1516,7 +1524,7 @@ const Staff = () => {
                   )
                 })}
               </div>
-              {invoiceData.discount && invoiceData.discount > 0 && (
+              {invoiceData.discount !== undefined && invoiceData.discount > 0 && (
                 <>
                   <div className={Style.invoicePrintDivider}></div>
                   <div className={Style.invoicePrintRow}>
@@ -1556,7 +1564,6 @@ const Staff = () => {
           </div>
         </div>
       )}
-      </div>
     </ProtectedRoute>
   )
 }

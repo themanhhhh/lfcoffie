@@ -87,10 +87,14 @@ const ShiftClosingPage = () => {
       // Tự động chọn phiên mới nhất nếu có
       if (finalList.length > 0 && !selectedPhienLamViec) {
         setSelectedPhienLamViec(finalList[0].MaPhienLamViec)
+      } else if (finalList.length === 0) {
+        // Không có phiên nào, tắt loading
+        setLoading(false)
       }
     } catch (err) {
       console.error('Error loading phien lam viec:', err)
       toast.error('Không thể tải danh sách phiên làm việc')
+      setLoading(false)
     }
   }
 
@@ -177,10 +181,36 @@ const ShiftClosingPage = () => {
   if (!report) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>Không có dữ liệu báo cáo</div>
-        <Link href="/staff" className={styles.backLink}>
-          <FaArrowLeft /> Quay lại
-        </Link>
+        <div className={styles.header}>
+          <div className={styles.headerMain}>
+            <Link href="/staff" className={styles.backLink}>
+              <FaArrowLeft /> Quay lại
+            </Link>
+            <h1>
+              <FaFileAlt /> Báo cáo chốt ca
+            </h1>
+          </div>
+        </div>
+        <div className={styles.emptyState}>
+          <FaFileAlt style={{ fontSize: '3rem', color: '#ccc', marginBottom: '1rem' }} />
+          <h3>Không có phiên làm việc</h3>
+          <p>{isManager 
+            ? 'Vui lòng chọn phiên làm việc để xem báo cáo' 
+            : 'Bạn chưa có phiên làm việc đang mở. Vui lòng mở ca trước.'}</p>
+          {!isManager && (
+            <Link href="/staff/open-shift" style={{ 
+              marginTop: '1rem', 
+              padding: '0.75rem 1.5rem', 
+              background: '#8B4513', 
+              color: 'white', 
+              borderRadius: '8px',
+              textDecoration: 'none',
+              display: 'inline-block'
+            }}>
+              Mở phiên làm việc
+            </Link>
+          )}
+        </div>
       </div>
     )
   }

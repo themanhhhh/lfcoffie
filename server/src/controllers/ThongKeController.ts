@@ -52,7 +52,8 @@ export class ThongKeController {
       // Lấy tất cả đơn hàng trong khoảng thời gian
       const orders = await this.donHangRepo.find({
         where: {
-          Ngay: Between(start, end)
+          Ngay: Between(start, end),
+          isDelete: false
         },
         relations: ['chiTietDonHangs']
       });
@@ -124,7 +125,8 @@ export class ThongKeController {
       // Tính doanh thu từ đơn hàng (DonHang + ChiTietDonHang)
       const donHangs = await this.donHangRepo.find({
         where: {
-          Ngay: Between(start, end)
+          Ngay: Between(start, end),
+          isDelete: false
         },
         relations: ['chiTietDonHangs']
       });
@@ -223,7 +225,8 @@ export class ThongKeController {
 
       const donHangs = await this.donHangRepo.find({
         where: {
-          Ngay: Between(start, end)
+          Ngay: Between(start, end),
+          isDelete: false
         },
         relations: ['chiTietDonHangs']
       });
@@ -511,7 +514,8 @@ export class ThongKeController {
       // Doanh thu hôm nay từ đơn hàng
       const todayOrders = await this.donHangRepo.find({
         where: {
-          Ngay: Between(today, tomorrow)
+          Ngay: Between(today, tomorrow),
+          isDelete: false
         },
         relations: ['chiTietDonHangs']
       });
@@ -524,7 +528,8 @@ export class ThongKeController {
       // Doanh thu hôm qua từ đơn hàng
       const yesterdayOrders = await this.donHangRepo.find({
         where: {
-          Ngay: Between(yesterday, today)
+          Ngay: Between(yesterday, today),
+          isDelete: false
         },
         relations: ['chiTietDonHangs']
       });
@@ -577,7 +582,8 @@ export class ThongKeController {
       // Lấy tất cả đơn hàng trong 7 ngày
       const orders = await this.donHangRepo.find({
         where: {
-          Ngay: Between(sevenDaysAgo, today)
+          Ngay: Between(sevenDaysAgo, today),
+          isDelete: false
         },
         relations: ['chiTietDonHangs']
       });
@@ -657,6 +663,7 @@ export class ThongKeController {
         .addSelect("SUM(ctdh.SoLuong)", "soLuong")
         .addSelect("SUM(ctdh.SoLuong * ctdh.DonGia)", "doanhThu")
         .where("dh.Ngay BETWEEN :start AND :end", { start, end })
+        .andWhere("dh.isDelete = :isDelete", { isDelete: false })
         .groupBy("mon.MaMon")
         .addGroupBy("mon.TenMon")
         .addGroupBy("mon.LoaiMon")
@@ -704,6 +711,7 @@ export class ThongKeController {
         LEFT JOIN "donhang" dh ON ctdh."MaDH" = dh."MaDonHang"
         LEFT JOIN "mon" mon ON ctdh."MaMon" = mon."MaMon"
         WHERE dh."Ngay" BETWEEN $1 AND $2
+          AND dh."isDelete" = false
         GROUP BY mon."LoaiMon"
       `, [start, end]);
 
@@ -758,6 +766,7 @@ export class ThongKeController {
         LEFT JOIN "donhang" dh ON ctdh."MaDH" = dh."MaDonHang"
         LEFT JOIN "mon" mon ON ctdh."MaMon" = mon."MaMon"
         WHERE mon."LoaiMon" = $1 AND dh."Ngay" BETWEEN $2 AND $3
+          AND dh."isDelete" = false
         GROUP BY mon."LoaiMon"
       `, [loaiMon, start, end]);
 
@@ -798,7 +807,8 @@ export class ThongKeController {
       // Tính doanh thu bán hàng từ DonHang
       let donHangQuery = this.donHangRepo.createQueryBuilder('dh')
         .leftJoinAndSelect('dh.chiTietDonHangs', 'ctdh')
-        .where('dh.Ngay BETWEEN :start AND :end', { start, end });
+        .where('dh.Ngay BETWEEN :start AND :end', { start, end })
+        .andWhere('dh.isDelete = :isDelete', { isDelete: false });
       
       if (maPhienLamViec) {
         donHangQuery = donHangQuery.andWhere('dh.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
