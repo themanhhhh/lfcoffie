@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../database/data-source";
 import { HoaDon } from "../entities/HoaDon";
+import { PhienLamViec } from "../entities/PhienLamViec";
 
 export class HoaDonController {
   private repository = AppDataSource.getRepository(HoaDon);
+  private phienLamViecRepo = AppDataSource.getRepository(PhienLamViec);
 
   async getAll(req: Request, res: Response) {
     const list = await this.repository.find({ 
@@ -22,7 +24,27 @@ export class HoaDonController {
 
   async create(req: Request, res: Response) {
     try {
-      const obj = this.repository.create(req.body as HoaDon);
+      const { MaPhienLamViec, ...rest } = req.body;
+      
+      // Tìm PhienLamViec nếu có MaPhienLamViec
+      let phienLamViec = null;
+      if (MaPhienLamViec) {
+        phienLamViec = await this.phienLamViecRepo.findOne({
+          where: { MaPhienLamViec, isDelete: false } as any
+        });
+        if (!phienLamViec) {
+          return res.status(400).json({ 
+            message: "Không tìm thấy phiên làm việc", 
+            error: `Phiên làm việc ${MaPhienLamViec} không tồn tại` 
+          });
+        }
+      }
+      
+      const obj = this.repository.create({
+        ...rest,
+        phienLamViec: phienLamViec
+      } as HoaDon);
+      
       const saved = await this.repository.save(obj);
       return res.status(201).json(saved);
     } catch (e:any) {

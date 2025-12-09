@@ -13,6 +13,7 @@ import {
 import styles from './checkinCheckout.module.css'
 import { useAuth } from '../../../contexts/AuthContext'
 import { toast } from 'react-hot-toast'
+import { phienLamViecApi, ApiError } from '../../../lib/api'
 
 type ShiftStatus = 'pending' | 'working' | 'completed'
 
@@ -126,7 +127,7 @@ const CheckinCheckoutPage = () => {
     }))
   }
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
     if (!selectedStaff) return
     if (selectedStaff.status === 'pending') {
       toast.error('Nhân viên chưa check-in.')
@@ -136,13 +137,33 @@ const CheckinCheckoutPage = () => {
       toast.error('Nhân viên đã kết ca.')
       return
     }
-    const time = formatNow()
-    updateStaff(selectedStaff.id, staff => ({
-      ...staff,
-      status: 'completed',
-      checkOut: time,
-      history: [{ action: 'checkout', time }, ...staff.history]
-    }))
+    
+    try {
+      // Tìm phiên làm việc đang mở của nhân viên này
+      const phienLamViecList = await phienLamViecApi.getAll()
+      const currentPhien = phienLamViecList.find(
+        plv => plv.nhanVien?.MaNhanVien === user?.MaNhanVien && plv.TrangThai === 'mở'
+      )
+      
+      if (currentPhien) {
+        // Đóng phiên làm việc trong database
+        await phienLamViecApi.closeShift(currentPhien.MaPhienLamViec)
+        toast.success('Đã đóng phiên làm việc thành công!')
+      } else {
+        toast.error('Không tìm thấy phiên làm việc đang mở')
+      }
+      
+      const time = formatNow()
+      updateStaff(selectedStaff.id, staff => ({
+        ...staff,
+        status: 'completed',
+        checkOut: time,
+        history: [{ action: 'checkout', time }, ...staff.history]
+      }))
+    } catch (err) {
+      const errorMessage = err instanceof ApiError ? err.message : 'Không thể đóng phiên làm việc'
+      toast.error(errorMessage)
+    }
   }
 
   const statusLabel: Record<ShiftStatus, string> = {
