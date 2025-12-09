@@ -50,6 +50,11 @@ const ShiftClosingPage = () => {
     ThoiGianMo?: string
     ThoiGianDong?: string
     TrangThai: string
+    caLam?: {
+      TenCaLam: string
+      ThoiGianBatDau: string
+      ThoiGianKetThuc: string
+    }
   }>>([])
 
   const isManager = !!user?.ChucVu && /quản|admin|giám/i.test(user.ChucVu)
@@ -236,15 +241,27 @@ const ShiftClosingPage = () => {
               <option value="">-- Chọn phiên làm việc --</option>
               {availablePhienLamViec.map((plv) => (
                 <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
-                  {plv.MaPhienLamViec} - {formatDateTime(plv.ThoiGianMo)} ({plv.TrangThai})
+                  {plv.MaPhienLamViec} - {plv.caLam?.TenCaLam} ({plv.caLam?.ThoiGianBatDau} - {plv.caLam?.ThoiGianKetThuc}) - {plv.TrangThai}
                 </option>
               ))}
             </select>
           ) : (
-            <div style={{ minWidth: '260px' }}>
+            <div style={{ minWidth: '350px' }}>
               {selectedPhienLamViec ? (
                 <div className={styles.currentPhienInfo}>
                   <strong>Phiên hiện tại:</strong>&nbsp;{selectedPhienLamViec}
+                  {(() => {
+                    const currentPhien = availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)
+                    if (currentPhien?.caLam) {
+                      return (
+                        <span style={{ marginLeft: '1rem', fontSize: '0.9em', color: '#666' }}>
+                          <FaClock style={{ marginRight: '4px' }} />
+                          {currentPhien.caLam.TenCaLam}: {currentPhien.caLam.ThoiGianBatDau} - {currentPhien.caLam.ThoiGianKetThuc}
+                        </span>
+                      )
+                    }
+                    return null
+                  })()}
                 </div>
               ) : (
                 <div className={styles.currentPhienInfo}>
@@ -275,18 +292,6 @@ const ShiftClosingPage = () => {
               <span className={styles.infoLabel}>Ngày:</span>
               <span className={styles.infoValue}>
                 {new Date(report.phienLamViec.Ngay).toLocaleDateString('vi-VN')}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Mở ca:</span>
-              <span className={styles.infoValue}>
-                {formatDateTime(report.phienLamViec.ThoiGianMo)}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Đóng ca:</span>
-              <span className={styles.infoValue}>
-                {formatDateTime(report.phienLamViec.ThoiGianDong) || 'Chưa đóng'}
               </span>
             </div>
             <div className={styles.infoItem}>
