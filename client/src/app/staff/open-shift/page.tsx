@@ -372,9 +372,19 @@ const OpenShiftPage = () => {
             <div className={styles.summaryCard}>
               <h3>Thông tin ca</h3>
               <ul>
-                <li>Ngày làm việc: {shiftInfo.date}</li>
-                <li>Ca: {SHIFT_DETAILS[shiftInfo.shift].label}</li>
-                <li>Thời gian: {SHIFT_DETAILS[shiftInfo.shift].time}</li>
+                <li>Ngày làm việc: {new Date(shiftInfo.date).toLocaleDateString('vi-VN')}</li>
+                {(() => {
+                  const selectedCaLam = caLamList.find(c => c.MaCaLam === selectedMaCaLam)
+                  if (selectedCaLam) {
+                    return (
+                      <>
+                        <li>Ca: {selectedCaLam.TenCaLam}</li>
+                        <li>Thời gian: {selectedCaLam.ThoiGianBatDau} - {selectedCaLam.ThoiGianKetThuc}</li>
+                      </>
+                    )
+                  }
+                  return <li style={{ color: '#999' }}>Chưa chọn ca làm việc</li>
+                })()}
               </ul>
             </div>
             <div className={styles.summaryCard}>
