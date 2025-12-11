@@ -17,7 +17,7 @@ export class CTKMController {
     try {
       const list = await this.repository.find({
         where: { isDelete: false },
-        relations: ['giamHoaDons', 'giamMons', 'combos', 'combos.dsMonTrongCombos', 'combos.dsMonTrongCombos.mon']
+        relations: ['giamHoaDons', 'giamMons', 'combos', 'combos.dsMonTrongCombos', 'combos.dsMonTrongCombos.mon', 'donHangs']
       });
       return res.json(list);
     } catch (e: any) {
@@ -74,8 +74,32 @@ export class CTKMController {
         const giamHoaDon = this.giamHoaDonRepo.create(giamHoaDonData);
         await this.giamHoaDonRepo.save(giamHoaDon);
       } else if (saved.LoaiCTKM === 'giammon') {
-        // Tạo GiamMon (cần MaMon từ body, nếu không có thì bỏ qua)
-        if (body.MaMon) {
+        // Tạo GiamMon cho nhiều món
+        const giamMonItems = body.giamMonItems || [];
+        
+        if (giamMonItems.length > 0) {
+          // Tạo nhiều GiamMon records
+          for (let i = 0; i < giamMonItems.length; i++) {
+            const item = giamMonItems[i];
+            if (item.MaMon) {
+              const maGM = `GM${Date.now().toString().slice(-6)}${i}`;
+              const giamMonData: any = {
+                MaGM: maGM,
+                MaCTKM: saved.MaCTKM,
+                MaMon: item.MaMon,
+                SoTienGiam: item.SoTienGiam || 0,
+                LoaiGiam: item.LoaiGiam || 'Phần trăm',
+                NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
+                NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                TrangThai: 'hoạt động'
+              };
+
+              const giamMon = this.giamMonRepo.create(giamMonData);
+              await this.giamMonRepo.save(giamMon);
+            }
+          }
+        } else if (body.MaMon) {
+          // Fallback: hỗ trợ tạo 1 món cũ
           const maGM = `GM${Date.now().toString().slice(-6)}`;
           const giamMonData: any = {
             MaGM: maGM,

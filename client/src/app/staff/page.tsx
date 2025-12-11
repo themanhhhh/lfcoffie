@@ -55,7 +55,7 @@ interface Category {
 interface CartItem extends Product {
   quantity: number
   topping?: TuyChon[]
-  size?: string
+  size?: TuyChon  // Changed from string to TuyChon to include GiaCongThem
   sugar?: string
   ice?: string
   note?: string
@@ -382,6 +382,11 @@ const Staff = () => {
   const handleAddCustomizedItem = () => {
     if (!selectedProduct) return
     
+    // Tìm size object từ mã size được chọn
+    const selectedSizeObj = customizeOptions.size 
+      ? sizes.find(s => s.MaTuyChon === customizeOptions.size) 
+      : undefined
+    
     setCart((prevCart) => {
       const existingItem = prevCart.find(
         (item) => {
@@ -391,7 +396,7 @@ const Staff = () => {
             customizeOptions.topping.map(t => t.MaTuyChon).sort()
           )
           return item.id === selectedProduct.id &&
-            item.size === customizeOptions.size &&
+            item.size?.MaTuyChon === customizeOptions.size &&
             item.sugar === customizeOptions.sugar &&
             item.ice === customizeOptions.ice &&
             sameTopping &&
@@ -409,7 +414,7 @@ const Staff = () => {
         ...selectedProduct,
         quantity: 1,
         topping: customizeOptions.topping.length > 0 ? customizeOptions.topping : undefined,
-        size: customizeOptions.size,
+        size: selectedSizeObj,
         sugar: customizeOptions.sugar,
         ice: customizeOptions.ice,
         note: customizeOptions.note || undefined
@@ -634,7 +639,8 @@ const Staff = () => {
     cart.reduce((total, item) => {
       const itemPrice = item.price * item.quantity
       const toppingPrice = (item.topping || []).reduce((sum, topping) => sum + topping.GiaCongThem * item.quantity, 0)
-      return total + itemPrice + toppingPrice
+      const sizePrice = item.size ? item.size.GiaCongThem * item.quantity : 0
+      return total + itemPrice + toppingPrice + sizePrice
     }, 0)
   
   const getDiscountAmount = () => {
@@ -708,6 +714,31 @@ const Staff = () => {
             </div>
           </div>
           <div className={Style.headerRight}>
+            {/* Shift Status Indicator */}
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                backgroundColor: currentPhienLamViec ? '#dcfce7' : '#fee2e2',
+                color: currentPhienLamViec ? '#166534' : '#991b1b',
+                border: `1px solid ${currentPhienLamViec ? '#86efac' : '#fecaca'}`
+              }}
+              title={currentPhienLamViec ? `Phiên: ${currentPhienLamViec}` : 'Chưa mở phiên làm việc'}
+            >
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: currentPhienLamViec ? '#22c55e' : '#ef4444',
+                animation: currentPhienLamViec ? 'none' : 'pulse 2s infinite'
+              }}></span>
+              {currentPhienLamViec ? 'Đang mở phiên' : 'Chưa mở phiên'}
+            </div>
             <div className={Style.workTime}>{shiftDisplay}</div>
             <Link 
               href="/admin/statistic"
@@ -869,9 +900,18 @@ const Staff = () => {
                       <p>{formatPrice(item.price)}</p>
                       {(item.size || (item.sugar && String(item.sugar) !== '0') || (item.ice && String(item.ice) !== '0') || item.topping?.length || item.note) && (
                         <div className={Style.cartItemOptions}>
-                          {item.size && <span>Size: {item.size}</span>}
-                          {item.sugar && String(item.sugar) !== '0' && <span>Đường: {item.sugar}%</span>}
-                          {item.ice && String(item.ice) !== '0' && <span>Đá: {item.ice}%</span>}
+                          {item.size && (
+                            <span>
+                              Size: {item.size.TenTuyChon}
+                              {item.size.GiaCongThem > 0 && (
+                                <span style={{ marginLeft: '0.25rem', color: '#8B4513', fontWeight: 600 }}>
+                                  (+{formatPrice(item.size.GiaCongThem * item.quantity)})
+                                </span>
+                              )}
+                            </span>
+                          )}
+                          {item.sugar && String(item.sugar) !== '0' && <span>Đường: {item.sugar}</span>}
+                          {item.ice && String(item.ice) !== '0' && <span>Đá: {item.ice}</span>}
                           {item.topping && item.topping.length > 0 && (
                             <span>
                               Topping: {item.topping.map(t => t.TenTuyChon).join(', ')}
@@ -1195,7 +1235,7 @@ const Staff = () => {
                     <option value="">-- Không chọn khuyến mãi --</option>
                     {availablePromotions.map((promo) => (
                       <option key={promo.MaGHD} value={promo.MaGHD}>
-                        {promo.ctkm?.TenCTKM || 'Khuyến mãi'} - {promo.LoaiGiam === 'Phần trăm' 
+                        [{promo.ctkm?.MaCTKM || promo.MaGHD}] {promo.ctkm?.TenCTKM || 'Khuyến mãi'} - {promo.LoaiGiam === 'Phần trăm' 
                           ? `Giảm ${promo.SoTienGiam}%`
                           : `Giảm ${formatPrice(promo.SoTienGiam)}`}
                         {promo.GiaTriTu && ` (Từ ${formatPrice(promo.GiaTriTu)})`}
@@ -1375,12 +1415,13 @@ const Staff = () => {
                       {cart.map((item) => {
                         const itemTotal = item.price * item.quantity
                         const toppingTotal = (item.topping || []).reduce((sum, t) => sum + t.GiaCongThem * item.quantity, 0)
-                        const total = itemTotal + toppingTotal
+                        const sizeTotal = item.size ? item.size.GiaCongThem * item.quantity : 0
+                        const total = itemTotal + toppingTotal + sizeTotal
                         return (
                           <div key={item.id} className={Style.invoiceItem}>
                             <div>
                               <span className={Style.invoiceItemName}>{item.name}</span>
-                              {item.size && <span style={{ fontSize: '0.85rem', color: '#666', marginLeft: '0.5rem' }}>({item.size})</span>}
+                              {item.size && <span style={{ fontSize: '0.85rem', color: '#666', marginLeft: '0.5rem' }}>({item.size.TenTuyChon})</span>}
                               <span className={Style.invoiceItemQty}>x{item.quantity}</span>
                               {item.topping && item.topping.length > 0 && (
                                 <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem' }}>
@@ -1497,13 +1538,14 @@ const Staff = () => {
                 {invoiceData.cart.map((item) => {
                   const itemTotal = item.price * item.quantity
                   const toppingTotal = (item.topping || []).reduce((sum, t) => sum + t.GiaCongThem * item.quantity, 0)
-                  const total = itemTotal + toppingTotal
+                  const sizeTotal = item.size ? item.size.GiaCongThem * item.quantity : 0
+                  const total = itemTotal + toppingTotal + sizeTotal
                   return (
                     <div key={item.id} className={Style.invoicePrintItem}>
                       <div>
                         <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
                           {item.name}
-                          {item.size && <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem', color: '#666' }}>({item.size})</span>}
+                          {item.size && <span style={{ fontSize: '0.9rem', marginLeft: '0.5rem', color: '#666' }}>({item.size.TenTuyChon})</span>}
                           <span style={{ marginLeft: '0.5rem', color: '#666' }}>x{item.quantity}</span>
                         </div>
                         {item.topping && item.topping.length > 0 && (
@@ -1513,8 +1555,8 @@ const Staff = () => {
                         )}
                         {((item.sugar && String(item.sugar) !== '0') || (item.ice && String(item.ice) !== '0') || item.note) && (
                           <div style={{ fontSize: '0.85rem', color: '#999', marginLeft: '1rem', marginTop: '0.25rem' }}>
-                            {item.sugar && String(item.sugar) !== '0' ? `Đường: ${item.sugar}% ` : ''}
-                            {item.ice && String(item.ice) !== '0' ? `Đá: ${item.ice}% ` : ''}
+                            {item.sugar && String(item.sugar) !== '0' ? `Đường: ${item.sugar} ` : ''}
+                            {item.ice && String(item.ice) !== '0' ? `Đá: ${item.ice} ` : ''}
                             {item.note ? `Ghi chú: ${item.note}` : ''}
                           </div>
                         )}

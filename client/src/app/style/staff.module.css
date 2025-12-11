@@ -5,6 +5,16 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Pulse animation for shift status indicator */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
 /* Hide scrollbars */
 .staffContainer ::-webkit-scrollbar,
 .leftPanel::-webkit-scrollbar,

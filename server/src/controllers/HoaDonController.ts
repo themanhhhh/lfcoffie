@@ -2,29 +2,34 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../database/data-source";
 import { HoaDon } from "../entities/HoaDon";
 import { PhienLamViec } from "../entities/PhienLamViec";
+import { CTKM } from "../entities/CTKM";
 
 export class HoaDonController {
   private repository = AppDataSource.getRepository(HoaDon);
   private phienLamViecRepo = AppDataSource.getRepository(PhienLamViec);
+  private ctkmRepo = AppDataSource.getRepository(CTKM);
 
   async getAll(req: Request, res: Response) {
     const list = await this.repository.find({ 
       where: { isDelete: false },
-      relations: ['phienLamViec', 'phienLamViec.caLam', 'phienLamViec.nhanVien']
+      relations: ['phienLamViec', 'phienLamViec.caLam', 'phienLamViec.nhanVien', 'ctkm']
     });
     return res.json(list);
   }
 
   async getOne(req: Request, res: Response) {
     const { id } = req.params;
-    const item = await this.repository.findOne({ where: { MaDonHang: id, isDelete: false } } as any);
+    const item = await this.repository.findOne({ 
+      where: { MaDonHang: id, isDelete: false } as any,
+      relations: ['ctkm']
+    });
     if (!item) return res.status(404).json({ message: "Không tìm thấy" });
     return res.json(item);
   }
 
   async create(req: Request, res: Response) {
     try {
-      const { MaPhienLamViec, ...rest } = req.body;
+      const { MaPhienLamViec, MaCTKM, ...rest } = req.body;
       
       // Tìm PhienLamViec nếu có MaPhienLamViec
       let phienLamViec = null;
@@ -39,10 +44,20 @@ export class HoaDonController {
           });
         }
       }
+
+      // Tìm CTKM nếu có MaCTKM
+      let ctkm = null;
+      if (MaCTKM) {
+        ctkm = await this.ctkmRepo.findOne({
+          where: { MaCTKM, isDelete: false } as any
+        });
+        // Không báo lỗi nếu không tìm thấy CTKM, chỉ bỏ qua
+      }
       
       const obj = this.repository.create({
         ...rest,
-        phienLamViec: phienLamViec
+        phienLamViec: phienLamViec,
+        ctkm: ctkm
       } as HoaDon);
       
       const saved = await this.repository.save(obj);

@@ -121,6 +121,10 @@ export class ThongKeController {
       
       const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(new Date().getDate() - 7));
       const end = endDate ? new Date(endDate as string) : new Date();
+      
+      // Đảm bảo start là đầu ngày và end là cuối ngày
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
 
       // Tính doanh thu từ đơn hàng (DonHang + ChiTietDonHang)
       const donHangs = await this.donHangRepo.find({
@@ -502,19 +506,22 @@ export class ThongKeController {
   // So sánh doanh thu với ngày hôm qua
   async compareRevenueWithYesterday(req: Request, res: Response) {
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
       
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      
+      const yesterdayEnd = new Date(yesterdayStart);
+      yesterdayEnd.setHours(23, 59, 59, 999);
 
       // Doanh thu hôm nay từ đơn hàng
       const todayOrders = await this.donHangRepo.find({
         where: {
-          Ngay: Between(today, tomorrow),
+          Ngay: Between(todayStart, todayEnd),
           isDelete: false
         },
         relations: ['chiTietDonHangs']
@@ -528,7 +535,7 @@ export class ThongKeController {
       // Doanh thu hôm qua từ đơn hàng
       const yesterdayOrders = await this.donHangRepo.find({
         where: {
-          Ngay: Between(yesterday, today),
+          Ngay: Between(yesterdayStart, yesterdayEnd),
           isDelete: false
         },
         relations: ['chiTietDonHangs']
@@ -549,12 +556,12 @@ export class ThongKeController {
 
       return res.json({
         today: {
-          date: this.formatDateLocal(today),
+          date: this.formatDateLocal(todayStart),
           revenue: todayRevenue,
           orderCount: todayOrders.length
         },
         yesterday: {
-          date: this.formatDateLocal(yesterday),
+          date: this.formatDateLocal(yesterdayStart),
           revenue: yesterdayRevenue,
           orderCount: yesterdayOrders.length
         },
