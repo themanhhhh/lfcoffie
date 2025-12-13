@@ -911,8 +911,8 @@ const Staff = () => {
                     <Image
                       src={product.image}
                       alt={product.name}
-                      width={280}
-                      height={200}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 280px"
                       className={Style.productImg}
                     />
                     <div className={Style.productPrice}>{formatPrice(product.price)}</div>
