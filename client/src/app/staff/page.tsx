@@ -28,7 +28,38 @@ import {
 import { toast } from 'react-hot-toast'
 import { MdLocalCafe, MdLocalBar, MdCake, MdFastfood } from 'react-icons/md'
 import { GiTeapot } from 'react-icons/gi'
-import { logo, coffeeBlack } from '../image/index'
+import { 
+  logo, 
+  coffeeBlack,
+  amerricano,
+  amerricanomo,
+  bodua,
+  cafeden,
+  cafenau,
+  caphemuoi,
+  chang,
+  coldbrewbuoihong,
+  croissants,
+  den250,
+  dreamy250ml,
+  indomie,
+  khoga,
+  matchacoco,
+  matchalatte,
+  matchaxoai,
+  nau250,
+  nhanduadaxay,
+  olongdao,
+  olongmachiato,
+  olongmatcha,
+  olongnhaivai,
+  olongnhietdoi,
+  olongsua,
+  olongsuadua,
+  olongsuanhai,
+  olongxoai,
+  tiramisu
+} from '../image/index'
 import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon, giamHoaDonApi, GiamHoaDon, comboApi } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
@@ -62,6 +93,65 @@ interface CartItem extends Product {
 }
 
 const CATEGORY_ICON_CYCLE: IconType[] = [MdLocalCafe, GiTeapot, MdLocalBar, MdCake, MdFastfood]
+
+// Mapping tên món với ảnh local
+const IMAGE_MAP: Record<string, StaticImageData> = {
+  // Cà phê
+  'Cà Phê Đen': cafeden,
+  'Cà Phê Nâu': cafenau,
+  'Cà Phê Muối': caphemuoi,
+  'Americano': amerricano,
+  'Americano Mơ': amerricanomo,
+  'Cold Brew Bưởi Hồng': coldbrewbuoihong,
+  'Đen 250ml': den250,
+  'Nâu 250ml': nau250,
+  'Dreamy 250ml': dreamy250ml,
+  
+  // Matcha
+  'Matcha Latte': matchalatte,
+  'Matcha Coco': matchacoco,
+  'Matcha Xoài': matchaxoai,
+  
+  // Ô Long / Trà
+  'Ô Long Sữa': olongsua,
+  'Ô Long Đào': olongdao,
+  'Ô Long Xoài': olongxoai,
+  'Ô Long Machiato': olongmachiato,
+  'Ô Long Matcha': olongmatcha,
+  'Ô Long Nhài Vải': olongnhaivai,
+  'Ô Long Nhiệt Đới': olongnhietdoi,
+  'Ô Long Sữa Dừa': olongsuadua,
+  'Ô Long Sữa Nhài': olongsuanhai,
+  
+  // Sinh tố / Đá xay
+  'Bơ Dừa': bodua,
+  'Nhãn Dừa Đá Xay': nhanduadaxay,
+  
+  // Đồ ăn
+  'Croissant': croissants,
+  'Tiramisu': tiramisu,
+  'Indomie': indomie,
+  'Khô Gà': khoga,
+  'Châng': chang,
+}
+
+// Helper function để lấy ảnh theo tên món
+const getImageByName = (name: string): StaticImageData => {
+  // Tìm exact match
+  if (IMAGE_MAP[name]) {
+    return IMAGE_MAP[name]
+  }
+  
+  // Tìm partial match (tên món chứa keyword)
+  const lowerName = name.toLowerCase()
+  for (const [key, value] of Object.entries(IMAGE_MAP)) {
+    if (lowerName.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerName)) {
+      return value
+    }
+  }
+  
+  return coffeeBlack
+}
 
 interface ShiftInfo {
   name?: string
@@ -288,7 +378,7 @@ const Staff = () => {
           name: item.TenMon,
           description: `${item.NhomMon} - ${item.LoaiMon}`,
           price: item.DonGia ?? 0,
-          image: item.imgUrl || coffeeBlack, // Use imgUrl from API or default
+          image: getImageByName(item.TenMon), // Use local image mapping
           categoryId: item.LoaiMon ?? 'other',
           categoryName: item.LoaiMon ?? 'Khác'
         }))
@@ -303,7 +393,7 @@ const Staff = () => {
             name: combo.TenCombo,
             description: `Combo: ${itemsDesc}`,
             price: combo.GiaCombo ?? 0,
-            image: coffeeBlack,
+            image: getImageByName(combo.TenCombo), // Try to match combo name
             categoryId: 'combo',
             categoryName: 'Combo'
           }
