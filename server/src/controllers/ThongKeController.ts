@@ -85,7 +85,7 @@ export class ThongKeController {
       });
 
       // Chuyển đổi thành array và sắp xếp theo ngày
-      const dailyData = Object.values(dailyStats).sort((a, b) => 
+      const dailyData = Object.values(dailyStats).sort((a, b) =>
         new Date(a.date).getTime() - new Date(b.date).getTime()
       );
 
@@ -118,10 +118,10 @@ export class ThongKeController {
   async getOverview(req: Request, res: Response) {
     try {
       const { startDate, endDate } = req.query;
-      
+
       const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(new Date().getDate() - 7));
       const end = endDate ? new Date(endDate as string) : new Date();
-      
+
       // Đảm bảo start là đầu ngày và end là cuối ngày
       start.setHours(0, 0, 0, 0);
       end.setHours(23, 59, 59, 999);
@@ -241,7 +241,7 @@ export class ThongKeController {
 
       donHangs.forEach(dh => {
         const total = dh.chiTietDonHangs?.reduce((s, ct) => s + (ct.SoLuong * ct.DonGia), 0) || 0;
-        
+
         // Phân loại theo LoaiDonHang
         const loaiDonHang = dh.LoaiDonHang || 'tại quán';
         if (loaiDonHang.includes('tại quán') || loaiDonHang.includes('tại chỗ')) {
@@ -291,13 +291,13 @@ export class ThongKeController {
       const phienLamViec = await this.phienLamViecRepo.findOne({
         where: { MaPhienLamViec: maPhienLamViec } as any,
         relations: [
-          'caLam', 
-          'nhanVien', 
-          'donHangs', 
-          'donHangs.chiTietDonHangs', 
+          'caLam',
+          'nhanVien',
+          'donHangs',
+          'donHangs.chiTietDonHangs',
           'donHangs.chiTietDonHangs.mon',
           'donHangs.ctkm',
-          'thuChis', 
+          'thuChis',
           'thuChis.nghiepVu'
         ]
       });
@@ -342,14 +342,14 @@ export class ThongKeController {
         // Tính doanh thu gốc của đơn hàng
         const dhSubtotal = dh.chiTietDonHangs?.reduce((s, ct) => {
           const itemTotal = ct.SoLuong * ct.DonGia;
-          
+
           // Tính giảm giá món (GiamMon) - tìm trong allGiamMons
           if (ct.mon) {
-            const applicableGiamMons = allGiamMons.filter(gm => 
+            const applicableGiamMons = allGiamMons.filter(gm =>
               gm.mon?.MaMon === ct.mon?.MaMon &&
               gm.TrangThai === 'hoạt động'
             );
-            
+
             applicableGiamMons.forEach((gm) => {
               const orderDate = new Date(dh.Ngay);
               if (orderDate >= new Date(gm.NgayBatDau) && orderDate <= new Date(gm.NgayKetThuc)) {
@@ -381,11 +381,11 @@ export class ThongKeController {
 
         // Tính chiết khấu từ GiamHoaDon (CTKM) - tìm trong allGiamHoaDons
         if (dh.ctkm) {
-          const applicableGiamHoaDons = allGiamHoaDons.filter(ghd => 
+          const applicableGiamHoaDons = allGiamHoaDons.filter(ghd =>
             ghd.ctkm?.MaCTKM === dh.ctkm?.MaCTKM &&
             ghd.TrangThai === 'hoạt động'
           );
-          
+
           applicableGiamHoaDons.forEach((ghd) => {
             const orderDate = new Date(dh.Ngay);
             if (orderDate >= new Date(ghd.NgayBatDau) && orderDate <= new Date(ghd.NgayKetThuc)) {
@@ -428,13 +428,37 @@ export class ThongKeController {
         orderSources[loaiDonHang].doanhThu += dhSubtotal;
       });
 
-      // Tính tổng thu từ ThuChi
-      const totalThu = phienLamViec.thuChis?.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'thu')
+
+      // Tính tổng thu từ ThuChi (KHÔNG bao gồm số dư đầu)
+      const soDuDau = phienLamViec.thuChis?.find(tc =>
+        tc.nghiepVu?.LoaiGiaoDich === 'thu' &&
+        tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')
+      )?.SoTien || 0;
+
+      // Tổng thu KHÁC (không bao gồm số dư đầu)
+      const totalThuKhac = phienLamViec.thuChis
+        ?.filter(tc => {
+          if (tc.nghiepVu?.LoaiGiaoDich !== 'thu') return false;
+          // Loại bỏ khoản "thu đầu" để tránh tính trùng
+          if (tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')) return false;
+          return true;
+        })
         .reduce((sum, tc) => sum + tc.SoTien, 0) || 0;
+
+      // Tổng thu bao gồm CẢ số dư đầu (để hiển thị báo cáo)
+      const totalThu = soDuDau + totalThuKhac;
 
       // Tính tổng chi từ ThuChi
       const totalChi = phienLamViec.thuChis?.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi')
         .reduce((sum, tc) => sum + tc.SoTien, 0) || 0;
+
+      // Tính doanh thu TIỀN MẶT từ đơn hàng (chỉ tính các đơn thanh toán bằng tiền mặt)
+      const doanhThuTienMat = phienLamViec.donHangs
+        ?.filter(dh => dh.PhuongThucThanhToan?.toLowerCase().includes('tiền mặt'))
+        .reduce((sum, dh) => {
+          const dhTotal = dh.chiTietDonHangs?.reduce((s, ct) => s + (ct.SoLuong * ct.DonGia), 0) || 0;
+          return sum + dhTotal;
+        }, 0) || 0;
 
       // Số đơn hàng
       const orderCount = phienLamViec.donHangs?.length || 0;
@@ -442,13 +466,10 @@ export class ThongKeController {
       // Trung bình hóa đơn
       const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
 
-      // Tiền trong két (số dư cuối = số dư đầu + thu - chi)
-      // Số dư đầu có thể lấy từ phiên làm việc hoặc tính từ ThuChi đầu tiên
-      const soDuDau = phienLamViec.thuChis?.find(tc => 
-        tc.nghiepVu?.LoaiGiaoDich === 'thu' && 
-        tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')
-      )?.SoTien || 0;
-      const tienTrongKet = soDuDau + totalThu - totalChi;
+      // Tiền trong két = Số dư đầu + Doanh thu tiền mặt + Thu khác - Chi
+      // (Không cộng totalThu vì đã tính riêng soDuDau + totalThuKhac)
+      const tienTrongKet = soDuDau + doanhThuTienMat + totalThuKhac - totalChi;
+
 
       // Giờ in: ưu tiên dùng ThoiGianDong nếu có, nếu không thì dùng thời gian hiện tại
       // Kết hợp Ngay và ThoiGianDong để tạo datetime đầy đủ
@@ -508,13 +529,13 @@ export class ThongKeController {
     try {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
-      
+
       const todayEnd = new Date();
       todayEnd.setHours(23, 59, 59, 999);
-      
+
       const yesterdayStart = new Date(todayStart);
       yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-      
+
       const yesterdayEnd = new Date(yesterdayStart);
       yesterdayEnd.setHours(23, 59, 59, 999);
 
@@ -581,7 +602,7 @@ export class ThongKeController {
     try {
       const today = new Date();
       today.setHours(23, 59, 59, 999);
-      
+
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
       sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -623,7 +644,7 @@ export class ThongKeController {
       });
 
       // Chuyển đổi thành array và sắp xếp theo ngày
-      const dailyData = Object.values(dailyStats).sort((a, b) => 
+      const dailyData = Object.values(dailyStats).sort((a, b) =>
         new Date(a.date).getTime() - new Date(b.date).getTime()
       );
 
@@ -804,25 +825,25 @@ export class ThongKeController {
   async getBusinessReport(req: Request, res: Response) {
     try {
       const { startDate, endDate, maPhienLamViec } = req.query;
-      
+
       // Đảm bảo set đúng giờ cho start và end
       const start = startDate ? new Date(startDate as string) : new Date();
       start.setHours(0, 0, 0, 0);
       const end = endDate ? new Date(endDate as string) : new Date();
       end.setHours(23, 59, 59, 999);
-      
+
       // Tính doanh thu bán hàng từ DonHang
       let donHangQuery = this.donHangRepo.createQueryBuilder('dh')
         .leftJoinAndSelect('dh.chiTietDonHangs', 'ctdh')
         .where('dh.Ngay BETWEEN :start AND :end', { start, end })
         .andWhere('dh.isDelete = :isDelete', { isDelete: false });
-      
+
       if (maPhienLamViec) {
         donHangQuery = donHangQuery.andWhere('dh.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
       }
-      
+
       const donHangs = await donHangQuery.getMany();
-      
+
       let doanhThuBanHang = 0;
       for (const donHang of donHangs) {
         if (donHang.chiTietDonHangs) {
@@ -832,56 +853,56 @@ export class ThongKeController {
           doanhThuBanHang += donHangTotal;
         }
       }
-      
+
       // Tính doanh thu khác từ ThuChi với LoaiGiaoDich = 'thu'
       let thuChiQuery = this.thuChiRepo.createQueryBuilder('tc')
         .leftJoinAndSelect('tc.nghiepVu', 'nv')
         .where('tc.ThoiGian BETWEEN :start AND :end', { start, end })
         .andWhere('nv.LoaiGiaoDich = :loai', { loai: 'thu' });
-      
+
       if (maPhienLamViec) {
         thuChiQuery = thuChiQuery.andWhere('tc.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
       }
-      
+
       const thuChis = await thuChiQuery.getMany();
       const doanhThuKhac = thuChis.reduce((sum, tc) => sum + tc.SoTien, 0);
-      
+
       // Tính chi phí từ ThuChi với LoaiGiaoDich = 'chi', nhóm theo NghiepVu
       // Lấy tất cả ThuChi trong khoảng thời gian, sau đó filter theo nghiepVu
       let chiPhiQuery = this.thuChiRepo.createQueryBuilder('tc')
         .leftJoinAndSelect('tc.nghiepVu', 'nv')
         .where('tc.ThoiGian BETWEEN :start AND :end', { start, end });
-      
+
       if (maPhienLamViec) {
         chiPhiQuery = chiPhiQuery.andWhere('tc.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });
       }
-      
+
       const allThuChi = await chiPhiQuery.getMany();
-      
+
       // Debug log
       console.log('getBusinessReport - All ThuChi found:', allThuChi.length);
       console.log('getBusinessReport - Date range:', start, 'to', end);
       console.log('getBusinessReport - maPhienLamViec:', maPhienLamViec);
-      
+
       // Lọc lại để chỉ lấy những cái có nghiepVu với LoaiGiaoDich = 'chi'
       const chiPhisFiltered = allThuChi.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi');
-      
+
       console.log('getBusinessReport - ChiPhi filtered:', chiPhisFiltered.length);
-      
+
       // Nhóm chi phí theo NghiepVu
       const chiPhiByCategory: Record<string, number> = {};
       chiPhisFiltered.forEach(cp => {
         const tenNghiepVu = cp.nghiepVu?.TenNghiepVu || 'Khác';
         chiPhiByCategory[tenNghiepVu] = (chiPhiByCategory[tenNghiepVu] || 0) + cp.SoTien;
       });
-      
+
       // Tính tổng chi phí
       const tongChiPhi = chiPhisFiltered.reduce((sum, cp) => sum + cp.SoTien, 0);
-      
+
       // Tính lợi nhuận
       const tongDoanhThu = doanhThuBanHang + doanhThuKhac;
       const loiNhuan = tongDoanhThu - tongChiPhi;
-      
+
       return res.json({
         doanhThu: {
           banHang: doanhThuBanHang,
