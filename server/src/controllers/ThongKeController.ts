@@ -430,16 +430,36 @@ export class ThongKeController {
 
 
       // Tính tổng thu từ ThuChi (KHÔNG bao gồm số dư đầu)
-      const soDuDau = phienLamViec.thuChis?.find(tc =>
+      // Tìm số dư đầu (có thể là tiền mặt hoặc chuyển khoản, tùy thuộc vào cách mở ca)
+      const soDuDauRecord = phienLamViec.thuChis?.find(tc =>
         tc.nghiepVu?.LoaiGiaoDich === 'thu' &&
         tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')
-      )?.SoTien || 0;
+      );
 
-      // Tổng thu KHÁC (không bao gồm số dư đầu)
-      const totalThuKhac = phienLamViec.thuChis
+      // Số dư đầu TIỀN MẶT (chỉ tính nếu phương thức thanh toán là tiền mặt)
+      const soDuDauTienMat = soDuDauRecord?.PhuongThucThanhToan?.toLowerCase().includes('tiền mặt')
+        ? (soDuDauRecord?.SoTien || 0)
+        : 0;
+
+      // Tổng số dư đầu (cả tiền mặt và chuyển khoản - để hiển thị báo cáo)
+      const soDuDau = soDuDauRecord?.SoTien || 0;
+
+      // Tổng thu TIỀN MẶT KHÁC (không bao gồm số dư đầu)
+      const totalThuTienMatKhac = phienLamViec.thuChis
         ?.filter(tc => {
           if (tc.nghiepVu?.LoaiGiaoDich !== 'thu') return false;
           // Loại bỏ khoản "thu đầu" để tránh tính trùng
+          if (tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')) return false;
+          // Chỉ tính tiền mặt
+          if (!tc.PhuongThucThanhToan?.toLowerCase().includes('tiền mặt')) return false;
+          return true;
+        })
+        .reduce((sum, tc) => sum + tc.SoTien, 0) || 0;
+
+      // Tổng thu KHÁC tất cả phương thức (không bao gồm số dư đầu - để hiển thị báo cáo)
+      const totalThuKhac = phienLamViec.thuChis
+        ?.filter(tc => {
+          if (tc.nghiepVu?.LoaiGiaoDich !== 'thu') return false;
           if (tc.nghiepVu?.TenNghiepVu?.toLowerCase().includes('đầu')) return false;
           return true;
         })
@@ -448,7 +468,15 @@ export class ThongKeController {
       // Tổng thu bao gồm CẢ số dư đầu (để hiển thị báo cáo)
       const totalThu = soDuDau + totalThuKhac;
 
-      // Tính tổng chi từ ThuChi
+      // Tính tổng chi TIỀN MẶT từ ThuChi (chỉ tính chi bằng tiền mặt)
+      const totalChiTienMat = phienLamViec.thuChis
+        ?.filter(tc =>
+          tc.nghiepVu?.LoaiGiaoDich === 'chi' &&
+          tc.PhuongThucThanhToan?.toLowerCase().includes('tiền mặt')
+        )
+        .reduce((sum, tc) => sum + tc.SoTien, 0) || 0;
+
+      // Tổng chi TẤT CẢ phương thức (để hiển thị báo cáo)
       const totalChi = phienLamViec.thuChis?.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi')
         .reduce((sum, tc) => sum + tc.SoTien, 0) || 0;
 
@@ -466,9 +494,9 @@ export class ThongKeController {
       // Trung bình hóa đơn
       const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
 
-      // Tiền trong két = Số dư đầu + Doanh thu tiền mặt + Thu khác - Chi
-      // (Không cộng totalThu vì đã tính riêng soDuDau + totalThuKhac)
-      const tienTrongKet = soDuDau + doanhThuTienMat + totalThuKhac - totalChi;
+      // Tiền trong két = Số dư đầu tiền mặt + Doanh thu tiền mặt + Thu tiền mặt khác - Chi tiền mặt
+      const tienTrongKet = soDuDauTienMat + doanhThuTienMat + totalThuTienMatKhac - totalChiTienMat;
+
 
 
       // Giờ in: ưu tiên dùng ThoiGianDong nếu có, nếu không thì dùng thời gian hiện tại
