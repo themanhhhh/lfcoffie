@@ -150,18 +150,15 @@ const StaffPage = () => {
           const stat = invoiceStats.get(employee.MaNhanVien) ?? { total: 0 }
           const joinDate = formatDate(stat.earliest)
           const lastShift = formatDate(stat.latest)
-          const inactivityDays = daysBetween(stat.latest)
 
+          // Ưu tiên trạng thái từ database
           let status: StaffStatus = 'active'
-          if (stat.total === 0) {
-            status = 'probation'
-          } else if (inactivityDays > 30) {
-            status = 'leave'
-          }
           if (employee.TrangThai === 'leave') {
             status = 'leave'
           } else if (employee.TrangThai === 'probation') {
             status = 'probation'
+          } else if (employee.TrangThai === 'active') {
+            status = 'active'
           }
 
           return {
@@ -385,18 +382,15 @@ const StaffPage = () => {
         const stat = invoiceStats.get(employee.MaNhanVien) ?? { total: 0 }
         const joinDate = formatDate(stat.earliest)
         const lastShift = formatDate(stat.latest)
-        const inactivityDays = daysBetween(stat.latest)
 
+        // Ưu tiên trạng thái từ database
         let status: StaffStatus = 'active'
-        if (stat.total === 0) {
-          status = 'probation'
-        } else if (inactivityDays > 30) {
-          status = 'leave'
-        }
         if (employee.TrangThai === 'leave') {
           status = 'leave'
         } else if (employee.TrangThai === 'probation') {
           status = 'probation'
+        } else if (employee.TrangThai === 'active') {
+          status = 'active'
         }
 
         return {

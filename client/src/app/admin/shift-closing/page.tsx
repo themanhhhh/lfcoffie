@@ -390,7 +390,7 @@ const ShiftClosingPage = () => {
               </tr>
               <tr>
                 <td></td>
-                <td>2. Doanh thu khác (dịch vụ, bán đồ lưu niệm, phụ thu,...)</td>
+                <td>2.Các loại thu trong nghiệp vụ thu chi</td>
                 <td>${formatPrice(businessReport.doanhThu.khac)}</td>
               </tr>
               <tr>
@@ -526,17 +526,23 @@ const ShiftClosingPage = () => {
             />
           </label>
           <label>
-            Ca làm:
+            Ca làm / Phiên:
             <select
               value={selectedPhienLamViec}
               onChange={(e) => setSelectedPhienLamViec(e.target.value)}
             >
               <option value="">-- Tất cả ca --</option>
-              {availablePhienLamViec.map((plv) => (
-                <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
-                  {plv.caLam?.TenCaLam || 'N/A'} - {new Date(plv.Ngay).toLocaleDateString('vi-VN')}
-                </option>
-              ))}
+              {availablePhienLamViec.map((plv) => {
+                const ngay = new Date(plv.Ngay).toLocaleDateString('vi-VN')
+                const tenCa = plv.caLam?.TenCaLam || 'Chưa xác định'
+                const nhanVien = plv.nhanVien?.TenNhanVien || ''
+                const trangThai = plv.TrangThai === 'mở' ? '(Đang mở)' : ''
+                return (
+                  <option key={plv.MaPhienLamViec} value={plv.MaPhienLamViec}>
+                    {ngay} - {tenCa} {nhanVien ? `- ${nhanVien}` : ''} {trangThai}
+                  </option>
+                )
+              })}
             </select>
           </label>
         </div>

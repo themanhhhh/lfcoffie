@@ -137,22 +137,25 @@ const CheckinCheckoutPage = () => {
       toast.error('Nhân viên đã kết ca.')
       return
     }
-    
+
     try {
       // Tìm phiên làm việc đang mở của nhân viên này
       const phienLamViecList = await phienLamViecApi.getAll()
-      const currentPhien = phienLamViecList.find(
-        plv => plv.nhanVien?.MaNhanVien === user?.MaNhanVien && plv.TrangThai === 'mở'
-      )
-      
+      const currentPhien = phienLamViecList.find((plv) => {
+        // Kiểm tra cả MaNhanVien trực tiếp và qua relation nhanVien
+        const maNhanVien = plv.MaNhanVien ?? plv.nhanVien?.MaNhanVien
+        return maNhanVien === user?.MaNhanVien && plv.TrangThai === 'mở'
+      })
+
       if (currentPhien) {
         // Đóng phiên làm việc trong database
         await phienLamViecApi.closeShift(currentPhien.MaPhienLamViec)
-        toast.success('Đã đóng phiên làm việc thành công!')
+        toast.success('Đã đóng phiên làm việc và kết ca thành công!')
       } else {
         toast.error('Không tìm thấy phiên làm việc đang mở')
+        return
       }
-      
+
       const time = formatNow()
       updateStaff(selectedStaff.id, staff => ({
         ...staff,
