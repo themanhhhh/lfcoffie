@@ -104,6 +104,9 @@ interface VoucherFormData {
   moTa: string
   ngayBatDau: string
   ngayKetThuc: string
+  thu?: string  // Thứ trong tuần
+  gioBatDau?: string  // Giờ bắt đầu (HH:mm)
+  gioKetThuc?: string  // Giờ kết thúc (HH:mm)
   comboItems?: ComboItem[]
   giamMonItems?: GiamMonItem[]
 }
@@ -145,6 +148,9 @@ const VoucherPage = () => {
     moTa: '',
     ngayBatDau: new Date().toISOString().split('T')[0],
     ngayKetThuc: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    thu: '',  // Mặc định không giới hạn thứ
+    gioBatDau: '',  // Mặc định không giới hạn giờ
+    gioKetThuc: '',
     comboItems: []
   })
   const [monList, setMonList] = useState<Mon[]>([])
@@ -455,8 +461,12 @@ const VoucherPage = () => {
 
   const handleAddVoucher = () => {
     setEditingVoucher(null)
+    // Tự động tạo mã CTKM
+    const timestamp = Date.now().toString().slice(-8)
+    const maKM = `CTKM${timestamp}`
+
     setFormData({
-      maKM: '',
+      maKM: maKM,  // Tự động generate
       tenKM: '',
       loaiKM: 'percentage',
       trangThai: 'active',
@@ -473,7 +483,7 @@ const VoucherPage = () => {
 
   const handleEditVoucher = async (voucher: Voucher) => {
     setEditingVoucher(voucher)
-    
+
     // Load combo items if it's a combo voucher
     let comboItems: ComboItem[] = []
     if (voucher.type === 'free_item') {
@@ -490,7 +500,7 @@ const VoucherPage = () => {
         console.error('Error loading combo items:', err)
       }
     }
-    
+
     setFormData({
       maKM: voucher.id,
       tenKM: voucher.name,
@@ -530,6 +540,9 @@ const VoucherPage = () => {
         giamToiDa: number | null
         ngayBatDau: string
         ngayKetThuc: string
+        thu?: string | null  // Thứ trong tuần
+        gioBatDau?: string | null  // Giờ bắt đầu
+        gioKetThuc?: string | null  // Giờ kết thúc
         loaiGiam: string
         comboItems?: Array<{ MaMon: string; SoLuong: number }>
         giamMonItems?: Array<{ MaMon: string; SoTienGiam: number; LoaiGiam: string }>
@@ -546,6 +559,10 @@ const VoucherPage = () => {
         giamToiDa: (loaiCTKM === 'combo' || loaiCTKM === 'giammon') ? null : (formData.giamToiDa || null),
         ngayBatDau: formData.ngayBatDau,
         ngayKetThuc: formData.ngayKetThuc,
+        // Thêm các trường thời gian mới
+        thu: formData.thu || null,
+        gioBatDau: formData.gioBatDau || null,
+        gioKetThuc: formData.gioKetThuc || null,
         loaiGiam: formData.loaiKM === 'percentage' ? 'Phần trăm' : 'VND'
       }
 
@@ -1010,15 +1027,16 @@ const VoucherPage = () => {
             </div>
             <form onSubmit={handleSubmitForm} className={styles.modalForm}>
               <div className={styles.formGroup}>
-                <label>Mã voucher *</label>
+                <label>Mã voucher * (tự động)</label>
                 <input
                   type="text"
                   value={formData.maKM}
                   onChange={(e) => setFormData({ ...formData, maKM: e.target.value })}
-                  disabled={!!editingVoucher}
+                  disabled={true}  // Luôn disable vì mã được tạo tự động
                   required
-                  placeholder="VD: KM001, SUMMER2025"
+                  placeholder="Mã sẽ được tạo tự động"
                 />
+                <small>Mã được tạo tự động khi lưu</small>
               </div>
               <div className={styles.formGroup}>
                 <label>Tên voucher *</label>
@@ -1126,6 +1144,48 @@ const VoucherPage = () => {
                     onChange={(e) => setFormData({ ...formData, ngayKetThuc: e.target.value })}
                     required
                   />
+                </div>
+              </div>
+
+              {/* Thứ trong tuần và giờ áp dụng */}
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Thứ áp dụng</label>
+                  <select
+                    value={formData.thu || ''}
+                    onChange={(e) => setFormData({ ...formData, thu: e.target.value })}
+                  >
+                    <option value="">Tất cả các ngày</option>
+                    <option value="Thứ 2">Thứ 2</option>
+                    <option value="Thứ 3">Thứ 3</option>
+                    <option value="Thứ 4">Thứ 4</option>
+                    <option value="Thứ 5">Thứ 5</option>
+                    <option value="Thứ 6">Thứ 6</option>
+                    <option value="Thứ 7">Thứ 7</option>
+                    <option value="Chủ nhật">Chủ nhật</option>
+                  </select>
+                  <small>Để trống nếu áp dụng cho tất cả các ngày</small>
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>Giờ bắt đầu</label>
+                  <input
+                    type="time"
+                    value={formData.gioBatDau || ''}
+                    onChange={(e) => setFormData({ ...formData, gioBatDau: e.target.value })}
+                  />
+                  <small>Để trống nếu áp dụng cả ngày</small>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Giờ kết thúc</label>
+                  <input
+                    type="time"
+                    value={formData.gioKetThuc || ''}
+                    onChange={(e) => setFormData({ ...formData, gioKetThuc: e.target.value })}
+                  />
+                  <small>Để trống nếu áp dụng cả ngày</small>
                 </div>
               </div>
               {/* Phần chọn món và số lượng cho combo */}

@@ -329,6 +329,12 @@ export class ThongKeController {
       // Nhóm món theo NhomMon
       const monByNhom: Record<string, { ten: string; soLuong: number; doanhThu: number }> = {};
 
+      // Thống kê theo từng món
+      const monStats: Record<string, { maMon: string; tenMon: string; loaiMon: string; soLuong: number; doanhThu: number }> = {};
+
+      // Nhóm theo LoaiMon (category)
+      const monByLoai: Record<string, { ten: string; soLuong: number; doanhThu: number }> = {};
+
       // Nhóm theo CTKM
       const ctkmStats: Record<string, { ten: string; soHoaDon: number; doanhThu: number }> = {};
 
@@ -372,6 +378,28 @@ export class ThongKeController {
             }
             monByNhom[nhom].soLuong += ct.SoLuong;
             monByNhom[nhom].doanhThu += itemTotal;
+
+            // Thống kê theo từng món
+            const maMon = ct.mon.MaMon;
+            if (!monStats[maMon]) {
+              monStats[maMon] = {
+                maMon: maMon,
+                tenMon: ct.mon.TenMon,
+                loaiMon: ct.mon.LoaiMon || 'Khác',
+                soLuong: 0,
+                doanhThu: 0
+              };
+            }
+            monStats[maMon].soLuong += ct.SoLuong;
+            monStats[maMon].doanhThu += itemTotal;
+
+            // Nhóm theo LoaiMon
+            const loai = ct.mon.LoaiMon || 'Khác';
+            if (!monByLoai[loai]) {
+              monByLoai[loai] = { ten: loai, soLuong: 0, doanhThu: 0 };
+            }
+            monByLoai[loai].soLuong += ct.SoLuong;
+            monByLoai[loai].doanhThu += itemTotal;
           }
 
           return s + itemTotal;
@@ -538,6 +566,8 @@ export class ThongKeController {
           gioIn
         },
         monByNhom: Object.values(monByNhom),
+        monStats: Object.values(monStats).sort((a, b) => b.soLuong - a.soLuong), // Sort by quantity descending
+        monByLoai: Object.values(monByLoai),
         ctkmStats: Object.values(ctkmStats),
         paymentMethods: Object.entries(paymentMethods).map(([key, value]) => ({
           phuongThuc: key,

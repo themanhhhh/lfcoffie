@@ -88,7 +88,7 @@ const ShiftClosingPage = () => {
         ))
       }
       setAvailablePhienLamViec(finalList)
-      
+
       // Tự động chọn phiên mới nhất nếu có
       if (finalList.length > 0 && !selectedPhienLamViec) {
         setSelectedPhienLamViec(finalList[0].MaPhienLamViec)
@@ -199,15 +199,15 @@ const ShiftClosingPage = () => {
         <div className={styles.emptyState}>
           <FaFileAlt style={{ fontSize: '3rem', color: '#ccc', marginBottom: '1rem' }} />
           <h3>Không có phiên làm việc</h3>
-          <p>{isManager 
-            ? 'Vui lòng chọn phiên làm việc để xem báo cáo' 
+          <p>{isManager
+            ? 'Vui lòng chọn phiên làm việc để xem báo cáo'
             : 'Bạn chưa có phiên làm việc đang mở. Vui lòng mở ca trước.'}</p>
           {!isManager && (
-            <Link href="/staff/open-shift" style={{ 
-              marginTop: '1rem', 
-              padding: '0.75rem 1.5rem', 
-              background: '#8B4513', 
-              color: 'white', 
+            <Link href="/staff/open-shift" style={{
+              marginTop: '1rem',
+              padding: '0.75rem 1.5rem',
+              background: '#8B4513',
+              color: 'white',
               borderRadius: '8px',
               textDecoration: 'none',
               display: 'inline-block'
@@ -430,6 +430,66 @@ const ShiftClosingPage = () => {
                 </thead>
                 <tbody>
                   {report.monByNhom.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.ten}</td>
+                      <td>{item.soLuong}</td>
+                      <td>{formatPrice(item.doanhThu)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* Chi tiết món */}
+        {report.monStats && report.monStats.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              <FaBox /> Chi tiết món
+            </h2>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Tên món</th>
+                    <th>Loại món</th>
+                    <th>Số lượng</th>
+                    <th>Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.monStats.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.tenMon}</td>
+                      <td>{item.loaiMon}</td>
+                      <td>{item.soLuong}</td>
+                      <td>{formatPrice(item.doanhThu)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {/* Loại món */}
+        {report.monByLoai && report.monByLoai.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              <FaBox /> Loại món
+            </h2>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Loại món</th>
+                    <th>Số lượng</th>
+                    <th>Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.monByLoai.map((item, index) => (
                     <tr key={index}>
                       <td>{item.ten}</td>
                       <td>{item.soLuong}</td>

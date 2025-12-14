@@ -484,6 +484,18 @@ export interface ShiftClosingReport {
     soLuong: number;
     doanhThu: number;
   }>;
+  monStats: Array<{
+    maMon: string;
+    tenMon: string;
+    loaiMon: string;
+    soLuong: number;
+    doanhThu: number;
+  }>;
+  monByLoai: Array<{
+    ten: string;
+    soLuong: number;
+    doanhThu: number;
+  }>;
   ctkmStats: Array<{
     ten: string;
     soHoaDon: number;

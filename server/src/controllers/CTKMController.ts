@@ -64,6 +64,9 @@ export class CTKMController {
           LoaiGiam: body.loaiGiam || 'Phần trăm',
           NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
           NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          Thu: body.thu || null,
+          GioBatDau: body.gioBatDau || null,
+          GioKetThuc: body.gioKetThuc || null,
           TrangThai: 'hoạt động'
         };
 
@@ -76,7 +79,7 @@ export class CTKMController {
       } else if (saved.LoaiCTKM === 'giammon') {
         // Tạo GiamMon cho nhiều món
         const giamMonItems = body.giamMonItems || [];
-        
+
         if (giamMonItems.length > 0) {
           // Tạo nhiều GiamMon records
           for (let i = 0; i < giamMonItems.length; i++) {
@@ -91,6 +94,9 @@ export class CTKMController {
                 LoaiGiam: item.LoaiGiam || 'Phần trăm',
                 NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
                 NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                Thu: body.thu || null,
+                GioBatDau: body.gioBatDau || null,
+                GioKetThuc: body.gioKetThuc || null,
                 TrangThai: 'hoạt động'
               };
 
@@ -109,6 +115,9 @@ export class CTKMController {
             LoaiGiam: body.loaiGiam || 'Phần trăm',
             NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
             NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            Thu: body.thu || null,
+            GioBatDau: body.gioBatDau || null,
+            GioKetThuc: body.gioKetThuc || null,
             TrangThai: 'hoạt động'
           };
 

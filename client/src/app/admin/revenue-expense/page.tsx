@@ -108,7 +108,7 @@ const RevenueExpensePage = () => {
         params.endDate = endDate
       }
       if (typeFilter !== 'all') params.loaiGiaoDich = typeFilter
-      
+
       const data = await thuChiApi.getAll(params)
       setTransactions(data)
     } catch (err) {
@@ -142,8 +142,12 @@ const RevenueExpensePage = () => {
 
   const handleAddTransaction = () => {
     setEditingTransaction(null)
+    // Tự động tạo mã giao dịch
+    const timestamp = Date.now().toString().slice(-8)
+    const maGiaoDich = `GD${timestamp}`
+
     setFormData({
-      MaGiaoDich: '',
+      MaGiaoDich: maGiaoDich,  // Tự động generate
       MaPhienLamViec: '',
       MaNghiepVu: '',
       ThoiGian: new Date().toISOString().split('T')[0],
@@ -209,7 +213,7 @@ const RevenueExpensePage = () => {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(trans => {
-      const matchSearch = 
+      const matchSearch =
         trans.MaGiaoDich.toLowerCase().includes(searchTerm.toLowerCase()) ||
         trans.nghiepVu?.TenNghiepVu.toLowerCase().includes(searchTerm.toLowerCase()) ||
         trans.GhiChu?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -276,265 +280,266 @@ const RevenueExpensePage = () => {
 
   return (
     <div className={styles.container}>
-        <div className={styles.header}>
-          <div className={styles.headerMain}>
-            <h1>
-              <FaMoneyBillWave /> Quản lý Thu Chi
-            </h1>
-            <p>Quản lý các giao dịch thu chi của quán</p>
+      <div className={styles.header}>
+        <div className={styles.headerMain}>
+          <h1>
+            <FaMoneyBillWave /> Quản lý Thu Chi
+          </h1>
+          <p>Quản lý các giao dịch thu chi của quán</p>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className={styles.addButton} onClick={handleExportExcel} disabled={filteredTransactions.length === 0}>
+            <FaFileExcel /> Xuất Excel
+          </button>
+          <button className={styles.addButton} onClick={handleAddTransaction}>
+            <FaPlus /> Thêm giao dịch
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statIcon}>
+            <FaArrowUp />
           </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className={styles.addButton} onClick={handleExportExcel} disabled={filteredTransactions.length === 0}>
-              <FaFileExcel /> Xuất Excel
-            </button>
-            <button className={styles.addButton} onClick={handleAddTransaction}>
-              <FaPlus /> Thêm giao dịch
-            </button>
+          <div className={styles.statContent}>
+            <span>Tổng thu hôm nay</span>
+            <strong>{stats.revenue.toLocaleString('vi-VN')} đ</strong>
+          </div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={`${styles.statIcon} ${styles.expenseIcon}`}>
+            <FaArrowDown />
+          </div>
+          <div className={styles.statContent}>
+            <span>Tổng chi hôm nay</span>
+            <strong>{stats.expense.toLocaleString('vi-VN')} đ</strong>
           </div>
         </div>
 
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statIcon}>
-              <FaArrowUp />
-            </div>
-            <div className={styles.statContent}>
-              <span>Tổng thu hôm nay</span>
-              <strong>{stats.revenue.toLocaleString('vi-VN')} đ</strong>
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={`${styles.statIcon} ${styles.expenseIcon}`}>
-              <FaArrowDown />
-            </div>
-            <div className={styles.statContent}>
-              <span>Tổng chi hôm nay</span>
-              <strong>{stats.expense.toLocaleString('vi-VN')} đ</strong>
-            </div>
-          </div>
-       
-        </div>
+      </div>
 
-        <div className={styles.filters}>
-          <div className={styles.searchBox}>
-            <FaSearch />
-            <input
-              type="text"
-              placeholder="Tìm kiếm giao dịch..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className={styles.filterGroup}>
-            <FaFilter />
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-            >
-              <option value="all">Tất cả loại</option>
-              <option value="thu">Thu</option>
-              <option value="chi">Chi</option>
-            </select>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="Từ ngày"
-              max={endDate || undefined}
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="Đến ngày"
-              min={startDate || undefined}
-            />
-          </div>
+      <div className={styles.filters}>
+        <div className={styles.searchBox}>
+          <FaSearch />
+          <input
+            type="text"
+            placeholder="Tìm kiếm giao dịch..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
+        <div className={styles.filterGroup}>
+          <FaFilter />
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="all">Tất cả loại</option>
+            <option value="thu">Thu</option>
+            <option value="chi">Chi</option>
+          </select>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            placeholder="Từ ngày"
+            max={endDate || undefined}
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            placeholder="Đến ngày"
+            min={startDate || undefined}
+          />
+        </div>
+      </div>
 
-        {dateError && (
-          <div style={{ padding: '0 2rem 0.5rem', color: 'red', fontSize: '0.9rem' }}>
-            {dateError}
+      {dateError && (
+        <div style={{ padding: '0 2rem 0.5rem', color: 'red', fontSize: '0.9rem' }}>
+          {dateError}
+        </div>
+      )}
+
+      <div className={styles.tableContainer}>
+        <table className={styles.transactionsTable}>
+          <thead>
+            <tr>
+              <th>Mã giao dịch</th>
+              <th>Thời gian</th>
+              <th>Nghiệp vụ</th>
+              <th>Loại</th>
+              <th>Số tiền</th>
+              <th>Phương thức</th>
+              <th>Ghi chú</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredTransactions.map(trans => {
+              const isRevenue = trans.nghiepVu?.LoaiGiaoDich === 'thu'
+              return (
+                <tr key={trans.MaGiaoDich}>
+                  <td className={styles.transCode}>{trans.MaGiaoDich}</td>
+                  <td>{new Date(trans.ThoiGian).toLocaleString('vi-VN')}</td>
+                  <td>{trans.nghiepVu?.TenNghiepVu || '-'}</td>
+                  <td>
+                    <span className={isRevenue ? styles.revenueTag : styles.expenseTag}>
+                      {isRevenue ? 'Thu' : 'Chi'}
+                    </span>
+                  </td>
+                  <td className={isRevenue ? styles.revenueAmount : styles.expenseAmount}>
+                    {isRevenue ? '+' : '-'}{trans.SoTien.toLocaleString('vi-VN')} đ
+                  </td>
+                  <td>{trans.PhuongThucThanhToan}</td>
+                  <td>{trans.GhiChu || '-'}</td>
+                  <td>
+                    <div className={styles.actions}>
+                      <button
+                        className={styles.editBtn}
+                        onClick={() => handleEditTransaction(trans)}
+                        title="Chỉnh sửa"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => handleDeleteTransaction(trans.MaGiaoDich)}
+                        title="Xóa"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+
+        {filteredTransactions.length === 0 && (
+          <div className={styles.emptyState}>
+            <FaMoneyBillWave />
+            <h3>Không tìm thấy giao dịch</h3>
+            <p>Không có giao dịch phù hợp với bộ lọc.</p>
           </div>
         )}
+      </div>
 
-        <div className={styles.tableContainer}>
-          <table className={styles.transactionsTable}>
-            <thead>
-              <tr>
-                <th>Mã giao dịch</th>
-                <th>Thời gian</th>
-                <th>Nghiệp vụ</th>
-                <th>Loại</th>
-                <th>Số tiền</th>
-                <th>Phương thức</th>
-                <th>Ghi chú</th>
-                <th>Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map(trans => {
-                const isRevenue = trans.nghiepVu?.LoaiGiaoDich === 'thu'
-                return (
-                  <tr key={trans.MaGiaoDich}>
-                    <td className={styles.transCode}>{trans.MaGiaoDich}</td>
-                    <td>{new Date(trans.ThoiGian).toLocaleString('vi-VN')}</td>
-                    <td>{trans.nghiepVu?.TenNghiepVu || '-'}</td>
-                    <td>
-                      <span className={isRevenue ? styles.revenueTag : styles.expenseTag}>
-                        {isRevenue ? 'Thu' : 'Chi'}
-                      </span>
-                    </td>
-                    <td className={isRevenue ? styles.revenueAmount : styles.expenseAmount}>
-                      {isRevenue ? '+' : '-'}{trans.SoTien.toLocaleString('vi-VN')} đ
-                    </td>
-                    <td>{trans.PhuongThucThanhToan}</td>
-                    <td>{trans.GhiChu || '-'}</td>
-                    <td>
-                      <div className={styles.actions}>
-                        <button
-                          className={styles.editBtn}
-                          onClick={() => handleEditTransaction(trans)}
-                          title="Chỉnh sửa"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          className={styles.deleteBtn}
-                          onClick={() => handleDeleteTransaction(trans.MaGiaoDich)}
-                          title="Xóa"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-
-          {filteredTransactions.length === 0 && (
-            <div className={styles.emptyState}>
-              <FaMoneyBillWave />
-              <h3>Không tìm thấy giao dịch</h3>
-              <p>Không có giao dịch phù hợp với bộ lọc.</p>
+      {/* Modal for Add/Edit Transaction */}
+      {showModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>{editingTransaction ? 'Chỉnh sửa giao dịch' : 'Thêm giao dịch mới'}</h2>
+              <button className={styles.closeBtn} onClick={() => setShowModal(false)}>
+                <FaTimes />
+              </button>
             </div>
-          )}
-        </div>
-
-        {/* Modal for Add/Edit Transaction */}
-        {showModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.modalHeader}>
-                <h2>{editingTransaction ? 'Chỉnh sửa giao dịch' : 'Thêm giao dịch mới'}</h2>
-                <button className={styles.closeBtn} onClick={() => setShowModal(false)}>
-                  <FaTimes />
-                </button>
+            <form onSubmit={handleSubmitForm} className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label>Mã giao dịch * (tự động)</label>
+                <input
+                  type="text"
+                  value={formData.MaGiaoDich}
+                  onChange={(e) => setFormData({ ...formData, MaGiaoDich: e.target.value })}
+                  disabled={true}  // Luôn disable vì mã được tạo tự động
+                  required
+                  placeholder="Mã sẽ được tạo tự động"
+                />
+                <small>Mã được tạo tự động khi lưu</small>
               </div>
-              <form onSubmit={handleSubmitForm} className={styles.modalForm}>
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label>Mã giao dịch *</label>
+                  <label>Nghiệp vụ *</label>
+                  <select
+                    value={formData.MaNghiepVu}
+                    onChange={(e) => setFormData({ ...formData, MaNghiepVu: e.target.value })}
+                    required
+                  >
+                    <option value="">Chọn nghiệp vụ</option>
+                    <optgroup label="Thu">
+                      {revenueCategories.map(cat => (
+                        <option key={cat.MaNghiepVu} value={cat.MaNghiepVu}>
+                          {cat.TenNghiepVu}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Chi">
+                      {expenseCategories.map(cat => (
+                        <option key={cat.MaNghiepVu} value={cat.MaNghiepVu}>
+                          {cat.TenNghiepVu}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Phiên làm việc</label>
                   <input
                     type="text"
-                    value={formData.MaGiaoDich}
-                    onChange={(e) => setFormData({ ...formData, MaGiaoDich: e.target.value })}
-                    disabled={!!editingTransaction}
-                    required
-                    placeholder="VD: GD001"
+                    value={formData.MaPhienLamViec}
+                    onChange={(e) => setFormData({ ...formData, MaPhienLamViec: e.target.value })}
+                    placeholder="VD: PLV001"
                   />
                 </div>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Nghiệp vụ *</label>
-                    <select
-                      value={formData.MaNghiepVu}
-                      onChange={(e) => setFormData({ ...formData, MaNghiepVu: e.target.value })}
-                      required
-                    >
-                      <option value="">Chọn nghiệp vụ</option>
-                      <optgroup label="Thu">
-                        {revenueCategories.map(cat => (
-                          <option key={cat.MaNghiepVu} value={cat.MaNghiepVu}>
-                            {cat.TenNghiepVu}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Chi">
-                        {expenseCategories.map(cat => (
-                          <option key={cat.MaNghiepVu} value={cat.MaNghiepVu}>
-                            {cat.TenNghiepVu}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Phiên làm việc</label>
-                    <input
-                      type="text"
-                      value={formData.MaPhienLamViec}
-                      onChange={(e) => setFormData({ ...formData, MaPhienLamViec: e.target.value })}
-                      placeholder="VD: PLV001"
-                    />
-                  </div>
-                </div>
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label>Thời gian *</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.ThoiGian}
-                      onChange={(e) => setFormData({ ...formData, ThoiGian: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Phương thức thanh toán *</label>
-                    <select
-                      value={formData.PhuongThucThanhToan}
-                      onChange={(e) => setFormData({ ...formData, PhuongThucThanhToan: e.target.value })}
-                      required
-                    >
-                      <option value="Tiền mặt">Tiền mặt</option>
-                      <option value="Chuyển khoản">Chuyển khoản</option>
-                      <option value="Thẻ">Thẻ</option>
-                    </select>
-                  </div>
-                </div>
+              </div>
+              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label>Số tiền *</label>
+                  <label>Thời gian *</label>
                   <input
-                    type="number"
-                    value={formData.SoTien}
-                    onChange={(e) => setFormData({ ...formData, SoTien: Number(e.target.value) })}
+                    type="datetime-local"
+                    value={formData.ThoiGian}
+                    onChange={(e) => setFormData({ ...formData, ThoiGian: e.target.value })}
                     required
-                    min="0"
-                    placeholder="0"
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Ghi chú</label>
-                  <textarea
-                    value={formData.GhiChu}
-                    onChange={(e) => setFormData({ ...formData, GhiChu: e.target.value })}
-                    rows={3}
-                    placeholder="Ghi chú về giao dịch..."
-                  />
+                  <label>Phương thức thanh toán *</label>
+                  <select
+                    value={formData.PhuongThucThanhToan}
+                    onChange={(e) => setFormData({ ...formData, PhuongThucThanhToan: e.target.value })}
+                    required
+                  >
+                    <option value="Tiền mặt">Tiền mặt</option>
+                    <option value="Chuyển khoản">Chuyển khoản</option>
+                    <option value="Thẻ">Thẻ</option>
+                  </select>
                 </div>
-                <div className={styles.modalActions}>
-                  <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>
-                    Hủy
-                  </button>
-                  <button type="submit" className={styles.submitBtn}>
-                    {editingTransaction ? 'Cập nhật' : 'Thêm mới'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label>Số tiền *</label>
+                <input
+                  type="number"
+                  value={formData.SoTien}
+                  onChange={(e) => setFormData({ ...formData, SoTien: Number(e.target.value) })}
+                  required
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Ghi chú</label>
+                <textarea
+                  value={formData.GhiChu}
+                  onChange={(e) => setFormData({ ...formData, GhiChu: e.target.value })}
+                  rows={3}
+                  placeholder="Ghi chú về giao dịch..."
+                />
+              </div>
+              <div className={styles.modalActions}>
+                <button type="button" className={styles.cancelBtn} onClick={() => setShowModal(false)}>
+                  Hủy
+                </button>
+                <button type="submit" className={styles.submitBtn}>
+                  {editingTransaction ? 'Cập nhật' : 'Thêm mới'}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
     </div>
   )
 }
