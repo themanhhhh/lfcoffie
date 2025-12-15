@@ -139,23 +139,26 @@ const CheckinCheckoutPage = () => {
     }
 
     try {
-      // Tìm phiên làm việc đang mở của nhân viên này
+      // Tìm phiên làm việc của nhân viên này
       const phienLamViecList = await phienLamViecApi.getAll()
       const currentPhien = phienLamViecList.find((plv) => {
         // Kiểm tra cả MaNhanVien trực tiếp và qua relation nhanVien
         const maNhanVien = plv.MaNhanVien ?? plv.nhanVien?.MaNhanVien
-        return maNhanVien === user?.MaNhanVien && plv.TrangThai === 'mở'
+        return maNhanVien === user?.MaNhanVien
       })
 
-      if (currentPhien) {
-        // Đóng phiên làm việc trong database
-        await phienLamViecApi.closeShift(currentPhien.MaPhienLamViec)
-        toast.success('Đã đóng phiên làm việc và kết ca thành công!')
-      } else {
-        toast.error('Không tìm thấy phiên làm việc đang mở')
+      if (!currentPhien) {
+        toast.error('Không tìm thấy phiên làm việc của bạn')
         return
       }
 
+      // Kiểm tra phiên đã được đóng chưa
+      if (currentPhien.TrangThai === 'mở') {
+        toast.error('Vui lòng đóng phiên làm việc trước khi checkout!')
+        return
+      }
+
+      // Phiên đã đóng, cho phép checkout
       const time = formatNow()
       updateStaff(selectedStaff.id, staff => ({
         ...staff,
@@ -163,8 +166,9 @@ const CheckinCheckoutPage = () => {
         checkOut: time,
         history: [{ action: 'checkout', time }, ...staff.history]
       }))
+      toast.success('Đã kết ca thành công!')
     } catch (err) {
-      const errorMessage = err instanceof ApiError ? err.message : 'Không thể đóng phiên làm việc'
+      const errorMessage = err instanceof ApiError ? err.message : 'Không thể kiểm tra phiên làm việc'
       toast.error(errorMessage)
     }
   }

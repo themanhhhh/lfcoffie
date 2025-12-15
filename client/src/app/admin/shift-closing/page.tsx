@@ -599,7 +599,7 @@ const ShiftClosingPage = () => {
               </tr>
               <tr>
                 <td></td>
-                <td>2. Doanh thu khác (dịch vụ, bán đồ lưu niệm, phụ thu,...)</td>
+                <td>2. Doanh thu khác (phạt nhân viên , )</td>
                 <td>{formatPrice(businessReport.doanhThu.khac)}</td>
               </tr>
               <tr className={styles.totalRow}>
