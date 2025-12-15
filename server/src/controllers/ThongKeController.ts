@@ -916,6 +916,7 @@ export class ThongKeController {
       let thuChiQuery = this.thuChiRepo.createQueryBuilder('tc')
         .leftJoinAndSelect('tc.nghiepVu', 'nv')
         .where('tc.ThoiGian BETWEEN :start AND :end', { start, end })
+        .andWhere('tc.isDelete = :isDelete', { isDelete: false })
         .andWhere('nv.LoaiGiaoDich = :loai', { loai: 'thu' });
 
       if (maPhienLamViec) {
@@ -929,7 +930,8 @@ export class ThongKeController {
       // Lấy tất cả ThuChi trong khoảng thời gian, sau đó filter theo nghiepVu
       let chiPhiQuery = this.thuChiRepo.createQueryBuilder('tc')
         .leftJoinAndSelect('tc.nghiepVu', 'nv')
-        .where('tc.ThoiGian BETWEEN :start AND :end', { start, end });
+        .where('tc.ThoiGian BETWEEN :start AND :end', { start, end })
+        .andWhere('tc.isDelete = :isDelete', { isDelete: false });
 
       if (maPhienLamViec) {
         chiPhiQuery = chiPhiQuery.andWhere('tc.MaPhienLamViec = :maPhienLamViec', { maPhienLamViec });

@@ -30,11 +30,11 @@ const sortChiPhiCategories = (categories: [string, number][]): [string, number][
     'Chi phí khác',
     'Khác'
   ]
-  
+
   return categories.sort((a, b) => {
     const indexA = priorityOrder.indexOf(a[0])
     const indexB = priorityOrder.indexOf(b[0])
-    
+
     // Nếu cả hai đều có trong priorityOrder, sắp xếp theo thứ tự
     if (indexA !== -1 && indexB !== -1) {
       return indexA - indexB
@@ -63,12 +63,12 @@ const getChiPhiLabel = (categoryName: string, index: number): string => {
     'Marketing': '4. Chi phí marketing',
     'Khác': '5. Chi phí khác (vệ sinh, văn phòng phẩm, bảo trì,...)'
   }
-  
+
   // Nếu có mapping, dùng mapping, nếu không thì dùng tên gốc với số thứ tự
   if (categoryMap[categoryName]) {
     return categoryMap[categoryName]
   }
-  
+
   // Tự động đánh số cho các khoản mục khác
   return `${index}. ${categoryName}`
 }
@@ -132,7 +132,7 @@ const ShiftClosingPage = () => {
           caLam: plv.caLam ? { TenCaLam: plv.caLam.TenCaLam } : undefined
         }))
       setAvailablePhienLamViec(filtered)
-      
+
       // Tự động chọn phiên mới nhất nếu có
       if (filtered.length > 0 && !selectedPhienLamViec) {
         setSelectedPhienLamViec(filtered[0].MaPhienLamViec)
@@ -228,11 +228,11 @@ const ShiftClosingPage = () => {
       const chiPhiCategories = Object.entries(businessReport.chiPhi.byCategory)
       const sortedChiPhi = sortChiPhiCategories(chiPhiCategories)
       const chiPhiCount = sortedChiPhi.length
-      const chiPhiLabel = chiPhiCount > 0 
+      const chiPhiLabel = chiPhiCount > 0
         ? `Chi phí (${Array.from({ length: Math.min(chiPhiCount, 5) }, (_, i) => i + 1).join('+')}${chiPhiCount > 5 ? '+' : ''})`
         : 'Chi phí '
       wsData.push(['II.', chiPhiLabel, ''])
-      
+
       // Map các loại chi phí theo tên nghiệp vụ
       sortedChiPhi.forEach(([category, value]: [string, number], index: number) => {
         const label = getChiPhiLabel(category, index + 1)
@@ -247,7 +247,7 @@ const ShiftClosingPage = () => {
 
       const wb = XLSX.utils.book_new()
       const ws = XLSX.utils.aoa_to_sheet(wsData)
-      
+
       // Set column widths
       ws['!cols'] = [
         { wch: 5 },
@@ -281,18 +281,18 @@ const ShiftClosingPage = () => {
       iframe.style.width = '210mm'
       iframe.style.height = '297mm'
       iframe.style.border = 'none'
-      
+
       document.body.appendChild(iframe)
 
       // Tạo HTML cho báo cáo
       const chiPhiCategories = Object.entries(businessReport.chiPhi.byCategory)
       const sortedChiPhi = sortChiPhiCategories(chiPhiCategories)
       const chiPhiCount = sortedChiPhi.length
-      const chiPhiLabel = chiPhiCount > 0 
+      const chiPhiLabel = chiPhiCount > 0
         ? `Chi phí (${Array.from({ length: Math.min(chiPhiCount, 5) }, (_, i) => i + 1).join('+')}${chiPhiCount > 5 ? '+' : ''})`
         : 'Chi phí '
 
-      const caLam = selectedPhienLamViec 
+      const caLam = selectedPhienLamViec
         ? availablePhienLamViec.find(p => p.MaPhienLamViec === selectedPhienLamViec)?.caLam?.TenCaLam || ''
         : ''
 
@@ -404,15 +404,15 @@ const ShiftClosingPage = () => {
                 <td></td>
               </tr>
               ${sortedChiPhi.map(([category, value]: [string, number], index: number) => {
-                const label = getChiPhiLabel(category, index + 1)
-                return `
+        const label = getChiPhiLabel(category, index + 1)
+        return `
                   <tr>
                     <td></td>
                     <td>${label}</td>
                     <td>${formatPrice(value)}</td>
                   </tr>
                 `
-              }).join('')}
+      }).join('')}
               <tr>
                 <td></td>
                 <td><strong>Tổng chi phí</strong></td>
@@ -487,7 +487,7 @@ const ShiftClosingPage = () => {
       // Lưu file
       const fileName = `BaoCaoKetQuaKinhDoanh_${startDate}_${endDate}.pdf`
       pdf.save(fileName)
-      
+
       toast.success('Xuất PDF thành công!', { id: 'pdf-export' })
     } catch (err) {
       toast.error('Lỗi khi xuất PDF: ' + (err instanceof Error ? err.message : 'Unknown error'), { id: 'pdf-export' })
@@ -590,7 +590,7 @@ const ShiftClosingPage = () => {
               {/* Doanh thu */}
               <tr className={styles.sectionHeader}>
                 <td>I.</td>
-                <td colSpan={2}><strong>Doanh thu (1+2)</strong></td>
+                <td colSpan={2}><strong>Doanh thu</strong></td>
               </tr>
               <tr>
                 <td></td>
@@ -611,7 +611,7 @@ const ShiftClosingPage = () => {
               {/* Chi phí */}
               <tr className={styles.sectionHeader}>
                 <td>II.</td>
-                <td colSpan={2}><strong>Chi phí ({Object.keys(businessReport.chiPhi.byCategory).length > 0 ? `1+${Object.keys(businessReport.chiPhi.byCategory).length > 1 ? `2${Object.keys(businessReport.chiPhi.byCategory).length > 2 ? `+3${Object.keys(businessReport.chiPhi.byCategory).length > 3 ? `+4${Object.keys(businessReport.chiPhi.byCategory).length > 4 ? '+5' : ''}` : ''}` : ''}` : ''}` : '1+2+3+4+5'})</strong></td>
+                <td colSpan={2}><strong>Chi phí ({Object.keys(businessReport.chiPhi.byCategory).length > 0 ? `1+${Object.keys(businessReport.chiPhi.byCategory).length > 1 ? `2${Object.keys(businessReport.chiPhi.byCategory).length > 2 ? `+3${Object.keys(businessReport.chiPhi.byCategory).length > 3 ? `+4${Object.keys(businessReport.chiPhi.byCategory).length > 4 ? '+5' : ''}` : ''}` : ''}` : ''}` : ''})</strong></td>
               </tr>
               {sortChiPhiCategories(Object.entries(businessReport.chiPhi.byCategory)).map(([category, value]: [string, number], index: number) => (
                 <tr key={category}>

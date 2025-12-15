@@ -310,6 +310,11 @@ const ShiftClosingPage = () => {
               <span className={styles.infoLabel}>Ca làm việc:</span>
               <span className={styles.infoValue}>
                 {report.phienLamViec.caLam?.TenCaLam || 'N/A'}
+                {report.phienLamViec.caLam?.ThoiGianBatDau && report.phienLamViec.caLam?.ThoiGianKetThuc && (
+                  <span style={{ marginLeft: '8px', color: '#666' }}>
+                    ({report.phienLamViec.caLam.ThoiGianBatDau} - {report.phienLamViec.caLam.ThoiGianKetThuc})
+                  </span>
+                )}
               </span>
             </div>
             <div className={styles.infoItem}>

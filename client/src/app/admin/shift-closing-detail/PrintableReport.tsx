@@ -92,6 +92,7 @@ export function buildPrintableHtml(report: ShiftClosingReport) {
           <div><strong>Mã PLV:</strong> ${escape(report.phienLamViec.MaPhienLamViec)}</div>
           <div><strong>Ngày:</strong> ${escape(new Date(report.phienLamViec.Ngay).toLocaleDateString('vi-VN'))}</div>
           <div><strong>Thu ngân:</strong> ${escape(report.phienLamViec.nhanVien?.TenNhanVien || 'N/A')}</div>
+          <div><strong>Ca làm việc:</strong> ${escape(report.phienLamViec.caLam?.TenCaLam || 'N/A')}${report.phienLamViec.caLam?.ThoiGianBatDau && report.phienLamViec.caLam?.ThoiGianKetThuc ? ` (${report.phienLamViec.caLam.ThoiGianBatDau} - ${report.phienLamViec.caLam.ThoiGianKetThuc})` : ''}</div>
           <div><strong>Giờ in:</strong> ${escape(formatDateTime(report.tongKet.gioIn))}</div>
         </div>
       </div>
@@ -151,7 +152,7 @@ export default function PrintableReport({ report }: { report: ShiftClosingReport
   return (
     <div>
       <h2>BÁO CÁO CHỐT CA - Preview</h2>
-      <pre style={{whiteSpace:'pre-wrap'}}>{JSON.stringify(report, null, 2)}</pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(report, null, 2)}</pre>
     </div>
   )
 }
