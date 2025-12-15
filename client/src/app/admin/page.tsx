@@ -161,7 +161,7 @@ const Admin = () => {
         name: item.TenMon,
         description: `${item.NhomMon} - ${item.LoaiMon}`,
         price: item.DonGia ?? 0,
-        image: coffeeBlack, // Default image
+        image: item.imgUrl || coffeeBlack, // Use imgUrl from API or default
         categoryId: item.LoaiMon ?? 'other',
         categoryName: item.LoaiMon ?? 'Khác'
       }))
@@ -287,158 +287,158 @@ const Admin = () => {
 
   return (
     <div className={Style.content}>
-          <div className={Style.contentHeader}>
-            <div className={Style.pageTitle}>
-              <h2>Quản lý Menu</h2>
-              <p>
-                Tổng số món: {filteredItems.length} | Hiển thị:{' '}
-                {filteredItems.length === 0
-                  ? '0'
-                  : `${startIndex + 1}-${Math.min(endIndex, filteredItems.length)}`}
-              </p>
-            </div>
-            <button className={Style.addBtn} onClick={handleAddItem}>
-              <FaPlus /> Thêm món mới
+      <div className={Style.contentHeader}>
+        <div className={Style.pageTitle}>
+          <h2>Quản lý Menu</h2>
+          <p>
+            Tổng số món: {filteredItems.length} | Hiển thị:{' '}
+            {filteredItems.length === 0
+              ? '0'
+              : `${startIndex + 1}-${Math.min(endIndex, filteredItems.length)}`}
+          </p>
+        </div>
+        <button className={Style.addBtn} onClick={handleAddItem}>
+          <FaPlus /> Thêm món mới
+        </button>
+      </div>
+
+      <div className={Style.filterSection}>
+        <div className={Style.searchBox}>
+          <FaSearch className={Style.searchIcon} />
+          <input
+            type="text"
+            placeholder="Tìm kiếm món ăn..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={Style.searchInput}
+          />
+        </div>
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className={Style.filterSelect}
+        >
+          <option value="all">Tất cả danh mục</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={Style.tableContainer}>
+        <table className={Style.menuTable}>
+          <thead>
+            <tr>
+              <th>Món</th>
+              <th>Danh mục</th>
+              <th>Giá</th>
+              <th>Mô tả</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className={Style.tableState}>
+                  Đang tải dữ liệu menu...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={5} className={`${Style.tableState} ${Style.tableStateError}`}>
+                  {error}
+                </td>
+              </tr>
+            ) : currentItems.length === 0 ? (
+              <tr>
+                <td colSpan={5} className={Style.tableState}>
+                  Không tìm thấy món phù hợp với bộ lọc hiện tại.
+                </td>
+              </tr>
+            ) : (
+              currentItems.map((item) => (
+                <tr key={item.id}>
+                  <td>
+                    <div className={Style.menuItemCell}>
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={60}
+                        height={60}
+                        className={Style.menuTableImg}
+                      />
+                      <div className={Style.menuItemInfo}>
+                        <h4>{item.name}</h4>
+                        <span className={Style.itemId}>ID: {item.id}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={Style.categoryTag}>{item.categoryName}</span>
+                  </td>
+                  <td className={Style.priceCell}>{formatPrice(item.price)}</td>
+                  <td className={Style.descCell}>{item.description}</td>
+                  <td>
+                    <div className={Style.actionButtons}>
+                      <button
+                        className={Style.editBtn}
+                        onClick={() => handleEditItem(item)}
+                        title="Chỉnh sửa"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className={Style.deleteBtn}
+                        onClick={() => handleDeleteItem(item)}
+                        title="Xóa"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && !loading && !error && (
+        <div className={Style.paginationContainer}>
+          <div className={Style.paginationInfo}>
+            Trang {currentPage} / {totalPages}
+          </div>
+          <div className={Style.pagination}>
+            <button
+              className={`${Style.pageBtn} ${currentPage === 1 ? Style.disabled : ''}`}
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              «
+            </button>
+
+            {getPageNumbers().map((page) => (
+              <button
+                key={page}
+                className={`${Style.pageBtn} ${currentPage === page ? Style.active : ''}`}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              className={`${Style.pageBtn} ${currentPage === totalPages ? Style.disabled : ''}`}
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+            >
+              »
             </button>
           </div>
-
-          <div className={Style.filterSection}>
-            <div className={Style.searchBox}>
-              <FaSearch className={Style.searchIcon} />
-              <input
-                type="text"
-                placeholder="Tìm kiếm món ăn..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={Style.searchInput}
-              />
-            </div>
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className={Style.filterSelect}
-            >
-              <option value="all">Tất cả danh mục</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className={Style.tableContainer}>
-            <table className={Style.menuTable}>
-              <thead>
-                <tr>
-                  <th>Món</th>
-                  <th>Danh mục</th>
-                  <th>Giá</th>
-                  <th>Mô tả</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className={Style.tableState}>
-                      Đang tải dữ liệu menu...
-                    </td>
-                  </tr>
-                ) : error ? (
-                  <tr>
-                    <td colSpan={5} className={`${Style.tableState} ${Style.tableStateError}`}>
-                      {error}
-                    </td>
-                  </tr>
-                ) : currentItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className={Style.tableState}>
-                      Không tìm thấy món phù hợp với bộ lọc hiện tại.
-                    </td>
-                  </tr>
-                ) : (
-                  currentItems.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <div className={Style.menuItemCell}>
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            width={60}
-                            height={60}
-                            className={Style.menuTableImg}
-                          />
-                          <div className={Style.menuItemInfo}>
-                            <h4>{item.name}</h4>
-                            <span className={Style.itemId}>ID: {item.id}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className={Style.categoryTag}>{item.categoryName}</span>
-                      </td>
-                      <td className={Style.priceCell}>{formatPrice(item.price)}</td>
-                      <td className={Style.descCell}>{item.description}</td>
-                      <td>
-                        <div className={Style.actionButtons}>
-                          <button
-                            className={Style.editBtn}
-                            onClick={() => handleEditItem(item)}
-                            title="Chỉnh sửa"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            className={Style.deleteBtn}
-                            onClick={() => handleDeleteItem(item)}
-                            title="Xóa"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && !loading && !error && (
-            <div className={Style.paginationContainer}>
-              <div className={Style.paginationInfo}>
-                Trang {currentPage} / {totalPages}
-              </div>
-              <div className={Style.pagination}>
-                <button
-                  className={`${Style.pageBtn} ${currentPage === 1 ? Style.disabled : ''}`}
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                >
-                  «
-                </button>
-
-                {getPageNumbers().map((page) => (
-                  <button
-                    key={page}
-                    className={`${Style.pageBtn} ${currentPage === page ? Style.active : ''}`}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                <button
-                  className={`${Style.pageBtn} ${currentPage === totalPages ? Style.disabled : ''}`}
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                >
-                  »
-                </button>
-              </div>
-            </div>
-          )}
+        </div>
+      )}
 
       {/* Modal for Add/Edit Product */}
       {showModal && (

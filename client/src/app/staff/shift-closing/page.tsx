@@ -447,37 +447,6 @@ const ShiftClosingPage = () => {
           </section>
         )}
 
-        {/* Chi tiết món */}
-        {report.monStats && report.monStats.length > 0 && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              <FaBox /> Chi tiết món
-            </h2>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Tên món</th>
-                    <th>Loại món</th>
-                    <th>Số lượng</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.monStats.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.tenMon}</td>
-                      <td>{item.loaiMon}</td>
-                      <td>{item.soLuong}</td>
-                      <td>{formatPrice(item.doanhThu)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
         {/* Loại món */}
         {report.monByLoai && report.monByLoai.length > 0 && (
           <section className={styles.section}>

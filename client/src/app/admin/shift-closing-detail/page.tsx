@@ -206,242 +206,276 @@ const ShiftClosingDetailPage = () => {
       )}
 
       {report && (
-      <div id="invoice-print" className={styles.reportContent}>
-        
-        {/* Thông tin phiên làm việc */}
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            <FaCalendarAlt /> Thông tin phiên làm việc
-          </h2>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Mã PLV:</span>
-              <span className={styles.infoValue}>{report.phienLamViec.MaPhienLamViec}</span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Ngày:</span>
-              <span className={styles.infoValue}>
-                {new Date(report.phienLamViec.Ngay).toLocaleDateString('vi-VN')}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Mở ca:</span>
-              <span className={styles.infoValue}>
-                {formatDateTime(report.phienLamViec.ThoiGianMo)}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Đóng ca:</span>
-              <span className={styles.infoValue}>
-                {formatDateTime(report.phienLamViec.ThoiGianDong) || 'Chưa đóng'}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Giờ in:</span>
-              <span className={styles.infoValue}>
-                {formatDateTime(report.tongKet.gioIn)}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Thu ngân:</span>
-              <span className={styles.infoValue}>
-                <FaUser /> {report.phienLamViec.nhanVien?.TenNhanVien || 'N/A'}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Ca làm việc:</span>
-              <span className={styles.infoValue}>
-                {report.phienLamViec.caLam?.TenCaLam || 'N/A'}
-              </span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.infoLabel}>Trạng thái:</span>
-              <span className={styles.infoValue}>
-                <span className={styles.statusBadge}>
-                  {report.phienLamViec.TrangThai}
+        <div id="invoice-print" className={styles.reportContent}>
+
+          {/* Thông tin phiên làm việc */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              <FaCalendarAlt /> Thông tin phiên làm việc
+            </h2>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Mã PLV:</span>
+                <span className={styles.infoValue}>{report.phienLamViec.MaPhienLamViec}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Ngày:</span>
+                <span className={styles.infoValue}>
+                  {new Date(report.phienLamViec.Ngay).toLocaleDateString('vi-VN')}
                 </span>
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* Tổng kết */}
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            <FaChartLine /> Tổng kết
-          </h2>
-          <div className={styles.summaryGrid}>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaMoneyBillWave />
               </div>
-              <div className={styles.summaryContent}>
-                <span>Số dư đầu</span>
-                <strong>{formatPrice(report.tongKet.soDuDau)}</strong>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Mở ca:</span>
+                <span className={styles.infoValue}>
+                  {formatDateTime(report.phienLamViec.ThoiGianMo)}
+                </span>
               </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaChartLine />
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Đóng ca:</span>
+                <span className={styles.infoValue}>
+                  {formatDateTime(report.phienLamViec.ThoiGianDong) || 'Chưa đóng'}
+                </span>
               </div>
-              <div className={styles.summaryContent}>
-                <span>Doanh thu</span>
-                <strong>{formatPrice(report.tongKet.totalRevenue)}</strong>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Giờ in:</span>
+                <span className={styles.infoValue}>
+                  {formatDateTime(report.tongKet.gioIn)}
+                </span>
               </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaTags />
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Thu ngân:</span>
+                <span className={styles.infoValue}>
+                  <FaUser /> {report.phienLamViec.nhanVien?.TenNhanVien || 'N/A'}
+                </span>
               </div>
-              <div className={styles.summaryContent}>
-                <span>Tổng giảm giá món</span>
-                <strong>{formatPrice(report.tongKet.totalGiamGiaMon)}</strong>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Ca làm việc:</span>
+                <span className={styles.infoValue}>
+                  {report.phienLamViec.caLam?.TenCaLam || 'N/A'}
+                  {report.phienLamViec.caLam?.ThoiGianBatDau && report.phienLamViec.caLam?.ThoiGianKetThuc && (
+                    <span style={{ marginLeft: '8px', color: '#666' }}>
+                      ({report.phienLamViec.caLam.ThoiGianBatDau} - {report.phienLamViec.caLam.ThoiGianKetThuc})
+                    </span>
+                  )}
+                </span>
               </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaTags />
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>Trạng thái:</span>
+                <span className={styles.infoValue}>
+                  <span className={styles.statusBadge}>
+                    {report.phienLamViec.TrangThai}
+                  </span>
+                </span>
               </div>
-              <div className={styles.summaryContent}>
-                <span>Tổng chiết khấu</span>
-                <strong>{formatPrice(report.tongKet.totalChietKhau)}</strong>
-              </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaMoneyBillWave />
-              </div>
-              <div className={styles.summaryContent}>
-                <span>Tổng thu</span>
-                <strong>{formatPrice(report.tongKet.totalThu)}</strong>
-              </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaMoneyBillWave />
-              </div>
-              <div className={styles.summaryContent}>
-                <span>Tổng chi</span>
-                <strong>{formatPrice(report.tongKet.totalChi)}</strong>
-              </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaMoneyBillWave />
-              </div>
-              <div className={styles.summaryContent}>
-                <span>Tiền trong két</span>
-                <strong>{formatPrice(report.tongKet.tienTrongKet)}</strong>
-              </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaFileAlt />
-              </div>
-              <div className={styles.summaryContent}>
-                <span>Số hóa đơn</span>
-                <strong>{report.tongKet.orderCount}</strong>
-              </div>
-            </div>
-            <div className={styles.summaryCard}>
-              <div className={styles.summaryIcon}>
-                <FaChartLine />
-              </div>
-              <div className={styles.summaryContent}>
-                <span>Trung bình hóa đơn</span>
-                <strong>{formatPrice(report.tongKet.averageOrder)}</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Món và nhóm món */}
-        {report.monByNhom && report.monByNhom.length > 0 && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              <FaBox /> Món và nhóm món
-            </h2>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Tên nhóm</th>
-                    <th>Số lượng</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.monByNhom.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.ten}</td>
-                      <td>{item.soLuong}</td>
-                      <td>{formatPrice(item.doanhThu)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </section>
-        )}
 
-        {/* CTKM */}
-        {report.ctkmStats && report.ctkmStats.length > 0 && (
+          {/* Tổng kết */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>
-              <FaTags /> CTKM
+              <FaChartLine /> Tổng kết
             </h2>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Tên CTKM</th>
-                    <th>Số hóa đơn</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.ctkmStats.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.ten}</td>
-                      <td>{item.soHoaDon}</td>
-                      <td>{formatPrice(item.doanhThu)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className={styles.summaryGrid}>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaMoneyBillWave />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Số dư đầu</span>
+                  <strong>{formatPrice(report.tongKet.soDuDau)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaChartLine />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Doanh thu</span>
+                  <strong>{formatPrice(report.tongKet.totalRevenue)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaTags />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Tổng giảm giá món</span>
+                  <strong>{formatPrice(report.tongKet.totalGiamGiaMon)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaTags />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Tổng chiết khấu</span>
+                  <strong>{formatPrice(report.tongKet.totalChietKhau)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaMoneyBillWave />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Tổng thu</span>
+                  <strong>{formatPrice(report.tongKet.totalThu)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaMoneyBillWave />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Tổng chi</span>
+                  <strong>{formatPrice(report.tongKet.totalChi)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaMoneyBillWave />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Tiền trong két</span>
+                  <strong>{formatPrice(report.tongKet.tienTrongKet)}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaFileAlt />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Số hóa đơn</span>
+                  <strong>{report.tongKet.orderCount}</strong>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryIcon}>
+                  <FaChartLine />
+                </div>
+                <div className={styles.summaryContent}>
+                  <span>Trung bình hóa đơn</span>
+                  <strong>{formatPrice(report.tongKet.averageOrder)}</strong>
+                </div>
+              </div>
             </div>
           </section>
-        )}
 
-        {/* Phương thức thanh toán */}
-        {report.paymentMethods && report.paymentMethods.length > 0 && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              <FaCreditCard /> Phương thức thanh toán
-            </h2>
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Phương thức</th>
-                    <th>Số hóa đơn</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.paymentMethods.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.phuongThuc}</td>
-                      <td>{item.soHoaDon}</td>
-                      <td>{formatPrice(item.doanhThu)}</td>
+          {/* Món và nhóm món */}
+          {report.monByNhom && report.monByNhom.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <FaBox /> Món và nhóm món
+              </h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Tên nhóm</th>
+                      <th>Số lượng</th>
+                      <th>Doanh thu</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-      </div>
+                  </thead>
+                  <tbody>
+                    {report.monByNhom.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.ten}</td>
+                        <td>{item.soLuong}</td>
+                        <td>{formatPrice(item.doanhThu)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {/* Loại món */}
+          {report.monByLoai && report.monByLoai.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <FaBox /> Loại món
+              </h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Loại món</th>
+                      <th>Số lượng</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.monByLoai.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.ten}</td>
+                        <td>{item.soLuong}</td>
+                        <td>{formatPrice(item.doanhThu)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {/* CTKM */}
+          {report.ctkmStats && report.ctkmStats.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <FaTags /> CTKM
+              </h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Tên CTKM</th>
+                      <th>Số hóa đơn</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.ctkmStats.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.ten}</td>
+                        <td>{item.soHoaDon}</td>
+                        <td>{formatPrice(item.doanhThu)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {/* Phương thức thanh toán */}
+          {report.paymentMethods && report.paymentMethods.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                <FaCreditCard /> Phương thức thanh toán
+              </h2>
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Phương thức</th>
+                      <th>Số hóa đơn</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.paymentMethods.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.phuongThuc}</td>
+                        <td>{item.soHoaDon}</td>
+                        <td>{formatPrice(item.doanhThu)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+        </div>
       )}
     </div>
   )
