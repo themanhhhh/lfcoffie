@@ -584,13 +584,20 @@ const VoucherPage = () => {
           'expired': 'hết hạn'
         }
 
+        // Send full payload for update (including discount details)
         await apiFetch(`/api/ctkm/${editingVoucher.id}`, {
           method: 'PUT',
           body: JSON.stringify({
             MaCTKM: formData.maKM,
             TenCTKM: formData.tenKM,
             LoaiCTKM: loaiCTKM,
-            TrangThai: trangThaiMap[formData.trangThai]
+            TrangThai: trangThaiMap[formData.trangThai],
+            // Include discount details for GiamHoaDon update
+            giaTriGiam: formData.giaTriGiam,
+            loaiGiam: formData.loaiKM === 'percentage' ? 'phan tram' : 'tien mat',
+            ngayBatDau: formData.ngayBatDau,
+            ngayKetThuc: formData.ngayKetThuc,
+            soTienToiThieu: formData.soTienToiThieu || null
           })
         })
         toast.success('Cập nhật voucher thành công!')

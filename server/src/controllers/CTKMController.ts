@@ -186,11 +186,58 @@ export class CTKMController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const existed = await this.repository.findOne({ where: { MaCTKM: id, isDelete: false } } as any);
+      const body = req.body;
+
+      const existed = await this.repository.findOne({
+        where: { MaCTKM: id, isDelete: false } as any,
+        relations: ['giamHoaDons', 'giamMons']
+      });
       if (!existed) return res.status(404).json({ message: "Không tìm thấy" });
-      Object.assign(existed, req.body);
-      const saved = await this.repository.save(existed);
-      return res.json(saved);
+
+      // Update CTKM fields
+      if (body.TenCTKM) existed.TenCTKM = body.TenCTKM;
+      if (body.LoaiCTKM) existed.LoaiCTKM = body.LoaiCTKM;
+      if (body.TrangThai) existed.TrangThai = body.TrangThai;
+
+      await this.repository.save(existed);
+
+      // Update GiamHoaDon if provided and CTKM is giamhoadon type
+      if (existed.LoaiCTKM === 'giamhoadon' && (body.giaTriGiam !== undefined || body.loaiGiam || body.ngayBatDau || body.ngayKetThuc)) {
+        const giamHoaDon = existed.giamHoaDons?.[0];
+        if (giamHoaDon) {
+          // Update existing GiamHoaDon
+          if (body.giaTriGiam !== undefined) giamHoaDon.SoTienGiam = body.giaTriGiam;
+          if (body.loaiGiam) giamHoaDon.LoaiGiam = body.loaiGiam;
+          if (body.ngayBatDau) giamHoaDon.NgayBatDau = new Date(body.ngayBatDau);
+          if (body.ngayKetThuc) giamHoaDon.NgayKetThuc = new Date(body.ngayKetThuc);
+          if (body.soTienToiThieu !== undefined) giamHoaDon.GiaTriTu = body.soTienToiThieu;
+          if (body.TrangThai) giamHoaDon.TrangThai = body.TrangThai;
+
+          await this.giamHoaDonRepo.save(giamHoaDon);
+        } else {
+          // Create new GiamHoaDon if not exists
+          const maGHD = `GHD${Date.now().toString().slice(-6)}`;
+          const newGiamHoaDon = this.giamHoaDonRepo.create({
+            MaGHD: maGHD,
+            ctkm: existed,
+            SoTienGiam: body.giaTriGiam || 0,
+            LoaiGiam: body.loaiGiam || 'phan tram',
+            NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
+            NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            GiaTriTu: body.soTienToiThieu || null,
+            TrangThai: body.TrangThai || 'hoạt động'
+          } as any);
+          await this.giamHoaDonRepo.save(newGiamHoaDon);
+        }
+      }
+
+      // Load and return updated CTKM with relations
+      const result = await this.repository.findOne({
+        where: { MaCTKM: id } as any,
+        relations: ['giamHoaDons', 'giamMons', 'combos']
+      });
+
+      return res.json(result);
     } catch (e: any) {
       return res.status(400).json({ message: "Cập nhật thất bại", error: e.message });
     }
