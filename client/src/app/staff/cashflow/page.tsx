@@ -59,7 +59,7 @@ const CashflowPage = () => {
   const [nghiepVuThuList, setNghiepVuThuList] = useState<NghiepVu[]>([])
   const [nghiepVuChiList, setNghiepVuChiList] = useState<NghiepVu[]>([])
   const [paymentMethods, setPaymentMethods] = useState<string[]>(['Tiền mặt'])
-  
+
   const { user } = useAuth()
 
 
@@ -67,19 +67,21 @@ const CashflowPage = () => {
     setLoading(true)
     setError(null)
     try {
-      const today = new Date().toISOString().split('T')[0]
-      
+      // Use local date (not UTC) to avoid timezone issues
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
       // Load nghiepvu for thu and chi, and payment methods
       const [nghiepVuThu, nghiepVuChi, paymentMethodsData] = await Promise.all([
         nghiepVuApi.getAll({ loaiGiaoDich: 'thu' }),
         nghiepVuApi.getAll({ loaiGiaoDich: 'chi' }),
         thuChiApi.getPaymentMethods().catch(() => ['Tiền mặt', 'Chuyển khoản', 'Thẻ']) // Fallback nếu API lỗi
       ])
-      
+
       setNghiepVuThuList(nghiepVuThu)
       setNghiepVuChiList(nghiepVuChi)
       setPaymentMethods(paymentMethodsData.length > 0 ? paymentMethodsData : ['Tiền mặt', 'Chuyển khoản', 'Thẻ'])
-      
+
       // Set default nghiepVu for forms
       if (nghiepVuThu.length > 0) {
         setCashInForm(prev => ({ ...prev, nghiepVu: nghiepVuThu[0].MaNghiepVu }))
@@ -105,12 +107,12 @@ const CashflowPage = () => {
 
       // Load thu chi data - load tất cả rồi phân loại ở frontend để tránh mất dữ liệu khi MaNghiepVu null
       const allThuChiData = await thuChiApi.getAll({ startDate: today, endDate: today })
-      
+
       // Phân loại thu/chi dựa trên nghiepVu hoặc dựa vào type từ form (nếu không có nghiepVu)
       // Nếu không có nghiepVu, sẽ không hiển thị, nhưng ít nhất sẽ load được tất cả dữ liệu
       const thuData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'thu')
       const chiData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'chi')
-      
+
       // Nếu có dữ liệu không có nghiepVu, log để debug
       const dataWithoutNghiepVu = allThuChiData.filter(tc => !tc.nghiepVu)
       if (dataWithoutNghiepVu.length > 0) {
@@ -161,8 +163,8 @@ const CashflowPage = () => {
       const errorMessage = err instanceof ApiError
         ? err.message
         : err instanceof Error
-        ? err.message
-        : 'Không thể tải dữ liệu giao dịch. Vui lòng thử lại.'
+          ? err.message
+          : 'Không thể tải dữ liệu giao dịch. Vui lòng thử lại.'
       setError(errorMessage)
     } finally {
       setLoading(false)
@@ -208,10 +210,10 @@ const CashflowPage = () => {
     const amount = Number(form.amount.replace(/\D/g, '')) || Number(form.amount)
 
     // Debug log
-    console.log('Form data:', { 
-      reason: form.reason, 
-      amount: form.amount, 
-      parsedAmount: amount, 
+    console.log('Form data:', {
+      reason: form.reason,
+      amount: form.amount,
+      parsedAmount: amount,
       nghiepVu: form.nghiepVu,
       phuongThucThanhToan: form.phuongThucThanhToan
     })
@@ -267,14 +269,14 @@ const CashflowPage = () => {
       const hours = String(now.getHours()).padStart(2, '0')
       const minutes = String(now.getMinutes()).padStart(2, '0')
       const seconds = String(now.getSeconds()).padStart(2, '0')
-      
+
       // Tính timezone offset (ví dụ: +07:00 cho GMT+7)
       const offsetMinutes = now.getTimezoneOffset()
       const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60)
       const offsetMins = Math.abs(offsetMinutes) % 60
       const offsetSign = offsetMinutes <= 0 ? '+' : '-'
       const timezoneOffset = `${offsetSign}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`
-      
+
       const thoiGian = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${timezoneOffset}`
 
       interface CreateThuChiPayload {
@@ -294,7 +296,7 @@ const CashflowPage = () => {
         GhiChu: ghiChu,
         SoTien: amount
       }
-      
+
       // Chỉ thêm MaPhienLamViec và MaNghiepVu nếu có giá trị
       if (maPhienLamViec) {
         payload.MaPhienLamViec = maPhienLamViec
@@ -302,7 +304,7 @@ const CashflowPage = () => {
       if (form.nghiepVu && form.nghiepVu.trim()) {
         payload.MaNghiepVu = form.nghiepVu
       }
-      
+
       console.log('Submitting payload:', payload)
 
       await thuChiApi.create(payload)
@@ -316,10 +318,12 @@ const CashflowPage = () => {
       // Reload data to get the latest transactions
       // Thêm delay nhỏ để đảm bảo database đã commit transaction
       await new Promise(resolve => setTimeout(resolve, 100))
-      
+
       // Force reload bằng cách gọi lại logic load thu chi data
       try {
-        const today = new Date().toISOString().split('T')[0]
+        // Use local date (not UTC) to avoid timezone issues
+        const nowReload = new Date()
+        const today = `${nowReload.getFullYear()}-${String(nowReload.getMonth() + 1).padStart(2, '0')}-${String(nowReload.getDate()).padStart(2, '0')}`
         // Load tất cả rồi phân loại ở frontend
         const allThuChiData = await thuChiApi.getAll({ startDate: today, endDate: today })
         const thuData = allThuChiData.filter(tc => tc.nghiepVu?.LoaiGiaoDich === 'thu')
@@ -368,7 +372,7 @@ const CashflowPage = () => {
       } catch (reloadErr) {
         console.error('Error reloading transactions:', reloadErr)
         // Fallback: gọi loadData nếu reload thủ công thất bại
-      await loadData()
+        await loadData()
       }
 
       toast.success('Ghi nhận giao dịch thành công!')
@@ -476,9 +480,9 @@ const CashflowPage = () => {
                 <option value="">Chưa có nghiệp vụ thu</option>
               ) : (
                 nghiepVuThuList.map((nv) => (
-                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
-                  {nv.TenNghiepVu}
-                </option>
+                  <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                    {nv.TenNghiepVu}
+                  </option>
                 ))
               )}
             </select>
@@ -538,9 +542,9 @@ const CashflowPage = () => {
                 <option value="">Chưa có nghiệp vụ chi</option>
               ) : (
                 nghiepVuChiList.map((nv) => (
-                <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
-                  {nv.TenNghiepVu}
-                </option>
+                  <option key={nv.MaNghiepVu} value={nv.MaNghiepVu}>
+                    {nv.TenNghiepVu}
+                  </option>
                 ))
               )}
             </select>
