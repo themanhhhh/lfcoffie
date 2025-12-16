@@ -13,11 +13,18 @@ export class ThuChiController {
       let where: any = { isDelete: false };
 
       if (startDate && endDate) {
-        // Set start date to beginning of day and end date to end of day
-        const start = new Date(startDate as string);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999);
+        // Parse date string as local time (not UTC)
+        // startDate format: YYYY-MM-DD
+        const [startYear, startMonth, startDay] = (startDate as string).split('-').map(Number);
+        const [endYear, endMonth, endDay] = (endDate as string).split('-').map(Number);
+
+        // Create dates in local timezone
+        const start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+        const end = new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999);
+
+        console.log('Date filter - startDate:', startDate, '-> start:', start.toISOString());
+        console.log('Date filter - endDate:', endDate, '-> end:', end.toISOString());
+
         where.ThoiGian = Between(start, end);
       }
 
