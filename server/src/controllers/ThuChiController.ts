@@ -9,9 +9,9 @@ export class ThuChiController {
 
   async getAll(req: Request, res: Response) {
     try {
-      const { startDate, endDate, loaiGiaoDich } = req.query;
+      const { startDate, endDate, loaiGiaoDich, maPhienLamViec } = req.query;
       let where: any = { isDelete: false };
-      
+
       if (startDate && endDate) {
         // Set start date to beginning of day and end date to end of day
         const start = new Date(startDate as string);
@@ -20,7 +20,12 @@ export class ThuChiController {
         end.setHours(23, 59, 59, 999);
         where.ThoiGian = Between(start, end);
       }
-      
+
+      // Filter theo phiên làm việc
+      if (maPhienLamViec) {
+        where.MaPhienLamViec = maPhienLamViec;
+      }
+
       const list = await this.repository.find({
         where,
         relations: ['phienLamViec', 'nghiepVu', 'phienLamViec.nhanVien']
@@ -40,7 +45,7 @@ export class ThuChiController {
   async getOne(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const item = await this.repository.findOne({ 
+      const item = await this.repository.findOne({
         where: { MaGiaoDich: id, isDelete: false } as any,
         relations: ['phienLamViec', 'nghiepVu']
       });
@@ -56,7 +61,7 @@ export class ThuChiController {
       // Parse ThoiGian từ string thành Date object để đảm bảo timezone đúng
       // TypeORM sẽ tự động xử lý timezone khi lưu vào database
       const thoiGian = req.body.ThoiGian ? new Date(req.body.ThoiGian) : new Date();
-      
+
       // Tạo object với các field cần thiết
       const data: any = {
         MaGiaoDich: req.body.MaGiaoDich,
@@ -74,7 +79,7 @@ export class ThuChiController {
 
       const obj = this.repository.create(data);
       const saved = await this.repository.save(obj);
-      
+
       console.log('Saved ThuChi:', saved);
       return res.status(201).json(saved);
     } catch (e: any) {
@@ -114,7 +119,7 @@ export class ThuChiController {
     try {
       const donHangRepo = AppDataSource.getRepository(DonHang);
       const thuChiRepo = AppDataSource.getRepository(ThuChi);
-      
+
       // Lấy từ ThuChi
       const thuChiMethods = await thuChiRepo
         .createQueryBuilder('thuchi')

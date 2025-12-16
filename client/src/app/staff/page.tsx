@@ -1406,10 +1406,7 @@ const Staff = () => {
                       <option value="">-- Không chọn khuyến mãi --</option>
                       {availablePromotions.map((promo) => (
                         <option key={promo.MaGHD} value={promo.MaGHD}>
-                          [{promo.ctkm?.MaCTKM || promo.MaGHD}] {promo.ctkm?.TenCTKM || 'Khuyến mãi'} - {promo.LoaiGiam === 'Phần trăm'
-                            ? `Giảm ${promo.SoTienGiam}%`
-                            : `Giảm ${formatPrice(promo.SoTienGiam)}`}
-                          {promo.GiaTriTu && ` (Từ ${formatPrice(promo.GiaTriTu)})`}
+                          {promo.ctkm?.TenCTKM || 'Khuyến mãi'}
                         </option>
                       ))}
                     </select>

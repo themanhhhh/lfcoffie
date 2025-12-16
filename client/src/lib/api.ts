@@ -378,7 +378,7 @@ export interface ThuChi {
 
 export const thuChiApi = {
   ...createCrudApi<ThuChi>('/api/thuchi'),
-  getAll: (params?: { startDate?: string; endDate?: string; loaiGiaoDich?: string }): Promise<ThuChi[]> => {
+  getAll: (params?: { startDate?: string; endDate?: string; loaiGiaoDich?: string; maPhienLamViec?: string }): Promise<ThuChi[]> => {
     const queryString = params ? '?' + new URLSearchParams(params as Record<string, string>).toString() : '';
     return apiFetch<ThuChi[]>(`/api/thuchi${queryString}`);
   },
