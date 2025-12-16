@@ -390,7 +390,7 @@ const ShiftClosingPage = () => {
               </tr>
               <tr>
                 <td></td>
-                <td>2.Các loại thu trong nghiệp vụ thu chi</td>
+                <td>2.Doanh thu khác ( phạt nhân viên , đặt phòng họp , ...)</td>
                 <td>${formatPrice(businessReport.doanhThu.khac)}</td>
               </tr>
               <tr>
