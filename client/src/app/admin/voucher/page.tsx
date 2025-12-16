@@ -461,9 +461,9 @@ const VoucherPage = () => {
 
   const handleAddVoucher = () => {
     setEditingVoucher(null)
-    // Tự động tạo mã CTKM
+    // Tự động tạo mã CTKM (tối đa 10 ký tự: KM + 8 số)
     const timestamp = Date.now().toString().slice(-8)
-    const maKM = `CTKM${timestamp}`
+    const maKM = `KM${timestamp}`
 
     setFormData({
       maKM: maKM,  // Tự động generate
@@ -563,7 +563,7 @@ const VoucherPage = () => {
         thu: formData.thu || null,
         gioBatDau: formData.gioBatDau || null,
         gioKetThuc: formData.gioKetThuc || null,
-        loaiGiam: formData.loaiKM === 'percentage' ? 'Phần trăm' : 'VND'
+        loaiGiam: formData.loaiKM === 'percentage' ? 'phan tram' : 'tien mat'
       }
 
       // Nếu là combo, thêm thông tin các món

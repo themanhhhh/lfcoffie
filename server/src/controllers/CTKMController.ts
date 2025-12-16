@@ -54,14 +54,17 @@ export class CTKMController {
       const saved = Array.isArray(savedResult) ? savedResult[0] : savedResult;
 
       // Tự động tạo bản ghi liên quan dựa trên LoaiCTKM
+      console.log('Creating CTKM with LoaiCTKM:', saved.LoaiCTKM);
+      console.log('Request body:', JSON.stringify(body, null, 2));
+
       if (saved.LoaiCTKM === 'giamhoadon') {
         // Tạo GiamHoaDon
         const maGHD = `GHD${Date.now().toString().slice(-6)}`;
         const giamHoaDonData: any = {
           MaGHD: maGHD,
-          MaCTKM: saved.MaCTKM,
+          ctkm: saved, // Assign relation object instead of MaCTKM string
           SoTienGiam: body.giaTriGiam || 0,
-          LoaiGiam: body.loaiGiam || 'Phần trăm',
+          LoaiGiam: body.loaiGiam || 'phan tram',
           NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
           NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           Thu: body.thu || null,
@@ -74,8 +77,11 @@ export class CTKMController {
           giamHoaDonData.GiaTriTu = body.soTienToiThieu;
         }
 
+        console.log('Creating GiamHoaDon:', JSON.stringify(giamHoaDonData, null, 2));
+
         const giamHoaDon = this.giamHoaDonRepo.create(giamHoaDonData);
         await this.giamHoaDonRepo.save(giamHoaDon);
+        console.log('GiamHoaDon saved successfully');
       } else if (saved.LoaiCTKM === 'giammon') {
         // Tạo GiamMon cho nhiều món
         const giamMonItems = body.giamMonItems || [];
@@ -91,7 +97,7 @@ export class CTKMController {
                 MaCTKM: saved.MaCTKM,
                 MaMon: item.MaMon,
                 SoTienGiam: item.SoTienGiam || 0,
-                LoaiGiam: item.LoaiGiam || 'Phần trăm',
+                LoaiGiam: item.LoaiGiam || 'phan tram',
                 NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
                 NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                 Thu: body.thu || null,
@@ -112,7 +118,7 @@ export class CTKMController {
             MaCTKM: saved.MaCTKM,
             MaMon: body.MaMon,
             SoTienGiam: body.giaTriGiam || 0,
-            LoaiGiam: body.loaiGiam || 'Phần trăm',
+            LoaiGiam: body.loaiGiam || 'phan tram',
             NgayBatDau: body.ngayBatDau ? new Date(body.ngayBatDau) : new Date(),
             NgayKetThuc: body.ngayKetThuc ? new Date(body.ngayKetThuc) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             Thu: body.thu || null,

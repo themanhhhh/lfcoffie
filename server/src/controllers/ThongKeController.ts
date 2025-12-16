@@ -360,7 +360,7 @@ export class ThongKeController {
               const orderDate = new Date(dh.Ngay);
               if (orderDate >= new Date(gm.NgayBatDau) && orderDate <= new Date(gm.NgayKetThuc)) {
                 let discount = 0;
-                if (gm.LoaiGiam === 'Phần trăm') {
+                if (gm.LoaiGiam?.toLowerCase().includes('tram')) {
                   discount = itemTotal * (gm.SoTienGiam / 100);
                 } else {
                   discount = gm.SoTienGiam * ct.SoLuong;
@@ -420,7 +420,7 @@ export class ThongKeController {
               // Kiểm tra điều kiện GiaTriTu
               if (!ghd.GiaTriTu || dhSubtotal >= ghd.GiaTriTu) {
                 let discount = 0;
-                if (ghd.LoaiGiam === 'Phần trăm') {
+                if (ghd.LoaiGiam?.toLowerCase().includes('tram')) {
                   discount = dhSubtotal * (ghd.SoTienGiam / 100);
                 } else {
                   discount = ghd.SoTienGiam;

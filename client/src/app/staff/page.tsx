@@ -792,13 +792,33 @@ const Staff = () => {
 
   const getDiscountAmount = () => {
     if (!selectedPromotion) return 0
-    const details = selectedPromotion.giamHoaDons?.[0]
-    if (!details) return 0
 
     const subtotal = getSubtotal()
-    return details.LoaiGiam === 'Phần trăm'
-      ? subtotal * (details.SoTienGiam / 100)
-      : details.SoTienGiam
+
+    // Helper function to check if it's percentage discount
+    const isPercentage = (loaiGiam: string) => {
+      const lower = loaiGiam?.toLowerCase() || ''
+      return lower.includes('trăm') || lower.includes('tram') || lower.includes('%') || lower === 'percentage'
+    }
+
+    // Thử lấy từ giamHoaDons trước
+    const giamHoaDon = selectedPromotion.giamHoaDons?.[0]
+    if (giamHoaDon) {
+      return isPercentage(giamHoaDon.LoaiGiam)
+        ? subtotal * (giamHoaDon.SoTienGiam / 100)
+        : giamHoaDon.SoTienGiam
+    }
+
+    // Thử lấy từ giamMons
+    const giamMon = selectedPromotion.giamMons?.[0]
+    if (giamMon) {
+      return isPercentage(giamMon.LoaiGiam)
+        ? subtotal * (giamMon.SoTienGiam / 100)
+        : giamMon.SoTienGiam
+    }
+
+    // Không có thông tin giảm giá chi tiết
+    return 0
   }
 
   const getTotalPrice = () => {
