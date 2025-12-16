@@ -582,7 +582,7 @@ const CashflowPage = () => {
       <section className={styles.tableSection}>
         <div className={styles.tableHeader}>
           <h2><FaFileInvoice /> Lịch sử thu chi</h2>
-          <span>Ghi nhận {transactions.length} giao dịch trong ca hiện tại</span>
+          <span>Ghi nhận {transactions.length} giao dịch trong ngày hôm nay</span>
         </div>
         <div className={styles.tableWrapper}>
           <table>
