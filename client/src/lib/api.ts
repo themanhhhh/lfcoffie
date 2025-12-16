@@ -281,6 +281,8 @@ export interface CTKM {
   MaCTKM: string;
   TenCTKM: string;
   LoaiCTKM: string;
+  TrangThai?: string;
+  isDelete?: boolean;
   giamHoaDons?: GiamHoaDon[];
   giamMons?: GiamMon[];
 }

@@ -60,7 +60,7 @@ import {
   olongxoai,
   tiramisu
 } from '../image/index'
-import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon, giamHoaDonApi, GiamHoaDon, comboApi } from '../../lib/api'
+import { monApi, donHangApi, chiTietDonHangApi, phienLamViecApi, tuyChonApi, ApiError, TuyChon, ctkmApi, CTKM, GiamHoaDon, comboApi } from '../../lib/api'
 import { ProtectedRoute } from '../../components/ProtectedRoute'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -209,8 +209,8 @@ const Staff = () => {
   const [currentShiftInfo, setCurrentShiftInfo] = useState<ShiftInfo | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [qrCodeImage, setQrCodeImage] = useState<string | null>(null)
-  const [availablePromotions, setAvailablePromotions] = useState<GiamHoaDon[]>([])
-  const [selectedPromotion, setSelectedPromotion] = useState<GiamHoaDon | null>(null)
+  const [availablePromotions, setAvailablePromotions] = useState<CTKM[]>([])
+  const [selectedPromotion, setSelectedPromotion] = useState<CTKM | null>(null)
   const [customerCash, setCustomerCash] = useState<string>('')
   const [showCustomizeModal, setShowCustomizeModal] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -650,11 +650,18 @@ const Staff = () => {
 
     // Load available promotions
     try {
-      const promotions = await giamHoaDonApi.getActiveRules()
-      const totalPrice = getTotalPrice()
+      const promotions = await ctkmApi.getAll()
       // Filter promotions that apply to current order
       const applicablePromotions = promotions.filter(promo => {
-        if (promo.GiaTriTu && totalPrice < promo.GiaTriTu) return false
+        // Chỉ lấy loại giảm hóa đơn hoặc giảm món
+        if (promo.LoaiCTKM !== 'giamhoadon' && promo.LoaiCTKM !== 'giammon') return false
+
+        // Check active status
+        if (promo.isDelete) return false
+
+        // Check TrangThai
+        if (promo.TrangThai !== 'hoạt động') return false
+
         return true
       })
       setAvailablePromotions(applicablePromotions)
@@ -755,7 +762,7 @@ const Staff = () => {
         paymentMethod,
         total: getTotalPrice(),
         discount: getDiscountAmount(),
-        promotion: selectedPromotion?.ctkm?.TenCTKM || null
+        promotion: selectedPromotion?.TenCTKM || null
       }
 
       // Hiển thị hóa đơn
@@ -785,10 +792,13 @@ const Staff = () => {
 
   const getDiscountAmount = () => {
     if (!selectedPromotion) return 0
+    const details = selectedPromotion.giamHoaDons?.[0]
+    if (!details) return 0
+
     const subtotal = getSubtotal()
-    return selectedPromotion.LoaiGiam === 'Phần trăm'
-      ? subtotal * (selectedPromotion.SoTienGiam / 100)
-      : selectedPromotion.SoTienGiam
+    return details.LoaiGiam === 'Phần trăm'
+      ? subtotal * (details.SoTienGiam / 100)
+      : details.SoTienGiam
   }
 
   const getTotalPrice = () => {
@@ -1397,16 +1407,16 @@ const Staff = () => {
                   {availablePromotions.length > 0 ? (
                     <select
                       className={Style.promotionSelect}
-                      value={selectedPromotion?.MaGHD || ''}
+                      value={selectedPromotion?.MaCTKM || ''}
                       onChange={(e) => {
-                        const promo = availablePromotions.find(p => p.MaGHD === e.target.value)
+                        const promo = availablePromotions.find(p => p.MaCTKM === e.target.value)
                         setSelectedPromotion(promo || null)
                       }}
                     >
                       <option value="">-- Không chọn khuyến mãi --</option>
                       {availablePromotions.map((promo) => (
-                        <option key={promo.MaGHD} value={promo.MaGHD}>
-                          {promo.ctkm?.TenCTKM || 'Khuyến mãi'}
+                        <option key={promo.MaCTKM} value={promo.MaCTKM}>
+                          {promo.TenCTKM}
                         </option>
                       ))}
                     </select>
